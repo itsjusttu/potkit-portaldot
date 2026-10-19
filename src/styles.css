@@ -512,15 +512,6 @@ html[data-route="app"] header.top { z-index: 70; } /* menu above toasts (60), be
 .wd-net { display: flex; align-items: center; justify-content: space-between; gap: .5rem; padding: .3rem .4rem .5rem .8rem; color: #e8c15a; font-size: .84rem; border-bottom: 1px solid #1f1f1f; margin-bottom: 4px; }
 .wd-net i { display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: #e8c15a; margin-right: .5rem; }
 
-/* floating demo guide */
-.guide { position: fixed; right: 1.25rem; bottom: 1.25rem; z-index: 55; display: grid; justify-items: end; gap: .6rem; }
-.guide-btn { display: inline-flex; align-items: center; gap: .5rem; min-height: 42px; padding: 0 1rem; background: #000; color: #fff; border: 1px solid rgba(111,195,211,.6); cursor: pointer;
-  font: 600 .78rem "Space Grotesk"; letter-spacing: .1em; text-transform: uppercase; box-shadow: 0 10px 30px rgba(0,0,0,.6); }
-.guide-btn:hover { background: #0b1418; }
-.g-count { color: var(--hud); }
-.guide-pop { width: min(440px, calc(100vw - 2rem)); max-height: 70vh; overflow: auto; background: #050505; box-shadow: 0 20px 60px rgba(0,0,0,.7); animation: wmIn .2s ease both; }
-.guide-pop .check { margin: 0; }
-.guide-pop .check ol { grid-template-columns: 1fr !important; }
 .toasts { bottom: 5rem; }
 
 /* drawer */
@@ -661,7 +652,6 @@ html[data-route="app"] header.top { z-index: 70; } /* menu above toasts (60), be
   .pf-top { grid-template-columns: 1fr; } .profile-kpis { grid-template-columns: 1fr 1fr; }
   .ex-stats { grid-template-columns: 1fr 1fr; }
   .wiz-steps { grid-template-columns: 1fr 1fr; }
-  .guide { bottom: calc(70px + env(safe-area-inset-bottom)); right: .75rem; }
   .toasts { bottom: auto; }
   .ph-act { position: static; margin-top: .6rem; }
   .cert { padding: 1.4rem 1rem; } .cert-head { flex-direction: column-reverse; } .cert .vchecks li { grid-template-columns: 2rem 1fr; }
@@ -745,11 +735,7 @@ html[data-route="app"] header.top { z-index: 70; } /* menu above toasts (60), be
 @media (max-width: 52rem) {
   .wiz-steps { row-gap: 1rem; }
   .wiz-steps li::after { bottom: 0; }            /* progress line no longer cuts through the 2nd row labels */
-  .guide-btn > span:not(.g-count) { display: none; }  /* compact Demo guide button: icon + count */
-  .guide-btn { padding: 0 .75rem; min-height: 38px; }
-  main { padding-bottom: calc(140px + env(safe-area-inset-bottom)); } /* content can scroll clear of the fixed button + tab bar */
 }
-@media (min-width: 52.01rem) { main { padding-bottom: 5rem; } } /* last card never sits under the floating Demo guide */
 
 /* =====================================================================
    v21 — "muted neon" /app frame (direction A, toned to the landing page)
@@ -832,8 +818,6 @@ html[data-route="app"] .tag.paid { color: var(--ok); border-color: rgba(52,211,1
 html[data-route="app"] .tag.warn { color: var(--warn); border-color: rgba(232,193,90,.5); text-shadow: 0 0 6px rgba(232,193,90,.35); }
 html[data-route="app"] .tag.bad { color: var(--bad); border-color: rgba(240,122,140,.55); text-shadow: 0 0 6px rgba(240,122,140,.35); }
 html[data-route="app"] input:focus, html[data-route="app"] select:focus { border-color: var(--neo-c); box-shadow: 0 0 0 1px rgba(var(--neo-c-rgb), .6); }
-html[data-route="app"] .guide-btn { border-color: rgba(var(--neo-m-rgb), .6); }
-html[data-route="app"] .guide-btn .g-count { color: var(--neo-m); }
 
 /* step 3: page-title glitch (mostly idle; two tinted halves jump ~0.4s every 6s) */
 html[data-route="app"] .page-head h1.glitch { position: relative; color: #eef6f7; text-shadow: 0 0 14px rgba(var(--neo-c-rgb), .25); }

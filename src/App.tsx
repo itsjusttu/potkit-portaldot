@@ -4,7 +4,7 @@ import { DEFAULTS } from "./config";
 import { appShareUrl, homeUrl } from "./routes";
 import { WalletButton, WalletModal, useWallets } from "./WalletUi";
 import { rememberedId, select, selected, type WalletOption } from "./lib/wallets";
-import { Checklist, Drawer, Empty, GasTip, Ico, Toasts, toast, type Step } from "./AppUi";
+import { Drawer, Empty, GasTip, Ico, Toasts, toast } from "./AppUi";
 import { FaucetButton } from "./Faucet";
 import {
   addr, anyWallet, connect, CONSOLE, disconnectWallet, ethereum, explain, fmt, GUIDE, inFrame, KINDS, kitAddrs, loadBalances, loadClaimables, loadEvents,
@@ -115,7 +115,6 @@ export function App() {
   const [eventsLoading, setEventsLoading] = useState(false);
   const [payFor, setPayFor] = useState<number | null>(null);
   const [payAmt, setPayAmt] = useState("");
-  const [guide, setGuide] = useState(false);
   const [needGas, setNeedGas] = useState(false); // set when a write fails for insufficient gas
   useEffect(() => { setNeedGas(false); }, [account]); // the warning belongs to the wallet that failed
   const [log, setLog] = useState<Log[]>(() => { try { return JSON.parse(localStorage.getItem(`${STORE}.log`) ?? "[]"); } catch { return []; } });
@@ -245,18 +244,6 @@ export function App() {
     walletName: selected()?.name ?? "Wallet", openPay, param: (k) => params[k] ?? "",
   };
 
-  // demo guide (floating, collapsible)
-  const isDep = (r: Row) => r.depositor === account || r.owner === account;
-  const demo: Step[] = [
-    { label: "Mint a receipt", done: rows.some(isDep), go: () => { setTab("issue"); setGuide(false); } },
-    { label: "Lock, set terms & issue shares", done: rows.some((r) => r.fraction && r.depositor === account) || events.some((e) => e.kind === "lock" && e.actors[0] === account), go: () => { setTab("issue"); setGuide(false); } },
-    { label: "List shares", done: listings.some((l) => l.seller === account) || events.some((e) => e.kind === "list" && e.actors[0] === account) || log.some((l) => l.action === "Listed"), go: () => { setTab("trade"); setGuide(false); } },
-    { label: "Buy shares (2nd wallet)", done: rows.some((r) => r.fraction && r.depositor !== account && (held.get(r.id) ?? 0n) > 0n) || events.some((e) => e.kind === "buy" && (e.actors.includes(account as Address) || events.some((x) => x.kind === "list" && x.lid === e.lid && x.actors[0] === account))), go: () => { setTab("trade"); setGuide(false); } },
-    { label: "Settle invoice", done: rows.some((r) => r.settle.settled) || events.some((e) => e.kind === "settle"), go: () => { setTab("explore"); setGuide(false); } },
-    { label: "Claim payout", done: log.some((l) => l.action === "Payout claimed") || events.some((e) => e.kind === "claim" && e.actors[0] === account), go: () => { setTab("portfolio"); setGuide(false); } },
-    { label: "Redeem the receipt", done: events.some((e) => e.kind === "redeem" && e.actors[0] === account), go: () => { setTab("portfolio"); setGuide(false); } },
-  ];
-  const demoDone = demo.filter((s) => s.done).length;
   const payRow = rows.find((r) => r.id === payFor);
 
   const needsWallet = tab !== "dashboard" && tab !== "explore" && tab !== "verify";
@@ -344,19 +331,6 @@ export function App() {
           </>
         )}
       </main>
-
-      {account && (
-        <div className={`guide ${guide ? "open" : ""}`}>
-          {guide && (
-            <div className="guide-pop" role="dialog" aria-label="Demo guide">
-              <Checklist dismissible={false} storeKey={`${STORE}.guide`} title="Demo guide" doneText="Demo path complete" steps={demo} />
-            </div>
-          )}
-          <button className="guide-btn" aria-label="Demo guide" aria-expanded={guide} onClick={() => setGuide(!guide)}>
-            <Ico n={guide ? "x" : "guide"} /> <span>Demo guide</span> <span className="num g-count">{loading ? "…" : `${demoDone}/${demo.length}`}</span>
-          </button>
-        </div>
-      )}
 
       <Drawer open={payFor !== null} onClose={() => setPayFor(null)} kicker="Settle invoice" title={payRow ? `Pay #${payRow.id} · ${payRow.note}` : "Pay invoice"}>
         {payRow && (

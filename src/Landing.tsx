@@ -85,12 +85,7 @@ function useScrollField() {
   useEffect(() => {
     const orb = document.querySelector<HTMLElement>(".lx-orb");
     const dust = document.querySelector<HTMLElement>(".lx-bg");
-    const marker = document.querySelector<HTMLElement>(".lx-story-marker");
     if (!orb || !dust) return;
-    const sections = Array.from(document.querySelectorAll<HTMLElement>(".lx-hero, .lx-sec"));
-    const markerIndex = marker?.querySelector<HTMLElement>("[data-index]");
-    const markerName = marker?.querySelector<HTMLElement>("[data-name]");
-    const markerLine = marker?.querySelector<HTMLElement>("i");
     let raf = 0;
     const update = () => {
       if (raf) return;
@@ -100,10 +95,6 @@ function useScrollField() {
         orb.style.setProperty("--scroll-y", `${-progress * 92}px`);
         orb.style.setProperty("--scroll-scale", `${1 - progress * .2}`);
         dust.style.setProperty("--scroll-bg-y", `${progress * 38}px`);
-        const active = sections.reduce((found, section, index) => section.getBoundingClientRect().top < innerHeight * .48 ? index : found, 0);
-        if (markerIndex) markerIndex.textContent = `${String(active + 1).padStart(2, "0")} / ${String(sections.length).padStart(2, "0")}`;
-        if (markerName) markerName.textContent = sections[active]?.id?.replaceAll("-", " ").toUpperCase() || "OVERVIEW";
-        if (markerLine) markerLine.style.transform = `scaleX(${(active + 1) / sections.length})`;
       });
     };
     addEventListener("scroll", update, { passive: true }); addEventListener("resize", update); update();
@@ -262,7 +253,6 @@ export function Landing() {
           </Reveal>
         </section>
       </main>
-      <div className="lx-story-marker" aria-hidden="true"><span data-index>01 / 09</span><i /><b data-name>OVERVIEW</b><small>SCROLL ↓</small></div>
       <Footer />
     </div>
   );

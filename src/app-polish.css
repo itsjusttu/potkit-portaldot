@@ -97,18 +97,17 @@ html[data-route="app"] .tag.bad { animation: none; }
 html[data-route="app"] .avatar { border-radius: 18px; }
 
 /* 11. overlays */
-html[data-route="app"] .drawer, html[data-route="app"] .wm, html[data-route="app"] .toast, html[data-route="app"] .guide-pop {
+html[data-route="app"] .drawer, html[data-route="app"] .wm, html[data-route="app"] .toast {
   background: var(--surface-2); border: 1px solid var(--line-strong); border-radius: var(--r-lg); box-shadow: 0 24px 60px rgba(0,0,0,.55); backdrop-filter: none; clip-path: none; }
 html[data-route="app"] .drawer { border-radius: var(--r-lg) 0 0 var(--r-lg); }
 html[data-route="app"] .dr-back, html[data-route="app"] .wm-back { background: rgba(5,6,10,.66); backdrop-filter: blur(3px); }
-html[data-route="app"] .guide-btn { border-radius: 999px; background: var(--surface-3); border: 1px solid var(--line-strong); clip-path: none; box-shadow: 0 8px 24px rgba(0,0,0,.4); }
 
 @media (prefers-reduced-motion: reduce) { html[data-route="app"] * { animation-duration: .01ms !important; transition-duration: .01ms !important; } }
 
 /* 12. de-HUD typography: sentence case, no wide tracking on UI chrome */
 html[data-route="app"] .side-item, html[data-route="app"] .side-brand b, html[data-route="app"] .btn,
 html[data-route="app"] .crumb, html[data-route="app"] .crumb *, html[data-route="app"] .empty h3,
-html[data-route="app"] .chip, html[data-route="app"] .guide-btn, html[data-route="app"] .check-toggle b {
+html[data-route="app"] .chip, html[data-route="app"] .check-toggle b {
   text-transform: none; letter-spacing: 0; font-family: "Inter", system-ui, sans-serif; }
 html[data-route="app"] .side-brand b { font-family: "Space Grotesk", "Inter", sans-serif; font-size: 1.15rem; letter-spacing: -.01em; }
 html[data-route="app"] .side-item { font-size: .92rem; font-weight: 500; }

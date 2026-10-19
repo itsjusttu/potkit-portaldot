@@ -43,7 +43,7 @@ html[data-route="app"] .rtable th { text-transform: none; letter-spacing: 0; fon
 html[data-route="app"] .rtable td { border-bottom: 1px solid var(--line); padding-block: .85rem; }
 html[data-route="app"] .rtable tbody tr:hover td { background: var(--surface-2); }
 html[data-route="app"] .tag { background: var(--surface-3); border: 1px solid var(--line); }
-html[data-route="app"] .guide-btn, html[data-route="app"] .drawer, html[data-route="app"] .wd-menu { background: var(--surface-2); }
+html[data-route="app"] .drawer, html[data-route="app"] .wd-menu { background: var(--surface-2); }
 html[data-route="app"] a:not(.btn):not(.side-item) { color: var(--brand); }
 
 html[data-route="app"] .btn.primary { background: var(--grad); border-color: transparent; }
