@@ -528,14 +528,31 @@ export async function loadEvents(a: Addrs, _market: Address | "", listings: List
     let step = 5_000n;
     for (let f = fromBlock; f <= latest; ) {
       const t = f + step - 1n > latest ? latest : f + step - 1n;
-      try { out.push(...(await get(f, t))); f = t + 1n; }
-      catch { if (step > 2_000n) { step = 2_000n; continue; } ok = false; f = t + 1n; }
+      try {
+        out.push(...(await get(f, t)));
+        f = t + 1n;
+        // Grow back toward the normal range after a smaller query succeeds. This keeps
+        // restrictive public RPCs working without paying the small-range cost everywhere.
+        if (step < 5_000n) step = step * 2n > 5_000n ? 5_000n : step * 2n;
+      } catch {
+        // Portaldot RPC providers can impose different eth_getLogs limits. Retry the same
+        // block window with progressively smaller ranges before marking history incomplete.
+        if (step > 500n) { step = step / 2n < 500n ? 500n : step / 2n; continue; }
+        ok = false;
+        f = t + 1n;
+      }
     }
     return out;
   }
   type L = { eventName: string; args: Record<string, unknown>; transactionHash: Hash; blockNumber: bigint; logIndex: number };
   const logs = (await scan((f, t) => reader.getContractEvents({ address: a.vault, abi: PotKit.abi, fromBlock: f, toBlock: t }))) as unknown as L[];
-  const byLid = new Map(listings.map((l) => [l.lid, l]));
+  // Reconstruct sellers from on-chain list events as well as the latest listing
+  // snapshot. Closed or older listings may no longer be included in the snapshot.
+  const sellerByLid = new Map<number, Address>(listings.map((l) => [l.lid, l.seller]));
+  for (const l of logs) {
+    if (l.eventName !== "Activity" || Number(l.args.kind) !== 6) continue;
+    sellerByLid.set(Number(l.args.a as bigint), l.args.actor as Address);
+  }
   const out: ChainEvent[] = [];
   const base = (l: L) => ({ hash: l.transactionHash, block: l.blockNumber ?? 0n, logIndex: l.logIndex ?? 0, time: 0 });
   for (const l of logs) {
@@ -555,8 +572,8 @@ export async function loadEvents(a: Addrs, _market: Address | "", listings: List
     else if (k === 5) out.push({ ...base(l), kind: "claim", id, actors: [who], amount: A, value: B, text: `#${id} payout claimed` });
     else if (k === 6) out.push({ ...base(l), kind: "list", id, lid: Number(A), actors: [who], amount: C, value: B, text: `${units(C)} shares of #${id} listed` });
     else if (k === 7) {
-      const li = byLid.get(Number(A));
-      out.push({ ...base(l), kind: "buy", id, lid: Number(A), actors: [who, ...(li ? [li.seller] : [])], amount: B, value: C, text: `${units(B)} shares of #${id} bought` });
+      const seller = sellerByLid.get(Number(A));
+      out.push({ ...base(l), kind: "buy", id, lid: Number(A), actors: [who, ...(seller ? [seller] : [])], amount: B, value: C, text: `${units(B)} shares of #${id} bought` });
     } else if (k === 8) out.push({ ...base(l), kind: "cancel", id, lid: Number(A), actors: [who], amount: B, text: `Listing ${A} cancelled` });
   }
   const seen = new Set<string>();
@@ -565,7 +582,17 @@ export async function loadEvents(a: Addrs, _market: Address | "", listings: List
   const recent = out.slice(0, 200);
   const blocks = [...new Set(recent.map((e) => e.block))].slice(0, 120);
   const times = new Map<bigint, number>();
-  await Promise.all(blocks.map(async (b) => { const blk = await reader.getBlock({ blockNumber: b }).catch(() => null); if (blk) times.set(b, Number(blk.timestamp)); }));
+  let nextBlock = 0;
+  const loadTimes = async () => {
+    while (nextBlock < blocks.length) {
+      const b = blocks[nextBlock++];
+      const blk = await reader.getBlock({ blockNumber: b }).catch(() => null);
+      if (blk) times.set(b, Number(blk.timestamp));
+    }
+  };
+  // Keep a modest concurrency for public RPC providers; a burst of 120 getBlock calls
+  // can be rate-limited and make the whole history view appear stuck.
+  await Promise.all(Array.from({ length: Math.min(12, blocks.length) }, () => loadTimes()));
   recent.forEach((e) => { e.time = times.get(e.block) ?? 0; });
   return { events: recent, ok };
 }

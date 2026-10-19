@@ -14,7 +14,7 @@ export function History({ c }: { c: Ctx }) {
   const myIds = new Set(c.rows.filter((r) => r.depositor === me || r.owner === me).map((r) => r.id));
   const chainItems: Item[] = c.events
     .filter((e) => e.actors.includes(me as `0x${string}`) || (e.kind === "terms" && myIds.has(e.id)))
-    .map((e) => ({ key: `${e.hash}-${e.logIndex}`, t: e.time * 1000, icon: EV_ICON[e.kind], title: e.kind === "buy" && e.actors[0] !== me ? "Your shares were bought" : LABEL[e.kind], detail: e.text, hash: e.hash, src: "chain" }));
+    .map((e) => ({ key: `${e.hash}-${e.logIndex}-${e.kind}`, t: e.time * 1000, icon: EV_ICON[e.kind], title: e.kind === "buy" && e.actors[0] !== me ? "Your shares were bought" : LABEL[e.kind], detail: e.text, hash: e.hash, src: "chain" }));
   const seen = new Set(chainItems.map((x) => x.hash));
   const localItems: Item[] = c.log.filter((l) => !l.hash || !seen.has(l.hash)).map((l, i) => ({ key: `l${i}`, t: Date.parse(l.at), icon: LOCAL_ICON[l.action] ?? "info", title: l.action, detail: l.detail, hash: l.hash, src: "local" }));
   const all = [...chainItems, ...localItems].sort((a, b) => b.t - a.t);
