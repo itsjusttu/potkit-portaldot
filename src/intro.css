@@ -1,0 +1,17 @@
+.pk-intro { --pk-g: min(80vw, 50vh, 460px); position: fixed; inset: 0; z-index: 9999; background: #05040b; color: #fff; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3.2rem; font-family: "Inter", system-ui, sans-serif; cursor: pointer; overflow: hidden; transition: opacity .8s ease, transform .9s cubic-bezier(.7,0,.2,1); background-image: radial-gradient(rgba(137,91,255,.13) 1px, transparent 1px); background-size: 22px 22px; }
+.pk-intro::before { content:""; position:absolute; inset:0; pointer-events:none; background:radial-gradient(ellipse at 50% 43%,rgba(92,54,220,.2),transparent 36%),radial-gradient(ellipse at 74% 64%,rgba(20,112,255,.11),transparent 35%); }
+.pk-intro.out { opacity: 0; transform: scale(1.04); pointer-events: none; }
+.pk-stage { position: relative; width: var(--pk-g); height: var(--pk-g); display: grid; place-items: center; }
+.pk-stage canvas { position: relative; }
+.pk-orbit { position: absolute; left: 50%; top: 50%; aspect-ratio: 1; translate: -50% -50%; border-radius: 50%; border: 1px dotted rgba(151,112,255,.24); opacity: 0; animation: pk-ring 1.2s ease forwards; pointer-events: none; box-shadow: inset 0 0 45px rgba(115,83,255,.035),0 0 36px rgba(55,111,255,.035); }
+.pk-logo { position: absolute; left: 50%; top: 50%; translate: -50% -50%; border-radius: 50%; opacity: .0; animation: pk-ring .8s ease 1.9s forwards; mix-blend-mode: screen; }
+.pk-load { display: grid; justify-items: center; gap: .4rem; }
+.pk-load span { font-size: .95rem; color: #d4d4da; }
+.pk-load b { font: 600 2.4rem/1 "Space Grotesk", "Inter", sans-serif; font-variant-numeric: tabular-nums; min-width: 5ch; text-align: center; }
+.pk-load b small { font-size: 1rem; font-weight: 500; }
+.pk-ticks { display: flex; gap: 4px; margin-top: .6rem; }
+.pk-ticks i { width: 3px; height: 22px; background: rgba(255,255,255,.16); transition: background .2s; }
+.pk-ticks i.on { background: linear-gradient(#a06bff, #3b9cff); }
+.pk-skip { position:absolute; bottom:2rem; color:rgba(220,216,239,.42); font-size:.72rem; letter-spacing:.04em; }
+@keyframes pk-ring { to { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .pk-intro { transition: none; } .pk-orbit, .pk-logo { animation: none; opacity: 1; } }

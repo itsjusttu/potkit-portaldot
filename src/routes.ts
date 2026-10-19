@@ -1,0 +1,35 @@
+// Path routing. '/' = landing, '/app' = dApp. On an `app.` subdomain the dApp is served at '/'.
+export const isAppHost = () => window.location.hostname.startsWith("app.");
+/** Landing doc pages (SPA routes, served by the vercel.json catch-all rewrite). */
+export const DOC_ROUTES = ["/how-it-works", "/protocol", "/security"];
+export const docRoute = () => { const p = window.location.pathname.replace(/\/+$/, ""); return !isAppHost() && DOC_ROUTES.includes(p) ? p : null; };
+export const isAppRoute = () => isAppHost() || /^\/app(\/|$)/.test(window.location.pathname);
+/** URL of the dApp, keeping the query string (judge link params). */
+/** Optional dedicated dApp origin, e.g. https://app.potkit.pro (set VITE_APP_URL on Vercel). */
+export const APP_ORIGIN = ((import.meta.env.VITE_APP_URL as string | undefined) || "").replace(/\/+$/, "");
+const isLocal = () => /^(localhost|127\.|0\.0\.0\.0|\[::1\])/.test(window.location.hostname) || window.location.hostname.endsWith(".vercel.app");
+export const appUrl = (search = window.location.search) => {
+  const params = new URLSearchParams(search.startsWith("?") ? search.slice(1) : search);
+  params.set("intro", "1");
+  const query = `?${params.toString()}`;
+  if (isAppHost()) return `/${query}`;
+  if (APP_ORIGIN && !isLocal()) return `${APP_ORIGIN}/${query}`;
+  return `/app${query}`;
+};
+/** Absolute dApp link for sharing (judge link). */
+export const appShareUrl = (search: string) => APP_ORIGIN ? `${APP_ORIGIN}/${search}` : `${((import.meta.env.VITE_SITE_URL as string | undefined) || window.location.origin).replace(/\/$/, "")}/app${search}`;
+/** URL of the landing page. On app.<domain> it points to the bare domain. */
+export const homeUrl = () => {
+  const { hostname, protocol, port, search } = window.location;
+  if (!isAppHost()) return `/${search}`;
+  return `${protocol}//${hostname.slice(4)}${port ? `:${port}` : ""}/${search}`;
+};
+/** Backward compat: old '#/app' links → '/app?…' (query preserved). Returns true if it redirected in-place. */
+export function migrateHashRoute() {
+  if (window.location.hash.startsWith("#/app")) {
+    history.replaceState(null, "", appUrl());
+    return true;
+  }
+  if (window.location.hash === "#/") history.replaceState(null, "", window.location.pathname + window.location.search);
+  return false;
+}

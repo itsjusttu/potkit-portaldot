@@ -1,0 +1,8 @@
+/* docs pages: same calm system as the landing */
+.dx-hero h1 { font-weight: 600; letter-spacing: -.03em; }
+.dx-sec h2 { font-weight: 600; letter-spacing: -.02em; }
+.dx-sec h4, .dx-toc small, .dx-t th, .dx-fn-h span, .dx-ev b, .dx-next small { font-family: "Inter", sans-serif; letter-spacing: .06em; font-weight: 600; }
+.dx-toc a { border-radius: 8px; } .dx-toc a.on { background: rgba(255,255,255,.05); }
+.dx-call, .dx-fn, .dx-fig, .dx-tw, .dx-art { border-radius: 12px; }
+.dx-t th, .dx-t td { border-color: var(--hair); }
+.dx-c, .dx-sec code { border-radius: 6px; }
