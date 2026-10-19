@@ -1,4 +1,4 @@
-# PotKit — tokenised receipts on Portaldot V3
+# PotKit - tokenised receipts on Portaldot V3
 
 **Track:** Ecosystem DApps (RWA tokenisation) · Portaldot Hacker House 2026
 
