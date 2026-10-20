@@ -586,13 +586,19 @@ export async function loadEvents(a: Addrs, _market: Address | "", listings: List
   const loadTimes = async () => {
     while (nextBlock < blocks.length) {
       const b = blocks[nextBlock++];
-      const blk = await reader.getBlock({ blockNumber: b }).catch(() => null);
-      if (blk) times.set(b, Number(blk.timestamp));
+      // Public testnet RPCs may throttle bursts of eth_getBlockByNumber calls.
+      // Retry each block with a small delay so a temporary 429/timeout does not
+      // turn the whole timeline into "Unknown date".
+      for (let attempt = 0; attempt < 3; attempt++) {
+        const blk = await reader.getBlock({ blockNumber: b }).catch(() => null);
+        if (blk) { times.set(b, Number(blk.timestamp)); break; }
+        if (attempt < 2) await new Promise((resolve) => setTimeout(resolve, 250 * (attempt + 1)));
+      }
     }
   };
-  // Keep a modest concurrency for public RPC providers; a burst of 120 getBlock calls
-  // can be rate-limited and make the whole history view appear stuck.
-  await Promise.all(Array.from({ length: Math.min(12, blocks.length) }, () => loadTimes()));
+  // Keep block lookups deliberately low-concurrency: the public RPC has strict
+  // request limits, and a burst can silently fail every timestamp lookup.
+  await Promise.all(Array.from({ length: Math.min(3, blocks.length) }, () => loadTimes()));
   recent.forEach((e) => { e.time = times.get(e.block) ?? 0; });
   return { events: recent, ok };
 }

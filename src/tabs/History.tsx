@@ -16,7 +16,16 @@ export function History({ c }: { c: Ctx }) {
     .filter((e) => e.actors.includes(me as `0x${string}`) || (e.kind === "terms" && myIds.has(e.id)))
     .map((e) => ({ key: `${e.hash}-${e.logIndex}-${e.kind}`, t: e.time * 1000, icon: EV_ICON[e.kind], title: e.kind === "buy" && e.actors[0] !== me ? "Your shares were bought" : LABEL[e.kind], detail: e.text, hash: e.hash, src: "chain" }));
   const seen = new Set(chainItems.map((x) => x.hash));
-  const localItems: Item[] = c.log.filter((l) => !l.hash || !seen.has(l.hash)).map((l, i) => ({ key: `l${i}`, t: Date.parse(l.at), icon: LOCAL_ICON[l.action] ?? "info", title: l.action, detail: l.detail, hash: l.hash, src: "local" }));
+  const localDeployHashes = new Set<string>();
+  const localItems: Item[] = c.log.filter((l) => {
+    if (l.hash && seen.has(l.hash)) return false;
+    const isDeploy = /deploy/i.test(l.action);
+    if (isDeploy && l.hash) {
+      if (localDeployHashes.has(l.hash.toLowerCase())) return false;
+      localDeployHashes.add(l.hash.toLowerCase());
+    }
+    return true;
+  }).map((l, i) => ({ key: `l${i}`, t: Date.parse(l.at), icon: LOCAL_ICON[l.action] ?? "info", title: l.action, detail: l.detail, hash: l.hash, src: "local" }));
   const all = [...chainItems, ...localItems].sort((a, b) => b.t - a.t);
   const groups = new Map<string, Item[]>();
   for (const it of all) { const d = it.t ? new Date(it.t).toLocaleDateString(undefined, { weekday: "long", month: "short", day: "numeric", year: "numeric" }) : "Unknown date"; groups.set(d, [...(groups.get(d) ?? []), it]); }

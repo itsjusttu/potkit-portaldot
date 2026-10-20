@@ -226,3 +226,7 @@ html[data-route="landing"] body, .lx { background: #000; }
   .lx-hero-stats { grid-template-columns:repeat(3,minmax(0,1fr)); }
 }
 
+/* Let the page-wide moving dust/glow run behind the entire hero without a boxed panel. */
+.lx-hero-frame { background:transparent; }
+.lx-hero-frame::before { display:none; }
+
