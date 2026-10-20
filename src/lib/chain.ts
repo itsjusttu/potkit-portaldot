@@ -70,6 +70,26 @@ export const inFrame = () => {
 
 /** Read-only client: talks to the RPC directly, never through the wallet, so judges can browse without one. */
 const reader = createPublicClient({ chain: portaldot, transport, pollingInterval: 2_000 });
+const MIN_VALID_BLOCK_TIME = Date.UTC(2020, 0, 1) / 1000;
+let latestBlockClock: { number: bigint; timestamp: number; cachedAt: number } | undefined;
+/** Estimate old block times from one recent block; old Portaldot testnet state may be pruned. */
+export async function estimateBlockTimestamps(blockNumbers: bigint[]) {
+  const result = new Map<bigint, number>();
+  let clock = latestBlockClock;
+  if (!clock || Date.now() - clock.cachedAt > 30_000) {
+    const latest = await reader.getBlock().catch(() => null);
+    const timestamp = latest ? Number(latest.timestamp) : 0;
+    if (!latest || !Number.isFinite(timestamp) || timestamp < MIN_VALID_BLOCK_TIME || timestamp > Date.now() / 1000 + 3600) return result;
+    clock = { number: latest.number, timestamp, cachedAt: Date.now() };
+    latestBlockClock = clock;
+  }
+  for (const block of new Set(blockNumbers)) {
+    if (block > clock.number) continue;
+    const estimate = clock.timestamp - Number(clock.number - block) * 6;
+    if (estimate >= MIN_VALID_BLOCK_TIME && estimate <= clock.timestamp) result.set(block, estimate);
+  }
+  return result;
+}
 const rawWallet = () => {
   const eth = ethereum();
   if (!eth) throw new Error("No wallet selected. Click Connect wallet and pick one.");
@@ -512,6 +532,8 @@ export const nativeBalance = (who: Address) => reader.getBalance({ address: who 
 export type ChainEvent = {
   kind: "mint" | "lock" | "terms" | "due" | "settle" | "claim" | "redeem" | "list" | "buy" | "cancel";
   hash: Hash; block: bigint; logIndex: number; time: number; // unix s (0 if unknown)
+  timeApprox?: boolean;
+  dueDate?: number;
   id: number; actors: Address[]; // everyone involved, for "mine" filtering
   amount?: bigint; value?: bigint; lid?: number; text: string;
 };
@@ -566,7 +588,7 @@ export async function loadEvents(a: Addrs, _market: Address | "", listings: List
     const A = x.a as bigint, B = x.b as bigint, C = x.c as bigint;
     if (k === 1) {
       out.push({ ...base(l), kind: "lock", id, actors: [who], amount: A, text: `#${id} locked into ${A.toString()} shares` });
-      out.push({ ...base(l), kind: "terms", id, actors: [who], value: B, text: `#${id} terms: ${fmt(B, PAY_DECIMALS)} ${PAY_SYMBOL}${C ? ` due ${new Date(Number(C) * 1000).toLocaleDateString()}` : ""}` });
+      out.push({ ...base(l), kind: "terms", id, actors: [who], value: B, dueDate: Number(C), text: `#${id} terms: ${fmt(B, PAY_DECIMALS)} ${PAY_SYMBOL}${C ? ` due ${new Date(Number(C) * 1000).toLocaleDateString()}` : ""}` });
     } else if (k === 2) out.push({ ...base(l), kind: "redeem", id, actors: [who], text: `#${id} redeemed` });
     else if (k === 4) out.push({ ...base(l), kind: "settle", id, actors: [who], value: A, text: `#${id} settled · ${fmt(A, PAY_DECIMALS)} ${PAY_SYMBOL} paid` });
     else if (k === 5) out.push({ ...base(l), kind: "claim", id, actors: [who], amount: A, value: B, text: `#${id} payout claimed` });
@@ -580,26 +602,8 @@ export async function loadEvents(a: Addrs, _market: Address | "", listings: List
   for (let i = out.length - 1; i >= 0; i--) { const e = out[i]!; const k = `${e.hash}|${e.kind}|${e.id}|${e.lid ?? ""}|${e.amount ?? ""}|${e.value ?? ""}`; if (seen.has(k)) out.splice(i, 1); else seen.add(k); }
   out.sort((p, q) => (p.block === q.block ? q.logIndex - p.logIndex : p.block > q.block ? -1 : 1));
   const recent = out.slice(0, 200);
-  const blocks = [...new Set(recent.map((e) => e.block))].slice(0, 120);
-  const times = new Map<bigint, number>();
-  let nextBlock = 0;
-  const loadTimes = async () => {
-    while (nextBlock < blocks.length) {
-      const b = blocks[nextBlock++];
-      // Public testnet RPCs may throttle bursts of eth_getBlockByNumber calls.
-      // Retry each block with a small delay so a temporary 429/timeout does not
-      // turn the whole timeline into "Unknown date".
-      for (let attempt = 0; attempt < 3; attempt++) {
-        const blk = await reader.getBlock({ blockNumber: b }).catch(() => null);
-        if (blk) { times.set(b, Number(blk.timestamp)); break; }
-        if (attempt < 2) await new Promise((resolve) => setTimeout(resolve, 250 * (attempt + 1)));
-      }
-    }
-  };
-  // Keep block lookups deliberately low-concurrency: the public RPC has strict
-  // request limits, and a burst can silently fail every timestamp lookup.
-  await Promise.all(Array.from({ length: Math.min(3, blocks.length) }, () => loadTimes()));
-  recent.forEach((e) => { e.time = times.get(e.block) ?? 0; });
+  const times = await estimateBlockTimestamps(recent.map((e) => e.block));
+  recent.forEach((e) => { e.time = times.get(e.block) ?? 0; e.timeApprox = e.time > 0; });
   return { events: recent, ok };
 }
 export const formatNative = (v: bigint) => `${Number(formatUnits(v, 18)).toLocaleString("en-US", { maximumFractionDigits: 4 })} tPOTv3`;

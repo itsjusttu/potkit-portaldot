@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
-import { explain, fmt, KINDS, loadRows, PAY_SYMBOL, readTokenUri, units, type ChainEvent, type Row } from "../lib/chain";
+import { explain, fmt, KINDS, loadRows, PAY_SYMBOL, readTokenUri, short, units, type ChainEvent, type Row } from "../lib/chain";
 import { Addr, Ico } from "../AppUi";
 import { type Ctx } from "./ctx";
-import { day, SettleBadge } from "./shared";
+import { day } from "./shared";
+import { readReceiptHistory } from "./receipt-history";
 
 type Check = { ok: boolean | null; k: string; v: ReactNode };
 
@@ -11,7 +12,10 @@ export function Verify({ c }: { c: Ctx }) {
   const [msg, setMsg] = useState("");
   const [loading, setLoading] = useState(false);
   const [res, setRes] = useState<{ row: Row; name: string; kind: string; at: Date } | null>(null);
-  const [copied, setCopied] = useState(false);
+  const [copied, setCopied] = useState("");
+  const copy = async (value: string, key: string) => {
+    try { await navigator.clipboard.writeText(value); setCopied(key); window.setTimeout(() => setCopied(""), 1500); } catch { /* Clipboard may be unavailable outside a secure context. */ }
+  };
   const check = useCallback(async (raw: string) => {
     if (!c.addrs) return setMsg("No contracts configured.");
     const v = raw.trim();
@@ -32,18 +36,34 @@ export function Verify({ c }: { c: Ctx }) {
 
   const r = res?.row;
   const vaultHeld = Boolean(r && c.addrs && r.owner.toLowerCase() === c.addrs.vault.toLowerCase());
-  // A redeemed receipt has its settlement storage cleared (refunding the deposit); its payment history lives on in
-  // PotKit's Activity events. Paid + fully claimed + redeemed is the happy end of the lifecycle, not "unbacked".
-  const before = (x: ChainEvent, y: ChainEvent) => x.block < y.block || (x.block === y.block && x.logIndex < y.logIndex);
   const hist = r ? c.events.filter((e) => e.id === r.id) : [];
-  const lastRedeem = hist.find((e) => e.kind === "redeem");
-  const paidEv = lastRedeem && hist.find((e) => e.kind === "settle" && before(e, lastRedeem));
-  const termsEv = paidEv && hist.find((e) => e.kind === "terms" && before(e, paidEv));
-  const redeemedPaid = Boolean(r && !vaultHeld && !r.fraction && paidEv);
+  const receiptHistory = r ? readReceiptHistory(c.events).get(r.id) : undefined;
+  // Redeeming clears live terms and share state, so restore the final receipt facts from its on-chain events.
+  const lastRedeem = receiptHistory?.redeem;
+  const paidEv = receiptHistory?.settle;
+  const termsEv = receiptHistory?.terms;
+  const lockEv = receiptHistory?.lock;
+  const redeemed = Boolean(receiptHistory?.redeemed);
+  const redeemedPaid = Boolean(r && redeemed && receiptHistory?.settled);
+  const faceValue = r && r.settle.faceValue > 0n ? r.settle.faceValue : termsEv?.value ?? 0n;
+  const dueDate = r?.dueDate || termsEv?.dueDate || 0;
+  const sharesIssued = r?.supply && r.supply > 0n ? units(r.supply) : lockEv?.amount?.toString() ?? "";
+  type ProofStep = { key: string; title: string; done: boolean; fallback: string; event?: ChainEvent; rank: number };
+  const proofSteps: ProofStep[] = r ? [
+    { key: "mint", title: "Receipt minted", done: true, fallback: "Receipt exists on-chain", event: hist.find((e) => e.kind === "mint"), rank: 0 },
+    { key: "lock", title: "Receipt locked", done: vaultHeld || Boolean(lockEv), fallback: "Receipt is not currently held by PotKit", event: lockEv, rank: 1 },
+    { key: "settle", title: "Debtor payment settled", done: Boolean(r.settle.settled || receiptHistory?.settled), fallback: "No settlement recorded", event: paidEv, rank: 2 },
+    { key: "redeem", title: "Receipt redeemed", done: redeemed, fallback: "Not redeemed", event: lastRedeem, rank: 5 },
+    ...hist.filter((e) => e.kind === "list").map((event, i) => ({ key: `list-${event.hash}-${i}`, title: `Shares listed · ${units(event.amount ?? 0n)}`, done: true, fallback: "", event, rank: 3 })),
+    ...hist.filter((e) => e.kind === "buy").map((event, i) => ({ key: `buy-${event.hash}-${i}`, title: `Shares sold · ${units(event.amount ?? 0n)}`, done: true, fallback: "", event, rank: 3 })),
+    ...hist.filter((e) => e.kind === "claim").map((event, i) => ({ key: `claim-${event.hash}-${i}`, title: `Payout claimed${event.value ? ` · +${fmt(event.value, 18)} ${PAY_SYMBOL}` : ""}`, done: true, fallback: "", event, rank: 4 })),
+  ].sort((a, b) => a.event && b.event
+    ? a.event.block === b.event.block ? a.event.logIndex - b.event.logIndex : a.event.block < b.event.block ? -1 : 1
+    : a.event ? -1 : b.event ? 1 : a.rank - b.rank) : [];
   const checks: Check[] = r && redeemedPaid ? [
     { ok: true, k: "Receipt exists on-chain", v: <>{res!.name}{res!.kind ? ` · ${res!.kind}` : ""}</> },
-    { ok: true, k: "Debtor payment", v: <>Paid {fmt(paidEv!.value ?? 0n, 18)} {PAY_SYMBOL} into PotKit (block {paidEv!.block.toString()})</> },
-    { ok: termsEv ? (paidEv!.value ?? 0n) >= (termsEv.value ?? 0n) : null, k: "Paid at least face value", v: termsEv ? `${fmt(termsEv.value ?? 0n, 18)} ${PAY_SYMBOL} face value` : "—" },
+    { ok: true, k: "Debtor payment", v: <>Paid {fmt(paidEv?.value ?? 0n, 18)} {PAY_SYMBOL} into PotKit{paidEv ? ` (block ${paidEv.block.toString()})` : ""}</> },
+    { ok: termsEv ? (paidEv?.value ?? 0n) >= (termsEv.value ?? 0n) : null, k: "Paid at least face value", v: termsEv ? `${fmt(termsEv.value ?? 0n, 18)} ${PAY_SYMBOL} face value` : "—" },
     { ok: true, k: "Payout claimed and shares burned", v: "Every share was claimed before redemption" },
     { ok: null, k: "NFT returned to the depositor", v: <>Held by <Addr a={r.owner} /> as a paid receipt</> },
   ] : r ? [
@@ -60,6 +80,7 @@ export function Verify({ c }: { c: Ctx }) {
 
   return (
     <div className="verify">
+      <section className="verify-intro"><div><p className="kicker">Public verification · Portaldot V3</p><h2>Verify an invoice</h2><p>Read the receipt, custody and settlement state directly from the selected PotKit contract.</p></div><span className="verify-network"><i /> Chain 420420777</span></section>
       <div className="verify-scope"><Ico n="info" /><p><b>What this proof checks:</b> receipt and share-token state, custody, terms and settlement events read from Portaldot. It does not independently confirm that the off-chain invoice or claim is genuine.</p></div>
       <form className="v-search" onSubmit={(e) => { e.preventDefault(); void check(input); }}>
         <label htmlFor="v-in" className="sr-only">Receipt id or share-token address</label>
@@ -69,33 +90,54 @@ export function Verify({ c }: { c: Ctx }) {
       {msg && <p className="banner err" role="alert">{msg}</p>}
       {loading && !res && <p className="muted" role="status">Reading Portaldot…</p>}
       {res && r && (
-        <article className={`cert ${fails ? "bad" : verdict === "VERIFIED" || redeemedPaid ? "good" : "warn"}`} aria-live="polite">
-          <i className="c-c tl" /><i className="c-c tr" /><i className="c-c bl" /><i className="c-c br" />
-          <header className="cert-head">
-            <div>
-              <p className="kicker">Certificate of verification</p>
-              <h2 className="cert-title">Receipt #{r.id} · {KINDS[r.kind]}</h2>
-              <p className="cert-note">{r.note}</p>
-              <div className="tags"><SettleBadge r={r} /></div>
-            </div>
-            <div className="seal" aria-label={`Verdict: ${verdict}`}>
-              <svg viewBox="0 0 120 120" aria-hidden><circle cx="60" cy="60" r="54" /><circle cx="60" cy="60" r="44" /><path d={fails ? "M44 44l32 32M76 44 44 76" : "M40 61l14 14 27-30"} /></svg>
-              <b>{verdict}</b>
-            </div>
-          </header>
-          <ul className="vchecks">
-            {checks.map((x) => (
+        <div className="verify-result" aria-live="polite">
+          <article className={`cert ${fails ? "bad" : verdict === "VERIFIED" || redeemedPaid ? "good" : "warn"}`}>
+            <i className="c-c tl" /><i className="c-c tr" /><i className="c-c bl" /><i className="c-c br" />
+            <header className="cert-head">
+              <div>
+                <p className="kicker">PotKit receipt · Invoice #{r.id}</p>
+                <h2 className="cert-title">{r.note || KINDS[r.kind]}</h2>
+                <p className="cert-note">{KINDS[r.kind]} · ERC-721</p>
+              <div className="cert-status">{(r.settle.settled || redeemedPaid) && <span className="is-paid">● PAID</span>}{!r.settle.settled && !redeemedPaid && !redeemed && <span>● UNPAID</span>}{redeemed && <span className="is-redeemed">● REDEEMED</span>}{!redeemed && <span>{vaultHeld ? "● LOCKED IN POTKIT" : "● NOT LOCKED"}</span>}</div>
+              </div>
+              <div className="seal" aria-label={`Verdict: ${verdict}`}>
+                <svg viewBox="0 0 120 120" aria-hidden><circle cx="60" cy="60" r="54" /><circle cx="60" cy="60" r="44" /><path d={fails ? "M44 44l32 32M76 44 44 76" : "M40 61l14 14 27-30"} /></svg>
+                <b>{verdict}</b>
+              </div>
+            </header>
+            <dl className="cert-facts">
+              <div><dt>FACE VALUE</dt><dd>{faceValue ? `${fmt(faceValue, r.settle.decimals || 18)} ${r.settle.symbol || PAY_SYMBOL}` : "Not set"}</dd></div>
+              <div><dt>SHARES ISSUED</dt><dd>{sharesIssued || "Not issued"}</dd></div>
+              <div><dt>DUE DATE</dt><dd>{dueDate ? day(dueDate) : "Not set"}</dd></div>
+              <div><dt>RECEIPT OWNER</dt><dd><Addr a={r.owner} /></dd></div>
+            </dl>
+            {redeemedPaid && <div className="cert-summary"><Ico n="check" size={16} /><span>Settled {fmt(paidEv?.value ?? faceValue, 18)} {PAY_SYMBOL} · {sharesIssued}/{sharesIssued} shares paid out · Lifecycle complete</span></div>}
+            <footer className="cert-foot">
+              <div className="cert-contract"><span>CONTRACT</span><Addr a={c.addrs!.vault} label="PotKit · Portaldot V3" /></div>
+              <button className="btn" onClick={() => void copy(link, "proof")}><Ico n={copied === "proof" ? "check" : "link"} /> {copied === "proof" ? "Link copied" : "Share proof"}</button>
+            </footer>
+            <p className="cert-disclaimer">Read {res.at.toLocaleString()} from chain 420420777. This proves on-chain state, not the authenticity of off-chain invoice documents.</p>
+          </article>
+          <aside className="proof-trail">
+            <header><div><p className="kicker">Transaction history</p><h3>On-chain proof trail</h3></div><span>{hist.length}<small>events loaded</small></span></header>
+            {!c.eventsOk && <p className="proof-scan-note">The RPC event scan is incomplete. Missing steps below may exist outside the range that could be read.</p>}
+            <ol className="proof-events">{proofSteps.map((step) => (
+              <li key={step.key} className={step.done ? "done" : "pending"}>
+                <span className="proof-event-icon"><Ico n={step.done ? "check" : "dash"} size={14} /></span>
+                <div className="proof-event-body"><b>{step.title}</b>
+                  {step.event ? <><small>Block {step.event.block.toString()}{step.event.time ? ` · ${step.event.timeApprox ? "~" : ""}${new Date(step.event.time * 1000).toLocaleString()}` : ""}</small><button type="button" className="proof-tx" title="Copy full transaction hash" onClick={() => void copy(step.event!.hash, step.event!.hash)}><code>{short(step.event.hash)}</code><span>{copied === step.event.hash ? "Copied" : "Copy tx"}</span></button></>
+                    : <small>{step.done ? step.fallback : c.eventsOk ? step.fallback : "Not found in the readable event range"}</small>}
+                </div>
+              </li>
+            ))}</ol>
+            <details className="proof-checks"><summary>On-chain state checks</summary><ul className="vchecks">{checks.map((x) => (
               <li key={x.k} className={x.ok === true ? "pass" : x.ok === false ? "fail" : "na"}>
                 <span className="vc-i"><Ico n={x.ok === true ? "check" : x.ok === false ? "x" : "dash"} /></span>
-                <span className="vc-k">{x.k}<span className="sr-only">: {x.ok === true ? "pass" : x.ok === false ? "fail" : "not applicable"}</span></span><span className="vc-v">{x.v}</span>
+                <span className="vc-k">{x.k}<span className="sr-only">: {x.ok === true ? "pass" : x.ok === false ? "fail" : "not applicable"}</span><small>{x.v}</small></span>
               </li>
-            ))}
-          </ul>
-          <footer className="cert-foot">
-            <div className="muted small">Read {res.at.toLocaleString()} directly from the PotKit contract <Addr a={c.addrs!.vault} label="PotKit" /> on Portaldot V3 (chain 420420777). No PotKit server involved.</div>
-            <button className="btn" onClick={() => void navigator.clipboard?.writeText(link).then(() => { setCopied(true); setTimeout(() => setCopied(false), 1500); })}><Ico n={copied ? "check" : "link"} /> {copied ? "Link copied" : "Copy shareable link"}</button>
-          </footer>
-        </article>
+            ))}</ul></details>
+          </aside>
+        </div>
       )}
     </div>
   );

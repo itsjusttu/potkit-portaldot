@@ -14,10 +14,11 @@ export type Ctx = {
   events: ChainEvent[]; eventsLoading: boolean; loading: boolean; eventsOk: boolean;
   total: number; loadOlder: () => void; saveStep: (s: DeployStep) => void; resetDeployment: () => void;
     /** usdBal / usdRaw: the wallet's tPOT balance (what settlement and market payments use) */
-  canMint: boolean; issuer: string; usdBal: string; usdRaw: bigint; native: bigint | null;
+  canMint: boolean; issuer: string; usdBal: string; usdRaw: bigint; native: bigint | null; nativeLoading: boolean; nativeError: boolean;
   log: Log[]; note: (action: string, detail: string, hash?: Hash) => void;
   run: (label: string, job: () => Promise<void>) => Promise<void>; ready: () => Address; refresh: () => Promise<void>;
   setTab: (t: Tab, params?: Record<string, string>) => void; connect: () => void; judgeLink: string;
+  switchNetwork: () => void;
   walletName: string; openPay: (id: number) => void; param: (k: string) => string;
 };
 

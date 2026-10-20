@@ -4,21 +4,24 @@ import { Addr, CountUp, Empty, Ico, StatusBars } from "../AppUi";
 import { faceShare, type Ctx } from "./ctx";
 import { pct } from "./shared";
 import { N } from "./shared";
+import { readReceiptHistory } from "./receipt-history";
 export const SkelRows = ({ n = 6, cols = 6 }: { n?: number; cols?: number }) => <div className="skel-rows" aria-busy="true" aria-label="Loading">{Array.from({ length: n }, (_, i) => <div key={i} className="skel-row">{Array.from({ length: cols }, (_, j) => <span key={j} className={`skel ${j === 0 ? "w100" : "w60"}`} />)}</div>)}</div>;
-import { PaperReceipt, SettleBadge } from "./shared";
+import { SettleBadge } from "./shared";
 
 type Col = "id" | "status" | "face" | "due" | "supply";
-const STATUS_ORDER: Record<Row["status"], number> = { Overdue: 0, "Due soon": 1, Pending: 2, Free: 3, Settled: 4 };
+const STATUS_ORDER: Record<string, number> = { Overdue: 0, "Due soon": 1, Pending: 2, Trading: 3, Settled: 4, Redeemed: 5, Free: 6 };
 export const EV_ICON: Record<ChainEvent["kind"], string> = { mint: "mint", lock: "lock", terms: "terms", due: "terms", settle: "settle", claim: "claim", redeem: "redeem", list: "tag", buy: "cart", cancel: "cancel" };
 const ago = (t: number) => { if (!t) return ""; const s = Date.now() / 1000 - t; return s < 60 ? "just now" : s < 3600 ? `${Math.floor(s / 60)}m ago` : s < 86400 ? `${Math.floor(s / 3600)}h ago` : `${Math.floor(s / 86400)}d ago`; };
 
 export function Explore({ c }: { c: Ctx }) {
   const [q, setQ] = useState(c.param("addr"));
   const [view, setView] = useState<"cards" | "table">(() => (localStorage.getItem("potkit.exview") as "cards" | "table") || "cards");
+  const [stageFilter, setStageFilter] = useState<"all" | "trading" | "settled" | "redeemed">("all");
   const pickView = (v: "cards" | "table") => { setView(v); localStorage.setItem("potkit.exview", v); };
   const [col, setCol] = useState<Col>("id");
   const [asc, setAsc] = useState(false);
   const R = c.rows;
+  const receiptHistory = readReceiptHistory(c.events);
   const outstanding = R.filter((r) => r.fraction && !r.settle.settled).reduce((s, r) => s + r.settle.faceValue, 0n);
   const settledVol = R.filter((r) => r.settle.settled).reduce((s, r) => s + r.settle.amount, 0n);
   const open = c.listings.filter((l) => l.remaining > 0n);
@@ -26,9 +29,20 @@ export function Explore({ c }: { c: Ctx }) {
   const traded = c.events.filter((e) => e.kind === "buy").reduce((s, e) => s + (e.value ?? 0n), 0n);
   const ask = new Map<number, bigint>();
   for (const l of open) { const p = ask.get(l.receiptId); if (p === undefined || l.price < p) ask.set(l.receiptId, l.price); }
+  const isRedeemed = (r: Row) => receiptHistory.get(r.id)?.redeemed ?? false;
+  const faceValueOf = (r: Row) => r.settle.faceValue > 0n ? r.settle.faceValue : receiptHistory.get(r.id)?.terms?.value ?? 0n;
+  const dueDateOf = (r: Row) => r.dueDate || receiptHistory.get(r.id)?.terms?.dueDate || 0;
+  const supplyOf = (r: Row) => r.supply > 0n ? r.supply : (receiptHistory.get(r.id)?.lock?.amount ?? 0n) * 10n ** 18n;
+  const isTrading = (r: Row) => !isRedeemed(r) && open.some((l) => l.receiptId === r.id);
+  const isSettled = (r: Row) => !isRedeemed(r) && r.settle.settled;
+  const displayStatus = (r: Row) => isRedeemed(r) ? "Redeemed" : isTrading(r) ? "Trading" : isSettled(r) ? "Settled" : r.status;
   const qq = q.trim().toLowerCase();
-  const rows = R.filter((r) => !qq || `#${r.id} ${r.id} ${r.note} ${KINDS[r.kind]} ${r.status} ${r.owner} ${r.depositor} ${r.fraction}`.toLowerCase().includes(qq))
-    .sort((a, b) => { const k = col === "id" ? a.id - b.id : col === "status" ? STATUS_ORDER[a.status] - STATUS_ORDER[b.status] : col === "face" ? Number(a.settle.faceValue - b.settle.faceValue) : col === "due" ? (a.dueDate || 9e12) - (b.dueDate || 9e12) : Number((a.supply - b.supply) / 10n ** 15n); return asc ? k : -k; });
+  const rows = R.filter((r) => {
+      const stage = displayStatus(r).toLowerCase();
+      const matchesStage = stageFilter === "all" || (stageFilter === "trading" && isTrading(r)) || (stageFilter === "settled" && isSettled(r)) || (stageFilter === "redeemed" && isRedeemed(r));
+      return matchesStage && (!qq || `#${r.id} ${r.id} ${r.note} ${KINDS[r.kind]} ${stage} ${r.status} ${r.owner} ${r.depositor} ${r.fraction}`.toLowerCase().includes(qq));
+    })
+    .sort((a, b) => { const k = col === "id" ? a.id - b.id : col === "status" ? (STATUS_ORDER[displayStatus(a)] ?? 6) - (STATUS_ORDER[displayStatus(b)] ?? 6) : col === "face" ? Number(faceValueOf(a) - faceValueOf(b)) : col === "due" ? (dueDateOf(a) || 9e12) - (dueDateOf(b) || 9e12) : Number((supplyOf(a) - supplyOf(b)) / 10n ** 15n); return asc ? k : -k; });
   const th = (k: Col, label: string, num = false) => (
     <th scope="col" className={num ? "num" : ""} aria-sort={col === k ? (asc ? "ascending" : "descending") : "none"}>
       <button className="th-sort" onClick={() => { if (col === k) setAsc(!asc); else { setCol(k); setAsc(k === "due" || k === "status"); } }}>{label}<span aria-hidden>{col === k ? (asc ? " ▲" : " ▼") : ""}</span></button>
@@ -38,8 +52,9 @@ export function Explore({ c }: { c: Ctx }) {
 
   return (
     <div className="explore">
+      <section className="explore-intro"><div><p className="kicker">Loaded receipts · {R.length} of {c.total}</p><h2>Explore real-world receivables</h2><p>Review issuer-provided invoice details, on-chain terms and shares currently listed.</p></div><span className="explore-live"><i /> Live from Portaldot V3</span></section>
       <section className="ex-stats" aria-label="Network overview">
-        <div className="kpi"><span>Receipts</span><b className="num"><N l={c.loading}><CountUp v={R.length} /></N></b><small><N l={c.loading}>{R.filter((r) => r.fraction).length} locked into shares</N></small></div>
+        <div className="kpi"><span>Receipts on contract</span><b className="num"><N l={c.loading}><CountUp v={c.total} /></N></b><small><N l={c.loading}>{R.filter((r) => r.fraction).length} locked among loaded receipts</N></small></div>
         <div className="kpi"><span>Outstanding face value</span><b className="num"><N l={c.loading}><CountUp v={fmt(outstanding, 18)} /></N></b><small>tPOT owed by debtors</small></div>
         <div className="kpi"><span>Settled volume</span><b className="num"><N l={c.loading}><CountUp v={fmt(settledVol, 18)} /></N></b><small>tPOT paid into PotKit</small></div>
         <div className="kpi"><span>Open listings</span><b className="num"><N l={c.loading}><CountUp v={open.length} /></N></b><small><N l={c.loading}>{fmt(listedVal, 18)} tPOT asked</N></small></div>
@@ -51,27 +66,31 @@ export function Explore({ c }: { c: Ctx }) {
         <section className="card ex-table">
           <div className="row ex-head">
             <h2>All receipts</h2>
-            <div className="chips view-toggle" role="group" aria-label="View">{(["cards", "table"] as const).map((v) => <button key={v} className={`chip ${view === v ? "on" : ""}`} aria-pressed={view === v} onClick={() => pickView(v)}>{v === "cards" ? "Receipts" : "Table"}</button>)}</div>
+            <div className="ex-view-controls">
+              <div className="chips view-toggle" role="group" aria-label="View">{(["cards", "table"] as const).map((v) => <button key={v} className={`chip ${view === v ? "on" : ""}`} aria-pressed={view === v} onClick={() => pickView(v)}>{v === "cards" ? "Receipts" : "Table"}</button>)}</div>
+              <div className="chips ex-stage-filters" role="group" aria-label="Filter receipts by lifecycle">
+                {([ ["all", "All"], ["trading", "Trading"], ["settled", "Settled"], ["redeemed", "Redeemed"] ] as const).map(([key, label]) => <button key={key} className={`chip ex-filter-${key} ${stageFilter === key ? "on" : ""}`} aria-pressed={stageFilter === key} onClick={() => setStageFilter(key)}>{label}</button>)}
+              </div>
+            </div>
             <div className="tb-search"><Ico n="search" /><input aria-label="Search receipts" placeholder="Search id, note, status or address" value={q} onChange={(e) => setQ(e.target.value)} /></div>
           </div>
           {c.loading ? <SkelRows /> : !rows.length ? <Empty icon="▤" title="No receipts match" body="Clear the search to see everything on this vault." /> : view === "cards" ? (
-            <div className="prc-grid">
+            <div className="explore-card-grid">
               {rows.map((r) => {
                 const onMkt = open.filter((l) => l.receiptId === r.id).reduce((s, l) => s + l.remaining, 0n);
-                const p = ask.get(r.id); const f = faceShare(r);
+                const p = ask.get(r.id); const totalShares = supplyOf(r); const face = faceValueOf(r); const dueDate = dueDateOf(r); const redeemed = isRedeemed(r);
+                const facePerShare = totalShares > 0n ? face * 10n ** 18n / totalShares : faceShare(r);
+                const marketPct = redeemed ? 100 : totalShares > 0n ? Math.min(100, Number((onMkt * 10000n) / totalShares) / 100) : 0;
+                const tone = redeemed ? "redeemed" : isSettled(r) ? "settled" : r.status === "Overdue" ? "overdue" : r.fraction ? (onMkt ? "trading" : "listed") : "minted";
                 return (
-                  <PaperReceipt key={r.id} r={r}
-                    amount={r.settle.faceValue > 0n ? `${fmt(r.settle.faceValue, r.settle.decimals)} ${r.settle.symbol}` : "No terms"}
-                    facts={[
-                      ["Depositor", short(r.depositor || r.owner)],
-                      [r.settle.settled ? "Paid" : "Due", r.settle.settled ? `${fmt(r.settle.amount, r.settle.decimals)} ${r.settle.symbol}` : r.dueDate ? new Date(r.dueDate * 1000).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }) : "—"],
-                      ["Shares", r.fraction ? units(r.supply) : "—"],
-                      ["Best ask", p === undefined ? "—" : `${fmt(p, 18)}${f > 0n ? ` (${pct(1 - Number(p) / Number(f))} off)` : ""}`],
-                    ]}
-                    bar={r.fraction && r.supply > 0n ? { label: "On market", value: Number((onMkt * 1000n) / r.supply) / 1000 } : undefined}>
-                    <button className="btn sm" onClick={() => c.setTab("verify", { id: String(r.id) })}><Ico n="shield" /> Verify</button>
-                    {r.fraction && !r.settle.settled && <button className="btn sm" onClick={() => c.openPay(r.id)}>Pay</button>}
-                  </PaperReceipt>
+                  <article className={`explore-card ex-${tone}`} key={r.id}>
+                    <header><span className="explore-icon"><Ico n={redeemed ? "redeem" : isSettled(r) ? "check" : r.fraction ? "swap" : "terms"} size={17} /></span><span className="ex-id">INVOICE #{r.id}</span>{redeemed ? <span className="tag explore-redeemed-tag">REDEEMED</span> : <SettleBadge r={r} terms={false} />}</header>
+                    <h3>{r.note || KINDS[r.kind]}</h3><p className="explore-issuer">{KINDS[r.kind]} · issuer wallet {short(r.depositor || r.owner)}</p>
+                    <div className="explore-card-facts"><div><small>Face value</small><b>{face ? `${fmt(face, r.settle.decimals)} ${r.settle.symbol}` : "Terms pending"}</b></div><div><small>Due</small><b>{dueDate ? new Date(dueDate * 1000).toLocaleDateString("en-US", { month: "short", day: "2-digit", year: "numeric" }) : redeemed ? "No due date" : "—"}</b></div></div>
+                    <div className="explore-meter-label"><span>{redeemed ? "Shares sold" : "Currently listed"}</span><b>{redeemed && totalShares > 0n ? `${units(totalShares)}/${units(totalShares)} sold` : totalShares > 0n ? `${units(onMkt)} / ${units(totalShares)}` : "Not issued"}</b></div><div className="explore-meter"><i style={{ width: `${marketPct}%` }} /></div>
+                    <div className="explore-card-foot"><span>{redeemed ? "Lifecycle complete" : r.fraction ? `${units(totalShares)} shares` : "Receipt only"}</span><b>{redeemed && receiptHistory.get(r.id)?.settled ? <>Settled · {fmt(receiptHistory.get(r.id)?.settle?.value ?? r.settle.amount, r.settle.decimals)} {r.settle.symbol} paid</> : p === undefined ? (redeemed ? "REDEEMED" : "Not listed") : <>{fmt(p, 18)} <small>tPOT / share</small></>}</b></div>
+                    <footer><button className="btn sm" onClick={() => c.setTab("verify", { id: String(r.id) })}><Ico n="shield" /> Verify</button>{!redeemed && r.fraction && !r.settle.settled && <button className="btn sm primary" onClick={() => p !== undefined ? c.setTab("trade") : c.openPay(r.id)}>{p !== undefined ? "View market" : "Pay invoice"}</button>}</footer>
+                  </article>
                 );
               })}
             </div>
@@ -82,10 +101,10 @@ export function Explore({ c }: { c: Ctx }) {
                 {rows.map((r) => (
                   <tr key={r.id}>
                     <td data-label="Receipt"><b>#{r.id} · {KINDS[r.kind]}</b><span className="muted r-note">{r.note}</span><span className="r-dep small muted">{r.depositor ? <>by <Addr a={r.depositor} /></> : <>owner <Addr a={r.owner} /></>}</span></td>
-                    <td data-label="Status"><div className="tags"><SettleBadge r={r} terms={false} /></div></td>
-                    <td data-label="Face value" className="num">{r.settle.faceValue > 0n ? `${fmt(r.settle.faceValue, r.settle.decimals)} ${r.settle.symbol}` : "—"}</td>
-                    <td data-label="Shares" className="num">{r.fraction ? units(r.supply) : "—"}</td>
-                    <td data-label="Best ask" className="num">{(() => { const p = ask.get(r.id); if (p === undefined) return "—"; const f = faceShare(r); return <>{fmt(p, 18)}{f > 0n && <span className="pos small ba-disc">{pct(1 - Number(p) / Number(f))} off</span>}</>; })()}</td>
+                    <td data-label="Status"><div className="tags">{isRedeemed(r) ? <span className="tag explore-redeemed-tag">REDEEMED</span> : <SettleBadge r={r} terms={false} />}</div></td>
+                    <td data-label="Face value" className="num">{faceValueOf(r) > 0n ? `${fmt(faceValueOf(r), r.settle.decimals)} ${r.settle.symbol}` : "—"}</td>
+                    <td data-label="Shares" className="num">{supplyOf(r) > 0n ? units(supplyOf(r)) : "—"}</td>
+                    <td data-label="Best ask" className="num">{(() => { const p = ask.get(r.id); if (p === undefined) return "—"; const f = supplyOf(r) > 0n ? faceValueOf(r) * 10n ** 18n / supplyOf(r) : faceShare(r); return <>{fmt(p, 18)}{f > 0n && <span className="pos small ba-disc">{pct(1 - Number(p) / Number(f))} off</span>}</>; })()}</td>
                     <td className="acts"><div className="row">
                       <button className="btn sm" aria-label={`Verify receipt ${r.id}`} title="Verify" onClick={() => c.setTab("verify", { id: String(r.id) })}><Ico n="shield" /><span className="act-l">Verify</span></button>
                       {r.fraction && !r.settle.settled && <button className="btn sm" onClick={() => c.openPay(r.id)}>Pay</button>}

@@ -24,7 +24,7 @@ async function getStatus(address: string): Promise<Status | null> {
  * Falls back to manual-funding instructions (mapped 5… account + Copy) when the API is
  * unavailable or not configured. Disabled when the wallet already has enough gas.
  */
-export function FaucetButton({ account, onFunded, compact = false }: { account: string; onFunded?: () => void; compact?: boolean }) {
+export function FaucetButton({ account, onFunded, compact = false, hideManualAddress = false }: { account: string; onFunded?: () => void; compact?: boolean; hideManualAddress?: boolean }) {
   const [st, setSt] = useState<Status | null | undefined>(undefined); // undefined = loading
   const [ph, setPh] = useState<Phase>({ s: "idle" });
   const [copied, setCopied] = useState(false);
@@ -45,17 +45,17 @@ export function FaucetButton({ account, onFunded, compact = false }: { account: 
   };
 
   const copy = () => void navigator.clipboard?.writeText(mapped).then(() => { setCopied(true); setTimeout(() => setCopied(false), 1300); });
-  const manual = (why: string) => (
+  const manual = (_why: string) => (
     <div className={`faucet off ${compact ? "compact" : ""}`}>
-      <p className="muted small">{why} Fund your gas account manually (Discord / testnet guide):</p>
-      {mapped && <p className="tl-hash"><span className="mono">{mapped}</span>
+      {!hideManualAddress && <p className="muted small">Mapped Portaldot account for manual gas funding:</p>}
+      {mapped && !hideManualAddress && <p className="tl-hash"><span className="mono">{mapped}</span>
         <button className="wp-copy" aria-label="Copy mapped gas account" onClick={copy}><Ico n={copied ? "check" : "copy"} size={14} />{copied ? "Copied" : "Copy"}</button></p>}
     </div>
   );
 
   if (st === undefined) return <div className={`faucet ${compact ? "compact" : ""}`}><button className="btn sm" disabled><span className="spin" aria-hidden /> Checking faucet…</button></div>;
-  if (st === null) return manual("The gas faucet isn't available on this host.");
-  if (!st.enabled) return manual("The gas faucet isn't configured on this deployment.");
+  if (st === null) return manual("Manual funding available.");
+  if (!st.enabled) return manual("Manual funding available.");
   if (!st.ok) return manual(st.message ?? "The gas faucet can't be reached right now.");
 
   const enough = st.recipient ? !st.recipient.eligible : false;

@@ -2,7 +2,8 @@ import { useEffect, useState } from "react";
 import { deployKit, fmt, fractionalize, KINDS, mint, PAY_SYMBOL, short, units } from "../lib/chain";
 import { Addr, Empty, Ico } from "../AppUi";
 import { type Ctx } from "./ctx";
-import { day, ReceiptArt, SettleBadge } from "./shared";
+import { day, SettleBadge } from "./shared";
+import { readReceiptHistory } from "./receipt-history";
 
 const WKEY = "potkit.v17.wizard";
 const STEPS = ["Invoice details", "Mint receipt", "Lock, set terms & issue shares"];
@@ -23,6 +24,11 @@ export function Issue({ c }: { c: Ctx }) {
   const chainStep = !wizId || !row ? null : !row.fraction ? 2 : 3;
   const cur = chainStep ?? step;
   const mine = c.rows.filter((r) => r.depositor === c.account || r.owner === c.account);
+  // Redemption clears live terms in storage; restore them from the shared event-history reader.
+  const receiptHistory = readReceiptHistory(c.events);
+  const redeemed = (id: number) => receiptHistory.get(id)?.redeemed ?? false;
+  const faceValue = (r: (typeof c.rows)[number]) => r.settle.faceValue > 0n ? r.settle.faceValue : redeemed(r.id) ? receiptHistory.get(r.id)?.terms?.value ?? 0n : 0n;
+  const originalSupply = (r: (typeof c.rows)[number]) => r.supply > 0n ? r.supply : (receiptHistory.get(r.id)?.lock?.amount ?? 0n) * 10n ** 18n;
   const needSetup = !c.addrs;
   const dis = Boolean(c.busy) || c.gated;
 
@@ -31,6 +37,7 @@ export function Issue({ c }: { c: Ctx }) {
 
   return (
     <div className="issue">
+      <section className="issue-intro"><div><p className="kicker">Stage 01 · Create</p><h2>ISSUE AN INVOICE</h2><p>Create the receipt, then lock it and issue shares in three guided steps.</p></div><span className="issue-chain-pill"><i /> Portaldot V3 · ERC-721</span></section>
       {needSetup && (
         <section className="card setup-card">
           <h2>Set up the contract</h2>
@@ -64,7 +71,7 @@ export function Issue({ c }: { c: Ctx }) {
                 <div><label htmlFor="w-due">Due date</label><input id="w-due" type="date" value={due} onChange={(e) => setDue(e.target.value)} /></div>
                 <div><label htmlFor="w-sup">Shares to issue</label><input id="w-sup" inputMode="numeric" value={supply} onChange={(e) => setSupply(e.target.value)} /></div>
               </div>
-              <div className="wiz-nav"><span className="muted">{c.canMint ? "You can mint (issuer)." : "Only the issuer or approved minters can mint."}</span>
+              <div className="wiz-nav"><span className={c.canMint ? "issue-ready-mint" : "muted"}>{c.canMint ? <><i />Ready to mint</> : "Only the issuer or approved minters can mint."}</span>
                 <button className="btn primary" disabled={!note.trim() || !/^\d+(\.\d+)?$/.test(face) || !/^\d+$/.test(supply)} onClick={() => setStep(1)}>Continue <Ico n="arrow" /></button></div>
             </div>
           )}
@@ -112,12 +119,19 @@ export function Issue({ c }: { c: Ctx }) {
             </div>
           )}
         </div>
-        <aside className="wiz-preview" aria-label="Receipt preview">
-          <p className="kicker">Live preview</p>
-          <ReceiptArt id={row?.id} kind={row?.kind ?? kind} note={row?.note ?? note} face={row?.settle.faceValue ? fmt(row.settle.faceValue, row.settle.decimals) : face}
-            due={row?.dueDate ? day(row.dueDate) : due ? new Date(`${due}T12:00:00`).toLocaleDateString() : ""} supply={row?.supply ? units(row.supply) : supply}
-            stage={["DRAFT", "READY TO MINT", "MINTED · IN YOUR WALLET", row?.settle.settled ? "SETTLED" : "LIVE · TERMS ON-CHAIN"][cur]} />
-          <p className="muted small">This is what the receipt's on-chain metadata will say. The NFT stays inside PotKit while locked, until one holder redeems every share.</p>
+        <aside className={`wiz-preview wiz-stage-${cur >= 3 ? "live" : cur >= 2 ? "minted" : cur === 1 ? "ready" : "draft"}`} aria-label="Receipt preview" aria-live="polite">
+          <header className="wiz-preview-head"><div><p className="kicker">Live preview · receipt artwork</p><b>{cur >= 3 ? "Receipt is live on Portaldot" : cur >= 2 ? "Receipt minted to your wallet" : cur === 1 ? "Ready to mint" : "Your invoice, as an NFT"}</b></div><span className="wiz-preview-state"><i />{cur >= 3 ? "ON-CHAIN" : cur >= 2 ? "MINTED" : cur === 1 ? "READY" : "DRAFT"}</span></header>
+          <div className="issue-receipt" aria-label="Live invoice receipt preview">
+            <div className="ir-corner ir-tl" /><div className="ir-corner ir-tr" /><div className="ir-corner ir-bl" /><div className="ir-corner ir-br" />
+            <div className="ir-meta"><span>POTKIT RECEIPT · {KINDS[row?.kind ?? kind].toUpperCase()}</span><span>ERC-721 {row ? `· #${row.id}` : "· PREVIEW"}</span></div>
+            <h3>{row?.note || note || "Your invoice title"}</h3>
+            <p className="ir-sub">Issuer-provided invoice record · Portaldot V3</p>
+            <div className="ir-face"><strong>{row?.settle.faceValue ? fmt(row.settle.faceValue, row.settle.decimals) : face || "—"}<i> tPOT</i></strong><small>FACE VALUE</small></div>
+            <dl className="ir-facts"><div><dt>DUE DATE</dt><dd>{row?.dueDate ? day(row.dueDate) : due ? new Date(due + "T12:00:00").toLocaleDateString() : "—"}</dd></div><div><dt>SHARES</dt><dd>{row?.supply ? units(row.supply) : supply || "—"}</dd></div></dl>
+            <div className="ir-foot"><span>{row?.depositor || row?.owner || c.account ? short(row?.depositor || row?.owner || c.account) : "ISSUER WALLET NOT CONNECTED"}</span><span className="ir-state"><i />{row?.settle.settled ? "SETTLED" : cur >= 3 ? "LIVE · TERMS ON-CHAIN" : cur >= 2 ? "MINTED" : "READY TO MINT"}</span></div>
+          </div>
+          {cur >= 2 && <p className="wiz-minted-note"><Ico n="check" /> Mint confirmed. The receipt can now be locked and split into shares.</p>}
+          <p className="muted small">This preview follows the invoice details above. The NFT stays inside PotKit while shares are outstanding.</p>
         </aside>
       </section>
 
@@ -129,15 +143,19 @@ export function Issue({ c }: { c: Ctx }) {
             <tbody>
               {mine.map((r) => {
                 const bal = c.held.get(r.id) ?? 0n;
-                const sold = r.supply > 0n ? Number(((r.supply - bal) * 1000n) / r.supply) / 10 : 0;
-                const next = !r.fraction ? "lock" : r.settle.settled ? "done" : "live";
+                const isRedeemed = redeemed(r.id);
+                const totalShares = originalSupply(r);
+                const sold = isRedeemed ? 100 : totalShares > 0n ? Number(((totalShares - bal) * 1000n) / totalShares) / 10 : 0;
+                const next = isRedeemed ? "view" : !r.fraction ? "lock" : r.settle.settled ? "done" : "live";
+                const face = faceValue(r);
                 return (
                   <tr key={r.id}>
                     <td data-label="Invoice"><b>#{r.id} · {KINDS[r.kind]}</b><span className="muted r-note">{r.note}</span></td>
-                    <td data-label="Status"><div className="tags"><SettleBadge r={r} terms={false} /></div></td>
-                    <td data-label="Face value" className="num">{r.settle.faceValue > 0n ? `${fmt(r.settle.faceValue, r.settle.decimals)} ${r.settle.symbol}` : <span className="muted">—</span>}</td>
-                    <td data-label="Sold" className="num">{r.fraction ? <><b>{sold}%</b><span className="muted"> of {units(r.supply)}</span></> : <span className="muted">—</span>}</td>
+                    <td data-label="Status"><div className="tags">{isRedeemed ? <span className="tag issue-redeemed-tag">REDEEMED</span> : <SettleBadge r={r} terms={false} />}</div></td>
+                    <td data-label="Face value" className="num">{face > 0n ? `${fmt(face, r.settle.decimals)} ${r.settle.symbol}` : <span className="muted">—</span>}</td>
+                    <td data-label="Sold" className="num">{isRedeemed && totalShares > 0n ? <b>{units(totalShares)}/{units(totalShares)}</b> : r.fraction && totalShares > 0n ? <><b>{sold}%</b><span className="muted"> of {units(totalShares)}</span></> : <span className="muted">—</span>}</td>
                     <td data-label="Next" className="acts"><div className="row">
+                      {next === "view" && <button className="btn sm" onClick={() => c.setTab("verify", { id: String(r.id) })}>View <Ico n="arrow" /></button>}
                       {next === "lock" && <button className="btn sm primary" onClick={() => resume(r.id)}>Lock &amp; issue <Ico n="arrow" /></button>}
                       {next === "live" && bal > 0n && <button className="btn sm" onClick={() => c.setTab("trade", { sell: String(r.id) })}>Sell</button>}
                       {next === "live" && <button className="btn sm" onClick={() => c.openPay(r.id)}>Settle</button>}
@@ -153,3 +171,4 @@ export function Issue({ c }: { c: Ctx }) {
     </div>
   );
 }
+

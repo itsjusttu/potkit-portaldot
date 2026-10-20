@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { Address } from "viem";
 import { DEFAULTS } from "./config";
-import { appShareUrl, homeUrl } from "./routes";
+import { appShareUrl, homeUrl, isAppHost } from "./routes";
 import { WalletButton, WalletModal, useWallets } from "./WalletUi";
 import { rememberedId, select, selected, type WalletOption } from "./lib/wallets";
 import { Drawer, Empty, GasTip, Ico, Toasts, toast } from "./AppUi";
@@ -26,7 +26,15 @@ const ALIAS: Record<string, Tab> = { desk: "issue", market: "trade", board: "exp
 const ALL: Tab[] = [...TABS, "profile"];
 function initialTab(): Tab {
   const t = (new URLSearchParams(location.search).get("tab") ?? "").toLowerCase();
-  return (ALL as string[]).includes(t) ? (t as Tab) : ALIAS[t] ?? "dashboard";
+  if ((ALL as string[]).includes(t)) return t as Tab;
+  if (ALIAS[t]) return ALIAS[t]!;
+  return /^\/profile\/0x[0-9a-fA-F]{40}\/?$/.test(location.pathname) ? "profile" : "dashboard";
+}
+function initialParams(): Record<string, string> {
+  const params = Object.fromEntries([...new URLSearchParams(location.search)].filter(([k]) => !TAB_KEEP.includes(k) && k !== "tab"));
+  const profilePath = location.pathname.match(/^\/profile\/(0x[0-9a-fA-F]{40})\/?$/);
+  if (profilePath) params.profile = profilePath[1]!;
+  return params;
 }
 // v6: one PotKit contract (v5 saved separate Receipt / Vault / TestUSD / Market addresses with another ABI)
 const STORE = "potkit.v6";
@@ -84,14 +92,15 @@ export function App() {
   const [addrs, setAddrsState] = useState<Addrs | null>(init.a);
   const [shared, setShared] = useState(init.shared);
   const [tab, setTabState] = useState<Tab>(initialTab);
-  const [params, setParams] = useState<Record<string, string>>(() => Object.fromEntries([...new URLSearchParams(location.search)].filter(([k]) => !TAB_KEEP.includes(k) && k !== "tab")));
+  const [params, setParams] = useState<Record<string, string>>(initialParams);
   const setTab = (t: Tab, p: Record<string, string> = {}) => {
     setTabState(t); setParams(p);
     const q = new URLSearchParams(location.search);
     [...q.keys()].filter((k) => !TAB_KEEP.includes(k)).forEach((k) => q.delete(k));
     if (t !== "issue") q.set("tab", t);
     Object.entries(p).forEach(([k, v]) => q.set(k, v));
-    history.replaceState(null, "", `${location.pathname}${q.toString() ? `?${q}` : ""}`);
+    const path = /^\/profile\/0x[0-9a-fA-F]{40}\/?$/.test(location.pathname) ? (isAppHost() ? "/" : "/app") : location.pathname;
+    history.replaceState(null, "", `${path}${q.toString() ? `?${q}` : ""}`);
     window.scrollTo({ top: 0 });
   };
   const [account, setAccount] = useState<Address | "">("");
@@ -107,6 +116,9 @@ export function App() {
   const usd: Address | "" = addrs ? NATIVE : "";
   const market: Address | "" = addrs?.vault ?? "";
   const [native, setNative] = useState<bigint | null>(null);
+  const [nativeLoading, setNativeLoading] = useState(false);
+  const [nativeError, setNativeError] = useState(false);
+  const nativeRequest = useRef(0);
   const [listings, setListings] = useState<Listing[]>([]);
   const [events, setEvents] = useState<ChainEvent[]>([]);
   const [eventsOk, setEventsOk] = useState(true);
@@ -147,6 +159,26 @@ export function App() {
     return () => { eth.removeListener?.("accountsChanged", sync); eth.removeListener?.("chainChanged", sync); };
   }, [provTick]);
 
+  // Read native gas balance independently from the contract/indexing refresh.
+  // This still works on Profile when no PotKit address has been configured.
+  const refreshNative = useCallback(async () => {
+    const request = ++nativeRequest.current;
+    if (!account) { setNative(null); setNativeLoading(false); setNativeError(false); return; }
+    setNativeLoading(true); setNativeError(false);
+    try {
+      const value = await nativeBalance(account);
+      if (request === nativeRequest.current) setNative(value);
+    } catch {
+      if (request === nativeRequest.current) { setNative(null); setNativeError(true); }
+    } finally {
+      if (request === nativeRequest.current) setNativeLoading(false);
+    }
+  }, [account]);
+  useEffect(() => {
+    void refreshNative();
+    return () => { nativeRequest.current++; };
+  }, [refreshNative, provTick]);
+
   // ---- chain reads ----
   const refresh = useCallback(async () => {
     if (!addrs) return;
@@ -161,7 +193,7 @@ export function App() {
         market ? loadListings(market).catch(() => []) : Promise.resolve([] as Listing[]),
       ]);
       setHeld(bal); setClaims(cl); setListings(ls); setLoading(false); setCanMint(meta.canMint); setIssuer(meta.issuer);
-      if (account) setNative(await nativeBalance(account).catch(() => null));
+      if (account) void refreshNative();
       setEventsLoading(true);
       const sameAsEnv = addrs.receipt.toLowerCase() === DEFAULTS.receipt.trim().toLowerCase();
       const from = savedBlock() ?? (sameAsEnv && /^\d+$/.test(ENV_FROM_BLOCK) ? BigInt(ENV_FROM_BLOCK) : undefined);
@@ -170,7 +202,7 @@ export function App() {
       setEventsLoading(false);
     } catch (e) { setLoading(false); setNotice(isNoCode(e) ? NO_CODE : `Could not read Portaldot: ${explain(e)}`); setEventsLoading(false); }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [addrs, account, market]);
+  }, [addrs, account, market, refreshNative]);
   const loadOlder = () => void (async () => {
     if (!addrs || !rows.length) return;
     const oldest = Math.min(...rows.map((r) => r.id));
@@ -240,13 +272,14 @@ export function App() {
 
   const c: Ctx = {
     account, chainOk, gated, busy, addrs, setAddrs, shared, usd, market, rows, held, claims, listings, events, eventsLoading, loading, eventsOk, total, loadOlder, saveStep, resetDeployment,
-    canMint, issuer, usdBal, usdRaw, native, log, note, run, ready, refresh, setTab, connect: connectWallet, judgeLink,
-    walletName: selected()?.name ?? "Wallet", openPay, param: (k) => params[k] ?? "",
+    canMint, issuer, usdBal, usdRaw, native, nativeLoading, nativeError, log, note, run, ready, refresh, setTab, connect: connectWallet, judgeLink,
+    walletName: selected()?.name ?? "Wallet", openPay, param: (k) => params[k] ?? "", switchNetwork: switchNet,
   };
 
   const payRow = rows.find((r) => r.id === payFor);
 
-  const needsWallet = tab !== "dashboard" && tab !== "explore" && tab !== "verify";
+  const publicProfile = tab === "profile" && /^0x[0-9a-fA-F]{40}$/.test(params.profile ?? "");
+  const needsWallet = tab !== "dashboard" && tab !== "explore" && tab !== "verify" && !publicProfile;
   return (
     <div className="shell">
       <aside className="side">
@@ -254,12 +287,22 @@ export function App() {
           <span className="logo" aria-hidden><span className="lg-d">◆</span><span className="lg-a">←</span></span>
           <span><b>Pot<span className="grad">Kit</span></b><small>dApp · Portaldot V3</small></span>
         </a>
+        <button className="side-new" onClick={() => setTab("issue")}><TabIco t="issue" /><span>New invoice</span></button>
         <nav className="side-nav" aria-label="Sections">
-          {TABS.map((t) => (
-            <button key={t} className={`side-item ${tab === t ? "on" : ""}`} aria-current={tab === t ? "page" : undefined} onClick={() => setTab(t)}>
-              <TabIco t={t} /><span>{TITLES[t][0]}</span>
-            </button>
-          ))}
+          {([
+            ["Overview", ["dashboard"]],
+            ["Create", ["issue"]],
+            ["Markets", ["trade", "explore"]],
+            ["You", ["portfolio", "history"]],
+            ["Trust", ["verify"]],
+          ] as [string, Tab[]][]).map(([group, tabs]) => <div className="side-group" key={group}>
+            <p className="side-group-title">{group}</p>
+            {tabs.map((t) => (
+              <button key={t} className={`side-item ${tab === t ? "on" : ""}`} aria-current={tab === t ? "page" : undefined} onClick={() => setTab(t)}>
+                <TabIco t={t} /><span>{TITLES[t][0]}</span>
+              </button>
+            ))}
+          </div>)}
         </nav>
         <div className="side-foot">
           {account && <button className={`side-item ${tab === "profile" ? "on" : ""}`} onClick={() => setTab("profile")}><TabIco t="profile" /><span>Profile</span></button>}
@@ -326,7 +369,7 @@ export function App() {
               {tab === "explore" && <Explore c={c} />}
               {tab === "verify" && <Verify c={c} />}
               {tab === "history" && <History c={c} />}
-              {tab === "profile" && account && <Profile c={c} />}
+              {tab === "profile" && (account || publicProfile) && <Profile c={c} />}
             </div>
           </>
         )}

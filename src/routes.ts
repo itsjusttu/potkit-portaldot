@@ -18,6 +18,12 @@ export const appUrl = (search = window.location.search) => {
 };
 /** Absolute dApp link for sharing (judge link). */
 export const appShareUrl = (search: string) => APP_ORIGIN ? `${APP_ORIGIN}/${search}` : `${((import.meta.env.VITE_SITE_URL as string | undefined) || window.location.origin).replace(/\/$/, "")}/app${search}`;
+/** Shareable public issuer profile. Public pages show chain-derived data; local profile edits stay in the owner's browser. */
+export const profileShareUrl = (address: string, kit?: string) => APP_ORIGIN
+  ? `${APP_ORIGIN}/profile/${address}${kit ? `?kit=${encodeURIComponent(kit)}` : ""}`
+  : isAppHost()
+    ? `${window.location.origin}/profile/${address}${kit ? `?kit=${encodeURIComponent(kit)}` : ""}`
+    : `${window.location.origin}/app?profile=${encodeURIComponent(address)}${kit ? `&kit=${encodeURIComponent(kit)}` : ""}`;
 /** URL of the landing page. On app.<domain> it points to the bare domain. */
 export const homeUrl = () => {
   const { hostname, protocol, port, search } = window.location;

@@ -16,6 +16,7 @@ const SORTS = { discount: "Best discount", yield: "Highest yield", due: "Due soo
 
 export function Trade({ c }: { c: Ctx }) {
   const [status, setStatus] = useState("all");
+  const [quick, setQuick] = useState<"all" | "discount" | "due">("all");
   const [sort, setSort] = useState<keyof typeof SORTS>("discount");
   const [q, setQ] = useState("");
   const [open, setOpen] = useState<number | null>(null);
@@ -44,6 +45,7 @@ export function Trade({ c }: { c: Ctx }) {
   }), [c.listings, c.rows, c.events]);
   const shown = cards
     .filter((x) => status === "all" || x.r.status === status)
+    .filter((x) => quick === "all" || (quick === "discount" ? x.discount >= .05 : x.days > 0 && x.days <= 30))
     .filter((x) => !q || `${x.r.id} ${x.r.note} ${KINDS[x.r.kind]}`.toLowerCase().includes(q.toLowerCase()))
     .sort((a, b) => sort === "discount" ? b.discount - a.discount : sort === "yield" ? b.ret - a.ret : sort === "due" ? (a.r.dueDate || 9e12) - (b.r.dueDate || 9e12) : sort === "price" ? a.price - b.price : b.l.lid - a.l.lid);
   const sel = cards.find((x) => x.l.lid === open);
@@ -51,40 +53,58 @@ export function Trade({ c }: { c: Ctx }) {
   const sellable = c.rows.filter((r) => r.fraction && !r.settle.settled && (c.held.get(r.id) ?? 0n) > 0n);
   const sellRow = c.rows.find((r) => r.id === Number(sellId));
   const sellFace = sellRow ? n6(faceShare(sellRow), sellRow.settle.decimals || 18) : 0;
+  const highestDiscount = [...cards].sort((a, b) => b.discount - a.discount)[0];
+  const endingSoon = cards.filter((x) => x.days > 0).sort((a, b) => a.days - b.days)[0];
+  const newest = [...cards].sort((a, b) => b.l.lid - a.l.lid)[0];
+  const recentTrades = c.events.filter((e) => e.kind === "buy").slice(0, 3);
+  const openListing = (item?: Card) => { if (item) { setOpen(item.l.lid); setAmt(""); setPending(null); } };
 
   return (
     <div className="trade">
-      <div className="trade-bar" role="search">
+      <section className="trade-intro"><div><p className="kicker">Stage 03 · Portaldot V3</p><h2>Invoice share markets</h2><p>Compare discounts and time to maturity, then inspect the settlement terms before you buy.</p></div><div className="trade-intro-stats"><span><b>{cards.length}</b> open markets</span><span><b>{num(cards.reduce((s, x) => s + x.price * Number(x.l.remaining) / 1e18, 0))}</b> tPOT listed</span></div></section>
+      {c.total >= 6 && cards.length > 0 && <section className="trade-highlights" aria-label="Market highlights">
+        {[{ id: "discount", title: "Highest discount", badge: "HOT", item: highestDiscount, value: highestDiscount ? pct(highestDiscount.discount) : "—" }, { id: "soon", title: "Ending soon", badge: "SOON", item: endingSoon, value: endingSoon ? `${Math.ceil(endingSoon.days)}d` : "—" }, { id: "newest", title: "Newest", badge: "NEW", item: newest, value: newest ? `#${newest.r.id}` : "—" }].map((h) => (
+          <button type="button" key={h.id} className={`trade-highlight hl-${h.id}`} onClick={() => openListing(h.item)} disabled={!h.item}>
+            <span className="trade-hl-top"><b>{h.title}</b><i>{h.badge}</i></span>
+            <span className="trade-hl-main">{h.item ? h.item.r.note : "No matching listing"}</span>
+            <span className="trade-hl-bottom"><small>{h.item ? `Invoice #${h.item.r.id} · ${h.item.price} tPOT / share` : "Listings will appear here"}</small><strong>{h.value}</strong></span>
+          </button>
+        ))}
+      </section>}
+      {cards.length > 0 && <div className="trade-bar" role="search">
         <div className="tb-search"><Ico n="search" /><input aria-label="Search listings" placeholder="Search invoice, id or kind" value={q} onChange={(e) => setQ(e.target.value)} /></div>
-        <div className="chips" role="group" aria-label="Filter by status">
-          {["all", "Pending", "Due soon", "Overdue"].map((s) => <button key={s} className={`chip ${status === s ? "on" : ""}`} aria-pressed={status === s} onClick={() => setStatus(s)}>{s === "all" ? "All" : s} <span className="num"><N l={c.loading}>{s === "all" ? cards.length : cards.filter((x) => x.r.status === s).length}</N></span></button>)}
+        <div className="chips" role="group" aria-label="Quick filters">
+          {([["all", "All"], ["discount", "Discount > 5%"], ["due", "Due < 30d"]] as const).map(([key, label]) => <button key={key} className={`chip ${quick === key ? "on" : ""}`} aria-pressed={quick === key} onClick={() => setQuick(key)}>{label}</button>)}
+        </div>
+        <div className="chips trade-status-chips" role="group" aria-label="Filter by status">
+          {["all", "Pending", "Due soon", "Overdue"].map((s) => <button key={s} className={`chip ${status === s ? "on" : ""}`} aria-pressed={status === s} onClick={() => setStatus(s)}>{s === "all" ? "Any status" : s}</button>)}
         </div>
         <label className="tb-sort"><span>Sort</span><select value={sort} onChange={(e) => setSort(e.target.value as keyof typeof SORTS)}>{Object.entries(SORTS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select></label>
-      </div>
+      </div>}
 
       <div className="trade-grid">
         <section aria-label="Listings">
           {!c.market ? <Empty icon="⇄" title="No contract yet" body="Deploy PotKit from Issue → Set up the contract (the market is built in)." />
             : c.loading ? <SkelCards />
-            : !shown.length ? <Empty icon="⇄" title={cards.length ? "No listings match" : "No open listings"} body={cards.length ? "Try another status filter or clear the search." : "Nobody is selling shares right now. List yours from the panel to get cash today."} />
+            : !shown.length ? <>
+              <Empty icon="⇄" title={cards.length ? "No listings match" : "No open listings"} body={cards.length ? "Try another status filter or clear the search." : "Nobody is selling shares right now. List yours from the panel to get cash today."} />
+              {!cards.length && recentTrades.length > 0 && <section className="card trade-recent" aria-label="Recent trades">
+                <header><div><p className="kicker">On-chain activity</p><h3>Recent trades</h3></div><span className="trade-recent-live"><i />Verified</span></header>
+                <ol>{recentTrades.map((e) => <li key={`${e.hash}-${e.logIndex}`}><span className="trade-recent-icon"><Ico n="cart" size={16} /></span><b>{e.text}</b><small>Block {e.block.toString()}</small></li>)}</ol>
+              </section>}
+            </>
             : (
-              <div className="lcards">
+              <div className="trade-market-list" role="table" aria-label="Open invoice share markets">
+                <div className="trade-row trade-row-head" role="row"><span>Invoice</span><span>Price / share</span><span>Discount</span><span>Units left</span><span>Due</span><span /></div>
                 {shown.map((x) => (
-                  <button key={x.l.lid} className="lcard" onClick={() => { setOpen(x.l.lid); setAmt(""); setPending(null); }} aria-label={`Listing ${x.l.lid}: receipt ${x.r.id}, ${units(x.l.remaining)} shares at ${x.price} tPOT`}>
-                    <div className="lc-top"><span className="lc-id">#{x.r.id} · {KINDS[x.r.kind]}</span>{x.l.seller === c.account && <span className="tag">yours</span>}</div>
-                    <b className="lc-note">{x.r.note}</b>
-                    <div className="tags"><SettleBadge r={x.r} terms={false} />{x.r.dueDate > 0 && x.days > 0 && x.days < 14 && x.r.status !== "Due soon" && <span className="tag warn">Due soon</span>}</div>
-                    <div className="lc-disc" title="Discount to face value">
-                      <b className={`num ${x.discount > 0 ? "pos" : ""}`}>{x.face ? pct(x.discount) : "—"}</b><small>discount</small>
-                    </div>
-                    <div className="lc-pf num"><span><b>{num(x.price)}</b> tPOT</span><span className="muted">vs face {x.face ? num(x.face) : "—"}</span></div>
-                    {x.progress !== null && (
-                      <div className="lc-due" role="progressbar" aria-label="Time elapsed to due date" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(x.progress * 100)}>
-                        <i style={{ width: `${x.progress * 100}%` }} className={x.days <= 0 ? "over" : x.days < 14 ? "soon" : ""} />
-                      </div>
-                    )}
-                    <div className="lc-foot"><span className="num">{units(x.l.remaining)} available</span><span className={x.r.dueDate && x.days <= 0 ? "neg" : ""}>{x.r.dueDate ? (x.days > 0 ? `due in ${Math.ceil(x.days)}d` : "overdue") : "no due date"}</span></div>
-                  </button>
+                  <div className="trade-row" role="row" key={x.l.lid}>
+                    <button type="button" className="trade-row-invoice" onClick={() => openListing(x)} aria-label={`Review ${x.r.note}, invoice ${x.r.id}`}><span className="trade-row-icon"><Ico n="terms" /></span><span><b>{x.r.note}</b><small>INVOICE #{x.r.id} · {KINDS[x.r.kind]}{x.l.seller === c.account ? " · YOUR LISTING" : ""}</small></span></button>
+                    <span className="trade-row-price">{num(x.price)} <small>tPOT</small></span>
+                    <span className="trade-row-discount">{x.face ? pct(x.discount) : "—"}</span>
+                    <span className="trade-row-units">{units(x.l.remaining)}</span>
+                    <span className="trade-row-due">{x.r.dueDate ? day(x.r.dueDate) : "No due date"}</span>
+                    <button type="button" className="btn sm trade-buy" onClick={() => openListing(x)}>Review</button>
+                  </div>
                 ))}
               </div>
             )}
@@ -93,7 +113,7 @@ export function Trade({ c }: { c: Ctx }) {
         <aside className="card sell-panel" id="sell" aria-label="Sell shares">
           <h2><Ico n="tag" /> Sell shares</h2>
           <p className="muted">Get tPOT today. Shares are held in escrow by PotKit until sold or cancelled; buyers pay you directly in the same transaction.</p>
-          {!sellable.length ? <p className="muted">You hold no unsettled shares. Issue an invoice first.</p> : (
+          {!sellable.length ? <div className="trade-sell-empty"><p className="muted">You hold no unsettled shares. Issue an invoice first.</p><button className="btn sm primary" onClick={() => c.setTab("issue")}>Issue invoice <Ico n="arrow" /></button></div> : (
             <>
               <label htmlFor="s-id">Receipt</label>
               <select id="s-id" value={sellId} onChange={(e) => setSellId(e.target.value)}>

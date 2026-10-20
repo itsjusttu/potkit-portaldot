@@ -24,13 +24,13 @@ export function ReceiptArt({ id, kind, note, face, due, supply, stage }: { id?: 
   return (
     <svg className="rart" viewBox="0 0 340 220" role="img" aria-label={`Receipt preview: ${KINDS[kind]} ${note}`}>
       <defs>
-        <linearGradient id="rg" x1="0" x2="1" y1="0" y2="1"><stop offset="0" stopColor="#0b1418" /><stop offset="1" stopColor="#020304" /></linearGradient>
-        <pattern id="rgrid" width="14" height="14" patternUnits="userSpaceOnUse"><path d="M14 0H0v14" fill="none" stroke="rgba(111,195,211,.07)" /></pattern>
+        <linearGradient id="rg" x1="0" x2="1" y1="0" y2="1"><stop offset="0" stopColor="#111126" /><stop offset="1" stopColor="#080a13" /></linearGradient>
+        <pattern id="rgrid" width="14" height="14" patternUnits="userSpaceOnUse"><path d="M14 0H0v14" fill="none" stroke="rgba(155,134,255,.09)" /></pattern>
       </defs>
       <rect width="340" height="220" fill="url(#rg)" />
       <rect width="340" height="220" fill="url(#rgrid)" />
       <rect x=".5" y=".5" width="339" height="219" fill="none" stroke="rgba(255,255,255,.18)" />
-      <path d="M12 12h18M12 12v18M328 12h-18M328 12v18M12 208h18M12 208v-18M328 208h-18M328 208v-18" stroke="#6fc3d3" strokeWidth="1.5" fill="none" />
+      <path d="M12 12h18M12 12v18M328 12h-18M328 12v18M12 208h18M12 208v-18M328 208h-18M328 208v-18" stroke="#9b86ff" strokeWidth="1.5" fill="none" />
       <text x="24" y="40" className="ra-k">POTKIT RECEIPT · {KINDS[kind].toUpperCase()}</text>
       <text x="316" y="40" textAnchor="end" className="ra-id">{id ? `#${id}` : "#—"}</text>
       <text x="24" y="78" className="ra-t">{lines[0] || "Untitled invoice"}</text>
@@ -53,7 +53,7 @@ const STAMP: Record<Row["status"], [string, string]> = { Free: ["DRAFT", "draft"
 const noTilt = () => typeof matchMedia !== "undefined" && matchMedia("(prefers-reduced-motion: reduce)").matches;
 /** Paper-receipt card with torn edge, barcode, status stamp and a foil layer that follows the pointer.
  *  `facts` = [label, value] pairs; `bar` = 0..1 progress with its label; `children` = action buttons (unchanged handlers). */
-export function PaperReceipt({ r, amount, facts, bar, children }: { r: Row; amount: ReactNode; facts: [string, ReactNode][]; bar?: { label: string; value: number }; children?: ReactNode }) {
+export function PaperReceipt({ r, amount, facts, bar, children, actionsInside = false, statusLabel, statusTone, stampLabel, stampTone, className = "" }: { r: Row; amount: ReactNode; facts: [string, ReactNode][]; bar?: { label: string; value: number }; children?: ReactNode; actionsInside?: boolean; statusLabel?: string; statusTone?: string; stampLabel?: string; stampTone?: string; className?: string }) {
   const ref = useRef<HTMLDivElement>(null);
   const move = (e: React.PointerEvent) => {
     const el = ref.current; if (!el || noTilt()) return;
@@ -62,13 +62,16 @@ export function PaperReceipt({ r, amount, facts, bar, children }: { r: Row; amou
     el.style.setProperty("--fx", `${px * 100}%`); el.style.setProperty("--fy", `${py * 100}%`);
   };
   const reset = () => { const el = ref.current; if (!el) return; el.style.transform = ""; el.style.removeProperty("--fx"); el.style.removeProperty("--fy"); };
-  const [stamp, tone] = STAMP[r.status];
+  const [defaultStamp, defaultTone] = STAMP[r.status];
+  const stamp = stampLabel ?? defaultStamp;
+  const tone = stampTone ?? defaultTone;
+  const badge = statusLabel ?? (r.status === "Free" ? "Not locked" : r.status);
   return (
     <div className="prc-wrap">
-      <div ref={ref} className={`prc prc-${tone}`} onPointerMove={move} onPointerLeave={reset} onPointerUp={(e) => { if (e.pointerType !== "mouse") reset(); }}>
+      <div ref={ref} className={`prc prc-${tone} ${actionsInside ? "prc-has-inner-acts" : ""} ${className}`} onPointerMove={move} onPointerLeave={reset} onPointerUp={(e) => { if (e.pointerType !== "mouse") reset(); }}>
         <div className="prc-paper">
           <div className="prc-foil" aria-hidden />
-          <div className="prc-hd"><b>RECEIPT #{String(r.id).padStart(4, "0")}</b><i>{r.status === "Free" ? "Not locked" : r.status}</i></div>
+          <div className="prc-hd"><b>RECEIPT #{String(r.id).padStart(4, "0")}</b><i className={statusTone ? `prc-status-${statusTone}` : undefined}>{badge}</i></div>
           <span className="prc-kind">{KINDS[r.kind]} · {r.note}</span>
           <hr />
           <div className="prc-big">{amount}</div>
@@ -77,9 +80,10 @@ export function PaperReceipt({ r, amount, facts, bar, children }: { r: Row; amou
             <dl className="prc-sold-l"><div><dt>{bar.label}</dt><dd>{Math.round(bar.value * 100)}%</dd></div></dl></>}
           <div className="prc-bar" aria-hidden />
           <div className="prc-stamp" aria-hidden>{stamp}</div>
+          {actionsInside && children && <div className="prc-inner-acts">{children}</div>}
         </div>
       </div>
-      {children && <div className="prc-acts">{children}</div>}
+      {children && !actionsInside && <div className="prc-acts">{children}</div>}
     </div>
   );
 }
