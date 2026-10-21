@@ -1,8 +1,9 @@
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import "../landing.css";
 import "./docs.css";
 import "../landing-polish.css";
 import "./docs-polish.css";
+import "./help.css";
 import { Footer, Header, Reveal, app, page, useLenis, Arrow } from "./Chrome";
 import { MarketArt, ReceiptArt, VaultArt } from "./Art";
 
@@ -17,6 +18,44 @@ const Callout = ({ tone = "info", children }: { tone?: "info" | "warn"; children
 const Table = ({ head, rows }: { head: string[]; rows: ReactNode[][] }) => (
   <div className="dx-tw"><table className="dx-t"><thead><tr>{head.map((h) => <th key={h}>{h}</th>)}</tr></thead><tbody>{rows.map((r, i) => <tr key={i}>{r.map((c, j) => <td key={j}>{c}</td>)}</tr>)}</tbody></table></div>
 );
+
+const HELP_LINKS = [
+  { title: "Getting started", desc: "Connect a wallet, understand the network, and learn the receipt lifecycle.", href: "/how-it-works", tag: "Guide" },
+  { title: "Issue an invoice", desc: "Mint a receipt, lock it, and set its face value and due date.", href: "/how-it-works#mint", tag: "Issuers" },
+  { title: "Trade receipt shares", desc: "Learn about listings, escrow, prices, and buying shares.", href: "/how-it-works#trade", tag: "Markets" },
+  { title: "Settlement & claims", desc: "See how invoice payments are split between share holders.", href: "/how-it-works#settle", tag: "Holders" },
+  { title: "Verify a receipt", desc: "Check backing, terms, status, and settlement from chain data.", href: app("?tab=verify"), tag: "Verification" },
+  { title: "Security model", desc: "Understand custody, contract permissions, and testnet limits.", href: "/security", tag: "Security" },
+];
+const HELP_FAQ = [
+  ["What is a PotKit receipt?", "A receipt is an NFT representing an invoice or other receivable. Its owner can lock it and issue fixed-supply shares backed by the receipt."],
+  ["Why does the app ask me to switch networks?", "PotKit transactions run on the Portaldot V3 testnet. Read-only pages such as Explore and Verify can still be used without switching."],
+  ["How do I issue an invoice?", "Connect an eligible wallet, mint a receipt, then lock it with the invoice amount and optional due date. Minting is limited to the contract issuer and approved minters."],
+  ["Can I sell only part of my shares?", "Yes. A seller chooses the share amount and price when creating a listing. Buyers can take a partial amount, and the seller can cancel the unsold remainder."],
+  ["How are holders paid after settlement?", "The debtor pays at least the face value in native tPOT. Each holder claims their pro-rata share; the contract's cumulative rounding distributes the pool exactly."],
+  ["Does PotKit charge a protocol fee?", "The current contract has no protocol fee. Market prices are set by sellers; the contract does not promise invoice payment or investment returns."],
+  ["Where can I find a transaction?", "Open History in the app for wallet activity, or follow the transaction hash in your wallet. Chain events are public and may take a moment to load."],
+];
+function HelpBrowse() {
+  const [query, setQuery] = useState("");
+  const search = useRef<HTMLInputElement>(null);
+  useEffect(() => {
+    const onKey = (event: KeyboardEvent) => { if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") { event.preventDefault(); search.current?.focus(); } };
+    addEventListener("keydown", onKey);
+    return () => removeEventListener("keydown", onKey);
+  }, []);
+  const normalized = query.trim().toLowerCase();
+  const links = HELP_LINKS.filter((x) => !normalized || `${x.title} ${x.desc} ${x.tag}`.toLowerCase().includes(normalized));
+  const faqs = HELP_FAQ.filter(([q, a]) => !normalized || `${q} ${a}`.toLowerCase().includes(normalized));
+  return <div className="help-browse">
+    <label className="help-search"><span aria-hidden>⌕</span><input ref={search} type="search" placeholder="Search guides and FAQs" value={query} onChange={(e) => setQuery(e.target.value)} aria-label="Search help guides and frequently asked questions" /><kbd>⌘ K</kbd></label>
+    <h3>Guides &amp; resources</h3>
+    <div className="help-cards">{links.map((x) => <a className="help-card" href={x.href} key={x.title}><small>{x.tag}</small><b>{x.title}</b><span>{x.desc}</span><i aria-hidden>↗</i></a>)}</div>
+    {!links.length && !faqs.length && <p className="help-empty">No matches. Try “wallet”, “invoice”, “shares”, or “settlement”.</p>}
+    <h3>Frequently asked questions</h3>
+    <div className="help-faq">{faqs.map(([q, a]) => <details key={q}><summary>{q}<span aria-hidden>+</span></summary><p>{a}</p></details>)}</div>
+  </div>;
+}
 
 /* ---------- diagrams (hand-drawn SVG) ---------- */
 const Box = ({ x, y, w = 150, h = 54, t, s, tone = "c" }: { x: number; y: number; w?: number; h?: number; t: string; s?: string; tone?: "c" | "m" | "n" }) => (
@@ -99,6 +138,15 @@ const Escrow = () => (
 
 /* ---------- content ---------- */
 const DOCS: Record<string, Doc> = {
+  "/help": {
+    path: "/help", kicker: "Help center", title: "Help & Support",
+    lede: "Guides, answers, and support for using PotKit. Find your way from creating a receipt to claiming a settlement.",
+    next: ["/how-it-works", "How PotKit works"],
+    secs: [
+      { id: "answers", t: "Find an answer", body: <HelpBrowse /> },
+      { id: "contact", t: "Still need help?", body: <div className="help-contact"><div><small>PotKit community</small><h3>Talk to the community</h3><p>Prepare a support request in the app, then share it in the Portaldot Discord support channel. Your details are only shared when you choose to post them.</p></div><a className="help-contact-link" href="https://discord.gg/G33tVtCsNW" target="_blank" rel="noreferrer">Open Discord <Arrow /></a></div> },
+    ],
+  },
   "/how-it-works": {
     path: "/how-it-works", kicker: "Guide", title: "How PotKit works",
     lede: "PotKit turns an unpaid invoice into an on-chain receipt, splits it into fixed-supply shares that can be sold for tPOT today, and pays every holder pro-rata when the debtor settles. One small contract on Portaldot V3, no backend.",
@@ -299,7 +347,7 @@ export function Docs({ path }: { path: string }) {
     return () => io.disconnect();
   }, [d]);
   return (
-    <div className="lx dx">
+    <div className={`lx dx ${path === "/help" ? "dx-help" : ""}`}>
       <div className="lx-bg" aria-hidden />
       <Header scrolled={scrolled} active={d.path} />
       <main>

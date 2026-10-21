@@ -54,6 +54,7 @@ html[data-route="app"] .side-item.on { background: rgba(139,104,255,.12); box-sh
 html[data-route="app"] .side-support { margin-top: auto; padding-top: .8rem; border-top: 1px solid var(--line); }
 html[data-route="app"] .side-support .side-group-title { margin-bottom: .45rem; }
 html[data-route="app"] .side-support .side-item { min-height: 2.9rem; color: var(--fg); }
+html[data-route="app"] .side-support button.side-item { border: 0; background: transparent; font: inherit; text-align: left; cursor: pointer; }
 html[data-route="app"] .side-support .side-item:hover { background: var(--surface-2); }
 html[data-route="app"] .side-support .ico-svg:last-child { margin-left: auto; color: var(--muted); }
 html[data-route="app"] .screen-loading { display: grid; gap: .9rem; min-height: 12rem; align-content: start; padding: 1.5rem; border: 1px solid var(--line); border-radius: var(--r-lg); background: var(--surface); }

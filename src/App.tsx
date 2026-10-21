@@ -8,6 +8,7 @@ import { useWalletStatus } from "./hooks/useWalletStatus";
 import { useTx } from "./hooks/useTx";
 import { Drawer, Empty, GasTip, Ico, Toasts, toast } from "./AppUi";
 import { FaucetButton } from "./Faucet";
+import { Support } from "./Support";
 import {
   addr, CONSOLE, explain, fmt, GUIDE, KINDS, kitAddrs, loadBalances, loadClaimables, loadEvents,
   loadListings, loadMeta, loadRows, nativeBalance, ENV_FROM_BLOCK, isNoCode, NATIVE, NO_CODE, PAY_SYMBOL, receiptCount, type DeployStep, portaldot, settle, short, switchToPortaldot, units, type Addrs, type ChainEvent, type Listing, type Row,
@@ -94,6 +95,7 @@ export function App() {
   const [addrs, setAddrsState] = useState<Addrs | null>(init.a);
   const [shared, setShared] = useState(init.shared);
   const [tab, setTabState] = useState<Tab>(initialTab);
+  const [supportOpen, setSupportOpen] = useState(false);
   const [params, setParams] = useState<Record<string, string>>(initialParams);
   const setTab = (t: Tab, p: Record<string, string> = {}) => {
     setTabState(t); setParams(p);
@@ -261,8 +263,8 @@ export function App() {
         </nav>
         <div className="side-group side-support">
           <p className="side-group-title">Support</p>
-          <a className="side-item" href="https://github.com/itsjusttu/potkit-portaldot/issues" target="_blank" rel="noreferrer"><Ico n="mail" /><span>Contact Support</span></a>
-          <a className="side-item" href={protocolPage("/how-it-works")}><Ico n="life" /><span>Help Center</span><Ico n="ext" /></a>
+          <button type="button" className="side-item" onClick={() => setSupportOpen(true)}><Ico n="mail" /><span>Contact Support</span></button>
+          <a className="side-item" href={protocolPage("/help")}><Ico n="life" /><span>Help Center</span><Ico n="ext" /></a>
         </div>
       </aside>
       <main>
@@ -280,6 +282,7 @@ export function App() {
           </nav>
         </header>
         <WalletModal open={wallet.picker} wallets={wallets} busyId={wallet.picking} onPick={(w) => void wallet.pick(w)} onClose={wallet.close} />
+        <Support open={supportOpen} onClose={() => setSupportOpen(false)} account={account} />
 
         {gated && (
           <div className="netbar" role="alert">

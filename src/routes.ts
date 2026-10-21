@@ -1,7 +1,7 @@
 // Path routing. '/' = landing, '/app' = dApp. On an `app.` subdomain the dApp is served at '/'.
 export const isAppHost = () => window.location.hostname.startsWith("app.");
 /** Landing doc pages (SPA routes, served by the vercel.json catch-all rewrite). */
-export const DOC_ROUTES = ["/how-it-works", "/protocol", "/security"];
+export const DOC_ROUTES = ["/help", "/how-it-works", "/protocol", "/security"];
 export const docRoute = () => { const p = window.location.pathname.replace(/\/+$/, ""); return !isAppHost() && DOC_ROUTES.includes(p) ? p : null; };
 export const isAppRoute = () => isAppHost() || /^\/app(\/|$)/.test(window.location.pathname);
 /** URL of the dApp, keeping the query string (judge link params). */

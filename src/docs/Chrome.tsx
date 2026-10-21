@@ -112,7 +112,7 @@ export function Header({ scrolled, active }: { scrolled: boolean; active?: strin
   const [mnav, setMnav] = useState(false);
   const judgeParams = new URLSearchParams(location.search);
   const hasJudge = ["kit", "vault", "receipt"].some((key) => judgeParams.has(key));
-  const nav = [["/how-it-works", "How it works"], ["/protocol", "Protocol"], ["/security", "Security"]];
+  const nav = [["/help", "Help"], ["/how-it-works", "How it works"], ["/protocol", "Protocol"], ["/security", "Security"]];
   return (
     <header className={`lx-head ${scrolled ? "scrolled" : ""}`}>
       <a className="lx-logo" href={page("/")} aria-label="PotKit home"><span className="mark">◆</span>PotKit</a>
