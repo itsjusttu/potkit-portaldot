@@ -25,6 +25,7 @@ const Profile = lazy(() => import("./tabs/Profile").then((m) => ({ default: m.Pr
 
 const ALIAS: Record<string, Tab> = { desk: "issue", market: "trade", board: "explore", log: "history", activity: "history" };
 const ALL: Tab[] = [...TABS, "profile"];
+const protocolPage = (path: string) => isAppHost() ? `${window.location.protocol}//${window.location.hostname.slice(4)}${path}` : path;
 function initialTab(): Tab {
   const t = (new URLSearchParams(location.search).get("tab") ?? "").toLowerCase();
   if ((ALL as string[]).includes(t)) return t as Tab;
@@ -239,7 +240,7 @@ export function App() {
       <aside className="side">
         <a className="side-brand" href={homeUrl()} aria-label="PotKit home" data-tip="Home">
           <span className="logo" aria-hidden><span className="lg-d">◆</span><span className="lg-a">←</span></span>
-          <span><b>Pot<span className="grad">Kit</span></b><small>dApp · Portaldot V3</small></span>
+          <span><b>Pot<span className="grad">Kit</span></b><small>Invoice protocol</small></span>
         </a>
         <button className="side-new" onClick={() => setTab("issue")}><TabIco t="issue" /><span>New invoice</span></button>
         <nav className="side-nav" aria-label="Sections">
@@ -258,16 +259,10 @@ export function App() {
             ))}
           </div>)}
         </nav>
-        <div className="side-group side-protocol">
-          <p className="side-group-title">Protocol</p>
-          <a className="side-item" href="/protocol"><Ico n="book" /><span>Docs</span></a>
-          <a className="side-item" href="/security"><Ico n="shield" /><span>Security</span></a>
-          <a className="side-item" href="https://github.com/portaldotVolunteer" target="_blank" rel="noreferrer"><Ico n="github" /><span>GitHub</span></a>
-        </div>
-        <div className="side-foot">
-          <span className={`net ${chainOk ? "ok" : ""}`}><i />{chainOk ? "Portaldot V3" : account ? "Wrong network" : "Not connected"}</span>
-          <span className="mono muted">chain {portaldot.id}</span>
-          <a className="side-help" href="/how-it-works"><Ico n="help" /><span>Help</span><Ico n="arrow" /></a>
+        <div className="side-group side-support">
+          <p className="side-group-title">Support</p>
+          <a className="side-item" href="https://github.com/itsjusttu/potkit-portaldot/issues" target="_blank" rel="noreferrer"><Ico n="mail" /><span>Contact Support</span></a>
+          <a className="side-item" href={protocolPage("/how-it-works")}><Ico n="life" /><span>Help Center</span><Ico n="ext" /></a>
         </div>
       </aside>
       <main>
