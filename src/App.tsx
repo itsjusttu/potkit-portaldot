@@ -1,26 +1,27 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { Address } from "viem";
 import { DEFAULTS } from "./config";
 import { appShareUrl, homeUrl, isAppHost } from "./routes";
-import { WalletButton, WalletModal, useWallets } from "./WalletUi";
-import { rememberedId, select, selected, type WalletOption } from "./lib/wallets";
+import { WalletButton, WalletModal } from "./WalletUi";
+import { selected } from "./lib/wallets";
+import { useWalletStatus } from "./hooks/useWalletStatus";
+import { useTx } from "./hooks/useTx";
 import { Drawer, Empty, GasTip, Ico, Toasts, toast } from "./AppUi";
 import { FaucetButton } from "./Faucet";
 import {
-  addr, anyWallet, connect, CONSOLE, disconnectWallet, ethereum, explain, fmt, GUIDE, inFrame, KINDS, kitAddrs, loadBalances, loadClaimables, loadEvents,
-  loadListings, loadMeta, loadRows, nativeBalance, ENV_FROM_BLOCK, isNoCode, NATIVE, NO_CODE, PAY_SYMBOL, receiptCount, type DeployStep, portaldot, settle, short, silentAccount, switchToPortaldot, units, walletChainId,
-  type Addrs, type ChainEvent, type Listing, type Row,
+  addr, CONSOLE, explain, fmt, GUIDE, KINDS, kitAddrs, loadBalances, loadClaimables, loadEvents,
+  loadListings, loadMeta, loadRows, nativeBalance, ENV_FROM_BLOCK, isNoCode, NATIVE, NO_CODE, PAY_SYMBOL, receiptCount, type DeployStep, portaldot, settle, short, switchToPortaldot, units, type Addrs, type ChainEvent, type Listing, type Row,
 } from "./lib/chain";
 import { TABS, type Ctx, type Log, type Tab } from "./tabs/ctx";
 import { SettleBadge } from "./tabs/shared";
-import { Dashboard } from "./tabs/Dashboard";
-import { Issue } from "./tabs/Issue";
-import { Trade } from "./tabs/Trade";
-import { Portfolio } from "./tabs/Portfolio";
-import { Explore } from "./tabs/Explore";
-import { Verify } from "./tabs/Verify";
-import { History } from "./tabs/History";
-import { Profile } from "./tabs/Profile";
+const Dashboard = lazy(() => import("./tabs/Dashboard").then((m) => ({ default: m.Dashboard })));
+const Issue = lazy(() => import("./tabs/Issue").then((m) => ({ default: m.Issue })));
+const Trade = lazy(() => import("./tabs/Trade").then((m) => ({ default: m.Trade })));
+const Portfolio = lazy(() => import("./tabs/Portfolio").then((m) => ({ default: m.Portfolio })));
+const Explore = lazy(() => import("./tabs/Explore").then((m) => ({ default: m.Explore })));
+const Verify = lazy(() => import("./tabs/Verify").then((m) => ({ default: m.Verify })));
+const History = lazy(() => import("./tabs/History").then((m) => ({ default: m.History })));
+const Profile = lazy(() => import("./tabs/Profile").then((m) => ({ default: m.Profile })));
 
 const ALIAS: Record<string, Tab> = { desk: "issue", market: "trade", board: "explore", log: "history", activity: "history" };
 const ALL: Tab[] = [...TABS, "profile"];
@@ -103,9 +104,8 @@ export function App() {
     history.replaceState(null, "", `${path}${q.toString() ? `?${q}` : ""}`);
     window.scrollTo({ top: 0 });
   };
-  const [account, setAccount] = useState<Address | "">("");
-  const [chainOk, setChainOk] = useState<boolean | null>(null);
-  const [busy, setBusy] = useState("");
+  const wallet = useWalletStatus();
+  const { account, chainOk, wallets, tick: provTick } = wallet;
   const [notice, setNotice] = useState("");
   const [rows, setRows] = useState<Row[]>([]);
   const [held, setHeld] = useState<Map<number, bigint>>(new Map());
@@ -127,37 +127,11 @@ export function App() {
   const [eventsLoading, setEventsLoading] = useState(false);
   const [payFor, setPayFor] = useState<number | null>(null);
   const [payAmt, setPayAmt] = useState("");
-  const [needGas, setNeedGas] = useState(false); // set when a write fails for insufficient gas
-  useEffect(() => { setNeedGas(false); }, [account]); // the warning belongs to the wallet that failed
   const [log, setLog] = useState<Log[]>(() => { try { return JSON.parse(localStorage.getItem(`${STORE}.log`) ?? "[]"); } catch { return []; } });
 
   const setAddrs = (a: Addrs | null) => { setAddrsState(a); setShared(false); if (a) localStorage.setItem(STORE, JSON.stringify(a)); else localStorage.removeItem(STORE); };
   const note = (action: string, detail: string, hash?: `0x${string}`) =>
     setLog((l) => { const next = [{ at: new Date().toISOString(), action, detail, hash }, ...l].slice(0, 100); localStorage.setItem(`${STORE}.log`, JSON.stringify(next)); return next; });
-
-  // ---- wallet: restore silently, follow account/network changes ----
-  const wallets = useWallets();
-  const [picker, setPicker] = useState(false);
-  const [walletId, setWalletId] = useState<string>(() => rememberedId() ?? "");
-  const [picking, setPicking] = useState("");
-  const [provTick, setProvTick] = useState(0);
-  useEffect(() => {
-    if (selected() || !walletId) return;
-    const w = wallets.find((x) => x.id === walletId && x.provider);
-    if (w) { select(w); setProvTick((t) => t + 1); }
-  }, [wallets, walletId]);
-  useEffect(() => {
-    const eth = ethereum();
-    if (!eth) { if (inFrame()) setNotice("Wallets cannot attach inside an embedded preview. Open this page in a full browser tab."); setAccount(""); setChainOk(null); return; }
-    const sync = async () => {
-      const acc = await silentAccount().catch(() => "" as const);
-      setAccount(acc);
-      setChainOk(acc ? (await walletChainId().catch(() => 0)) === portaldot.id : null);
-    };
-    void sync();
-    eth.on?.("accountsChanged", sync); eth.on?.("chainChanged", sync);
-    return () => { eth.removeListener?.("accountsChanged", sync); eth.removeListener?.("chainChanged", sync); };
-  }, [provTick]);
 
   // Read native gas balance independently from the contract/indexing refresh.
   // This still works on Profile when no PotKit address has been configured.
@@ -180,28 +154,36 @@ export function App() {
   }, [refreshNative, provTick]);
 
   // ---- chain reads ----
+  const refreshSeq = useRef(0); // only the newest refresh may write state (account switch / rapid actions)
+  const rowsLen = useRef(0); rowsLen.current = rows.length;
   const refresh = useCallback(async () => {
     if (!addrs) return;
+    const seq = ++refreshSeq.current;
+    const stale = () => seq !== refreshSeq.current;
     try {
-      const r = await loadRows(addrs.vault, 0, Math.max(20, rows.length));
-      setRows(r);
-      setTotal(await receiptCount(addrs.vault).catch(() => r.length));
+      const [r, count] = await Promise.all([loadRows(addrs.vault, 0, Math.max(20, rowsLen.current)), receiptCount(addrs.vault).catch(() => null)]);
+      if (stale()) return;
+      setRows(r); setTotal(count ?? r.length);
       const [bal, meta, cl, ls] = await Promise.all([
         account ? loadBalances(addrs.vault, account, r) : Promise.resolve(new Map<number, bigint>()),
         loadMeta(addrs.receipt, account),
         account ? loadClaimables(addrs.vault, account, r) : Promise.resolve(new Map<number, bigint>()),
         market ? loadListings(market).catch(() => []) : Promise.resolve([] as Listing[]),
       ]);
+      if (stale()) return;
       setHeld(bal); setClaims(cl); setListings(ls); setLoading(false); setCanMint(meta.canMint); setIssuer(meta.issuer);
       if (account) void refreshNative();
       setEventsLoading(true);
       const sameAsEnv = addrs.receipt.toLowerCase() === DEFAULTS.receipt.trim().toLowerCase();
       const from = savedBlock() ?? (sameAsEnv && /^\d+$/.test(ENV_FROM_BLOCK) ? BigInt(ENV_FROM_BLOCK) : undefined);
       const ev = await loadEvents(addrs, market, ls, from).catch(() => ({ events: [] as ChainEvent[], ok: false }));
-      setEvents(ev.events); setEventsOk(ev.ok);
-      setEventsLoading(false);
-    } catch (e) { setLoading(false); setNotice(isNoCode(e) ? NO_CODE : `Could not read Portaldot: ${explain(e)}`); setEventsLoading(false); }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+      if (stale()) return;
+      setEvents(ev.events); setEventsOk(ev.ok); setEventsLoading(false);
+    } catch (e) {
+      if (stale()) return;
+      setLoading(false); setEventsLoading(false);
+      setNotice(isNoCode(e) ? NO_CODE : `Could not read Portaldot: ${explain(e)}`);
+    }
   }, [addrs, account, market, refreshNative]);
   const loadOlder = () => void (async () => {
     if (!addrs || !rows.length) return;
@@ -229,49 +211,21 @@ export function App() {
   };
   useEffect(() => { void refresh(); }, [refresh]);
 
-  // spinner on the button that started an action
-  const lastBtn = useRef<HTMLElement | null>(null);
-  useEffect(() => {
-    const on = (e: MouseEvent) => { lastBtn.current = (e.target as HTMLElement).closest("button"); };
-    document.addEventListener("click", on, true);
-    return () => document.removeEventListener("click", on, true);
-  }, []);
-  async function run(label: string, job: () => Promise<void>) {
-    if (busy) return;
-    const btn = lastBtn.current;
-    btn?.classList.add("loading"); btn?.setAttribute("aria-busy", "true");
-    setBusy(label); setNotice("");
-    try { await job(); await refresh(); } catch (e) { const d = explain(e); if (/Not enough tPOTv3/i.test(d)) setNeedGas(true); toast({ kind: "err", title: "Action failed", detail: d }); }
-    finally { btn?.classList.remove("loading"); btn?.removeAttribute("aria-busy"); setBusy(""); }
-  }
-  const connectWallet = () => { if (inFrame()) return setNotice("Open this page in a full browser tab to use a wallet."); setPicker(true); };
-  const pickWallet = async (w: WalletOption) => {
-    const prev = selected(); select(w); setPicking(w.id);
-    try {
-      const acc = await connect();
-      setWalletId(w.id); setProvTick((t) => t + 1); setAccount(acc);
-      setChainOk((await walletChainId()) === portaldot.id); setPicker(false);
-      toast({ kind: "ok", title: `Connected with ${w.name}`, detail: short(acc) });
-    } catch (e) { select(prev); setProvTick((t) => t + 1); toast({ kind: "err", title: `${w.name} did not connect`, detail: explain(e) }); }
-    finally { setPicking(""); }
-  };
-  const disconnect = async () => {
-    const name = selected()?.name ?? "wallet";
-    await disconnectWallet(); select(null); setWalletId(""); setProvTick((t) => t + 1);
-    toast({ kind: "ok", title: "Disconnected", detail: `${name} is no longer used by PotKit.` });
-    if (tab === "profile") setTab("issue");
-  };
+  const { busy, phase, needGas, setNeedGas, run } = useTx(refresh);
+  useEffect(() => { setNeedGas(false); }, [account, setNeedGas]); // the gas warning belongs to the wallet that failed
+  const connectWallet = wallet.open;
+  const disconnect = async () => { await wallet.disconnect(); if (tab === "profile") setTab("issue"); };
   const copyAddr = () => (navigator.clipboard?.writeText(account) ?? Promise.reject()).catch(() => toast({ kind: "err", title: "Copy failed", detail: account }));
-  const switchNet = () => void run("net", async () => { await switchToPortaldot(); setChainOk((await walletChainId()) === portaldot.id); });
+  const switchNet = () => void run("net", async () => { await switchToPortaldot(); await wallet.recheckChain(); });
   const ready = () => { if (!account) throw new Error("Connect your wallet first."); if (!chainOk) throw new Error("Switch your wallet to Portaldot V3 first."); return account; };
-  const gated = Boolean(account) && chainOk === false;
+  const gated = wallet.status === "wrong-network";
   const judgeLink = addrs ? appShareUrl(`?kit=${addrs.vault}`) : "";
   const usdRaw = native ?? 0n;
   const usdBal = native === null ? "" : `${fmt(native, 18)} ${PAY_SYMBOL}`;
   const openPay = (id: number) => { const r = rows.find((x) => x.id === id); setPayAmt(r && r.settle.faceValue > 0n ? fmt(r.settle.faceValue, r.settle.decimals).replace(/,/g, "") : ""); setPayFor(id); };
 
   const c: Ctx = {
-    account, chainOk, gated, busy, addrs, setAddrs, shared, usd, market, rows, held, claims, listings, events, eventsLoading, loading, eventsOk, total, loadOlder, saveStep, resetDeployment,
+    account, chainOk, gated, busy, phase, addrs, setAddrs, shared, usd, market, rows, held, claims, listings, events, eventsLoading, loading, eventsOk, total, loadOlder, saveStep, resetDeployment,
     canMint, issuer, usdBal, usdRaw, native, nativeLoading, nativeError, log, note, run, ready, refresh, setTab, connect: connectWallet, judgeLink,
     walletName: selected()?.name ?? "Wallet", openPay, param: (k) => params[k] ?? "", switchNetwork: switchNet,
   };
@@ -279,9 +233,9 @@ export function App() {
   const payRow = rows.find((r) => r.id === payFor);
 
   const publicProfile = tab === "profile" && /^0x[0-9a-fA-F]{40}$/.test(params.profile ?? "");
-  const needsWallet = tab !== "dashboard" && tab !== "explore" && tab !== "verify" && !publicProfile;
+  const needsWallet = tab !== "dashboard" && tab !== "issue" && tab !== "trade" && tab !== "explore" && tab !== "verify" && !publicProfile;
   return (
-    <div className="shell">
+    <div className="shell" data-phase={phase} data-wallet={wallet.status}>
       <aside className="side">
         <a className="side-brand" href={homeUrl()} aria-label="PotKit home" data-tip="Home">
           <span className="logo" aria-hidden><span className="lg-d">◆</span><span className="lg-a">←</span></span>
@@ -291,9 +245,9 @@ export function App() {
         <nav className="side-nav" aria-label="Sections">
           {([
             ["Overview", ["dashboard"]],
-            ["Create", ["issue"]],
+            ["Issue", ["issue"]],
             ["Markets", ["trade", "explore"]],
-            ["You", ["portfolio", "history"]],
+            ["You", ["portfolio", "history", "profile"]],
             ["Trust", ["verify"]],
           ] as [string, Tab[]][]).map(([group, tabs]) => <div className="side-group" key={group}>
             <p className="side-group-title">{group}</p>
@@ -304,10 +258,16 @@ export function App() {
             ))}
           </div>)}
         </nav>
+        <div className="side-group side-protocol">
+          <p className="side-group-title">Protocol</p>
+          <a className="side-item" href="/protocol"><Ico n="book" /><span>Docs</span></a>
+          <a className="side-item" href="/security"><Ico n="shield" /><span>Security</span></a>
+          <a className="side-item" href="https://github.com/portaldotVolunteer" target="_blank" rel="noreferrer"><Ico n="github" /><span>GitHub</span></a>
+        </div>
         <div className="side-foot">
-          {account && <button className={`side-item ${tab === "profile" ? "on" : ""}`} onClick={() => setTab("profile")}><TabIco t="profile" /><span>Profile</span></button>}
           <span className={`net ${chainOk ? "ok" : ""}`}><i />{chainOk ? "Portaldot V3" : account ? "Wrong network" : "Not connected"}</span>
           <span className="mono muted">chain {portaldot.id}</span>
+          <a className="side-help" href="/how-it-works"><Ico n="help" /><span>Help</span><Ico n="arrow" /></a>
         </div>
       </aside>
       <main>
@@ -324,7 +284,7 @@ export function App() {
               onDisconnect={() => void disconnect()} onSwitchNet={switchNet} />
           </nav>
         </header>
-        <WalletModal open={picker} wallets={wallets} busyId={picking} onPick={(w) => void pickWallet(w)} onClose={() => setPicker(false)} />
+        <WalletModal open={wallet.picker} wallets={wallets} busyId={wallet.picking} onPick={(w) => void wallet.pick(w)} onClose={wallet.close} />
 
         {gated && (
           <div className="netbar" role="alert">
@@ -342,10 +302,10 @@ export function App() {
           {tab === "issue" && <div className="quick-route"><span><i>01</i> Connect wallet</span><b>→</b><span><i>02</i> Check Portaldot &amp; gas</span><b>→</b><span><i>03</i> Create a receipt</span>{!account ? <button onClick={connectWallet}>Connect wallet <Ico n="arrow" /></button> : <a href="#wizard">Start issuing <Ico n="arrow" /></a>}</div>}
         </div>
 
-        {notice && <p className="banner" role="status">{notice}</p>}
-        {needsWallet && (inFrame() || (!anyWallet() && !wallets.some((w) => w.provider))) ? (
-          <Empty icon="◇" title="No wallet detected" tone="warn" body={inFrame() ? "Wallets can't attach inside an embedded preview. Open this page in a full browser tab." : "Install any EVM browser wallet (OKX, Rabby, MetaMask, Coinbase and more), then reload. Explore and Verify work without a wallet."}>
-            <button className="btn primary" onClick={() => setPicker(true)}>Choose a wallet</button>
+        {(notice || wallet.embedded) && <p className="banner" role="status">{notice || "Wallets cannot attach inside an embedded preview. Open this page in a full browser tab."}</p>}
+        {needsWallet && wallet.noWallet ? (
+          <Empty icon="◇" title="No wallet detected" tone="warn" body={wallet.embedded ? "Wallets can't attach inside an embedded preview. Open this page in a full browser tab." : "Install any EVM browser wallet (OKX, Rabby, MetaMask, Coinbase and more), then reload. Explore and Verify work without a wallet."}>
+            <button className="btn primary" onClick={wallet.open}>Choose a wallet</button>
           </Empty>
         ) : needsWallet && !account ? (
           <Empty icon="◎" title="Connect your wallet" body="Connect to issue invoices, trade shares and claim payouts. Explore and Verify work without a wallet.">
@@ -362,6 +322,7 @@ export function App() {
             )}
             {account && (tab === "issue" || tab === "trade") && <GasTip consoleUrl={CONSOLE} guideUrl={GUIDE} account={account} />}
             <div className={`tabbody t-${tab} ${gated && tab !== "explore" && tab !== "verify" ? "gated" : ""}`} inert={(gated && tab !== "explore" && tab !== "verify") || undefined}>
+              <Suspense fallback={<div className="screen-loading" role="status" aria-busy="true"><span className="skel w40 h2" /><span className="skel w100" /><span className="skel w80" /></div>}>
               {tab === "issue" && <Issue c={c} />}
               {tab === "dashboard" && <Dashboard c={c} />}
               {tab === "trade" && <Trade c={c} />}
@@ -370,6 +331,7 @@ export function App() {
               {tab === "verify" && <Verify c={c} />}
               {tab === "history" && <History c={c} />}
               {tab === "profile" && (account || publicProfile) && <Profile c={c} />}
+              </Suspense>
             </div>
           </>
         )}

@@ -49,10 +49,17 @@ export function Trade({ c }: { c: Ctx }) {
     .filter((x) => !q || `${x.r.id} ${x.r.note} ${KINDS[x.r.kind]}`.toLowerCase().includes(q.toLowerCase()))
     .sort((a, b) => sort === "discount" ? b.discount - a.discount : sort === "yield" ? b.ret - a.ret : sort === "due" ? (a.r.dueDate || 9e12) - (b.r.dueDate || 9e12) : sort === "price" ? a.price - b.price : b.l.lid - a.l.lid);
   const sel = cards.find((x) => x.l.lid === open);
-  const buyN = Number(amt || (sel ? units(sel.l.remaining).replace(/,/g, "") : 0)) || 0;
+  const buyAmount = amt.replace(/,/g, "").trim();
+  const buyN = Number(buyAmount) || 0;
+  const maxBuy = sel ? Number(units(sel.l.remaining).replace(/,/g, "")) : 0;
+  const buyValid = Boolean(sel) && Boolean(buyAmount) && /^\d+(\.\d+)?$/.test(buyAmount) && buyN > 0 && buyN <= maxBuy;
+  const buyError = !amt ? "" : !/^\d+(\.\d+)?$/.test(amt.trim()) || !(Number(amt) > 0) ? "Enter a positive share amount." : Number(amt) > maxBuy ? `Only ${units(sel?.l.remaining ?? 0n)} shares are available.` : "";
+  const walletReason = !c.account ? "Connect your wallet to continue." : c.gated ? "Switch to Portaldot V3 before submitting." : c.busy ? "Wait for the current transaction to finish." : "";
   const sellable = c.rows.filter((r) => r.fraction && !r.settle.settled && (c.held.get(r.id) ?? 0n) > 0n);
   const sellRow = c.rows.find((r) => r.id === Number(sellId));
   const sellFace = sellRow ? n6(faceShare(sellRow), sellRow.settle.decimals || 18) : 0;
+  const sellAmtOk = /^\d+(\.\d+)?$/.test(sellAmt.trim()) && Number(sellAmt) > 0;
+  const sellPriceOk = /^\d+(\.\d+)?$/.test(sellPrice.trim()) && Number(sellPrice) > 0;
   const highestDiscount = [...cards].sort((a, b) => b.discount - a.discount)[0];
   const endingSoon = cards.filter((x) => x.days > 0).sort((a, b) => a.days - b.days)[0];
   const newest = [...cards].sort((a, b) => b.l.lid - a.l.lid)[0];
@@ -113,7 +120,7 @@ export function Trade({ c }: { c: Ctx }) {
         <aside className="card sell-panel" id="sell" aria-label="Sell shares">
           <h2><Ico n="tag" /> Sell shares</h2>
           <p className="muted">Get tPOT today. Shares are held in escrow by PotKit until sold or cancelled; buyers pay you directly in the same transaction.</p>
-          {!sellable.length ? <div className="trade-sell-empty"><p className="muted">You hold no unsettled shares. Issue an invoice first.</p><button className="btn sm primary" onClick={() => c.setTab("issue")}>Issue invoice <Ico n="arrow" /></button></div> : (
+          {!sellable.length ? <div className="trade-sell-empty"><p className="muted">You hold no unsettled shares. Issue an invoice first.</p><button className="btn sm primary" onClick={() => c.account ? c.setTab("issue") : c.connect()}>{c.account ? "Issue invoice" : "Connect wallet"} <Ico n="arrow" /></button></div> : (
             <>
               <label htmlFor="s-id">Receipt</label>
               <select id="s-id" value={sellId} onChange={(e) => setSellId(e.target.value)}>
@@ -121,8 +128,8 @@ export function Trade({ c }: { c: Ctx }) {
                 {sellable.map((r) => <option key={r.id} value={r.id}>#{r.id} · {r.note.slice(0, 30)} · {units(c.held.get(r.id) ?? 0n)} held</option>)}
               </select>
               <div className="row fields">
-                <div><label htmlFor="s-amt">Shares</label><input id="s-amt" inputMode="decimal" value={sellAmt} onChange={(e) => setSellAmt(e.target.value)} /></div>
-                <div><label htmlFor="s-p">Price / share</label><input id="s-p" inputMode="decimal" value={sellPrice} onChange={(e) => setSellPrice(e.target.value)} /></div>
+                <div><label htmlFor="s-amt">Shares</label><input id="s-amt" inputMode="decimal" value={sellAmt} aria-invalid={!sellAmtOk} onChange={(e) => setSellAmt(e.target.value)} />{!sellAmtOk && <small className="field-error">Enter a positive share amount.</small>}</div>
+                <div><label htmlFor="s-p">Price / share</label><input id="s-p" inputMode="decimal" value={sellPrice} aria-invalid={!sellPriceOk} onChange={(e) => setSellPrice(e.target.value)} />{!sellPriceOk && <small className="field-error">Enter a positive price in tPOT.</small>}</div>
               </div>
               {sellRow && (
                 <dl className="facts compact">
@@ -137,7 +144,7 @@ export function Trade({ c }: { c: Ctx }) {
                   <button className="btn sm" onClick={() => c.setTab("issue")}>Open Issue <Ico n="arrow" /></button>
                 </div>
               )}
-              <button className="btn primary block" disabled={dis || !c.market || !sellRow || !(sellRow.settle.faceValue > 0n) || !sellRow.settle.token} onClick={() => {
+              <button className="btn primary block" disabled={dis || !c.market || !sellRow || !(sellRow.settle.faceValue > 0n) || !sellRow.settle.token || !sellAmtOk || !sellPriceOk} title={!sellRow ? "Choose a receipt with unsettled shares." : !sellAmtOk ? "Enter a positive share amount." : !sellPriceOk ? "Enter a positive price in tPOT." : !(sellRow.settle.faceValue > 0n) ? "Lock the receipt with terms before listing shares." : walletReason} onClick={() => {
                 if (!sellRow?.fraction) return;
                 if (!/^\d+(\.\d+)?$/.test(sellAmt.trim()) || !/^\d+(\.\d+)?$/.test(sellPrice.trim()) || !(Number(sellAmt) > 0) || !(Number(sellPrice) > 0)) { toast({ kind: "err", title: "Check the form", detail: "Enter a positive number of shares and price." }); return; }
                 setPending({ kind: "list", row: sellRow, amount: sellAmt.trim(), price: sellPrice.trim(), face: sellFace });
@@ -195,7 +202,8 @@ export function Trade({ c }: { c: Ctx }) {
             ) : sel.r.settle.settled ? <p className="muted">Settled — closed for trading.</p> : (
               <div className="buy-panel">
                 <label htmlFor="b-amt">Shares to buy</label>
-                <input id="b-amt" inputMode="decimal" placeholder={units(sel.l.remaining)} value={amt} onChange={(e) => setAmt(e.target.value)} />
+                <input id="b-amt" inputMode="decimal" placeholder={units(sel.l.remaining)} value={amt} aria-invalid={Boolean(buyError)} onChange={(e) => setAmt(e.target.value)} />
+                {buyError && <small className="field-error">{buyError}</small>}
                 <dl className="facts compact">
                   <div><dt>You pay</dt><dd className="num">{(buyN * sel.price).toLocaleString(undefined, { maximumFractionDigits: 6 })} tPOT</dd></div>
                   <div><dt>Payout at settle</dt><dd className="num">{sel.face ? `${(buyN * sel.face).toLocaleString(undefined, { maximumFractionDigits: 6 })} tPOT` : "—"}</dd></div>
@@ -205,31 +213,10 @@ export function Trade({ c }: { c: Ctx }) {
                 {c.account && c.native !== null && Number(c.usdRaw) / 1e18 < buyN * sel.price && (
                   <FaucetButton account={c.account} compact onFunded={() => void c.refresh()} />
                 )}
-                {pending?.kind === "buy" ? (
-                  <div className="confirm-box" role="dialog" aria-label="Confirm purchase">
-                    <p className="kicker">Confirm purchase</p>
-                    <p><b>Buy {num(Number(pending.amount))} shares of #{sel.r.id} at {num(sel.price)} tPOT.</b></p>
-                    <dl className="facts compact">
-                      <div><dt>Cost</dt><dd className="num">{num(Number(pending.amount) * sel.price)} tPOT</dd></div>
-                      <div><dt>Face payout</dt><dd className="num">{sel.face ? `${num(Number(pending.amount) * sel.face)} tPOT` : "—"}</dd></div>
-                      <div><dt>Expected profit</dt><dd className="num pos">{sel.face ? `+${num(Number(pending.amount) * (sel.face - sel.price))} tPOT (${pct(sel.ret)})` : "—"}</dd></div>
-                    </dl>
-                    <div className="row confirm-acts">
-                      <button className="btn" disabled={Boolean(c.busy)} onClick={() => setPending(null)}>Cancel</button>
-                      <button className="btn primary" disabled={dis} onClick={() => void c.run(`buy${sel.l.lid}`, async () => {
-                        const a = pending.amount;
-                        const h = await buyShares(c.ready(), c.market as Address, sel.l, a);
-                        c.note("Shares bought", `${a} KIT${sel.r.id} for ${(Number(a) * sel.price).toLocaleString()} tPOT · from ${short(sel.l.seller)}`, h); setOpen(null); setPending(null);
-                      })}>{c.busy === `buy${sel.l.lid}` ? "Confirm in wallet…" : "Confirm"}</button>
-                    </div>
-                  </div>
-                ) : (
-                  <button className="btn primary block" disabled={dis || buyN <= 0} onClick={() => {
-                    const a = (amt || units(sel.l.remaining)).replace(/,/g, "").trim();
-                    if (!/^\d+(\.\d+)?$/.test(a) || !(Number(a) > 0)) { toast({ kind: "err", title: "Check the amount", detail: "Enter a positive amount." }); return; }
-                    setPending({ kind: "buy", amount: a });
-                  }}>Review purchase</button>
-                )}
+                <button className="btn primary block" disabled={Boolean(c.busy) || (Boolean(c.account) && c.gated) || (Boolean(c.account) && !buyValid)} title={!c.account ? walletReason : c.gated ? walletReason : !buyValid ? (buyError || "Enter a share amount to continue.") : undefined} onClick={() => { if (!c.account) { c.connect(); return; } if (c.gated) { c.switchNetwork(); return; } if (!buyValid) return; void c.run(`buy${sel.l.lid}`, async () => {
+                  const h = await buyShares(c.ready(), c.market as Address, sel.l, buyAmount);
+                  c.note("Shares bought", `${buyAmount} KIT${sel.r.id} for ${(buyN * sel.price).toLocaleString()} tPOT · from ${short(sel.l.seller)}`, h); setOpen(null); setPending(null); setAmt("");
+                }); }}>{c.busy === `buy${sel.l.lid}` ? "Confirm in wallet…" : !c.account ? "Connect wallet" : c.gated ? "Switch network" : !buyValid ? "Enter an amount" : "Confirm"}</button>
                 <p className="payout-note" role="note"><b>Illustrative payout only.</b> This estimate assumes the debtor pays the full face value. Payment is not guaranteed; an overdue invoice can remain unpaid. Actual claims are pro-rata to the amount received on-chain.</p>
               </div>
             )}

@@ -1,5 +1,4 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
-import Lenis from "lenis";
 import { appUrl } from "../routes";
 
 // All external links live here, grouped once (header dropdowns + footer columns read from these).
@@ -88,12 +87,23 @@ export function Reveal({ children, className = "", delay = 0, as: Tag = "div" }:
 export function useLenis() {
   const [scrolled, setScrolled] = useState(false);
   useEffect(() => {
-    const lenis = new Lenis({ lerp: 0.1, anchors: { offset: -80 } });
-    let raf = 0;
-    const loop = (t: number) => { lenis.raf(t); raf = requestAnimationFrame(loop); };
-    raf = requestAnimationFrame(loop);
-    lenis.on("scroll", () => setScrolled(scrollY > 12));
-    return () => { cancelAnimationFrame(raf); lenis.destroy(); };
+    const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const light = matchMedia("(max-width: 600px)").matches;
+    let lenis: { raf: (t: number) => void; destroy: () => void; on: (event: "scroll", cb: () => void) => void } | undefined;
+    let raf = 0, stopped = false;
+    const update = () => setScrolled(scrollY > 12);
+    if (reduced || light) {
+      addEventListener("scroll", update, { passive: true }); update();
+    } else {
+      void import("lenis").then(({ default: Lenis }) => {
+        if (stopped) return;
+        lenis = new Lenis({ lerp: 0.1, anchors: { offset: -80 } });
+        const loop = (t: number) => { lenis?.raf(t); raf = requestAnimationFrame(loop); };
+        raf = requestAnimationFrame(loop);
+        lenis.on("scroll", update);
+      });
+    }
+    return () => { stopped = true; cancelAnimationFrame(raf); removeEventListener("scroll", update); lenis?.destroy(); };
   }, []);
   return scrolled;
 }

@@ -36,4 +36,16 @@ function devApi(): Plugin {
   };
 }
 
-export default defineConfig({ plugins: [react(), devApi()], server: { port: 8080, host: true } });
+export default defineConfig({
+  plugins: [react(), devApi()],
+  server: { port: 8080, host: true },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (id.includes("/node_modules/viem/") || id.includes("/node_modules/ox/") || id.includes("/node_modules/@noble/")) return "evm-vendor";
+        },
+      },
+    },
+  },
+});

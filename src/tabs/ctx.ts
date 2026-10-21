@@ -1,4 +1,5 @@
 import type { Address, Hash } from "viem";
+import type { TxPhase } from "../hooks/useTx";
 import type { Addrs, ChainEvent, DeployStep, Listing, Row } from "../lib/chain";
 
 export type Tab = "dashboard" | "issue" | "trade" | "portfolio" | "explore" | "verify" | "history" | "profile";
@@ -6,7 +7,7 @@ export const TABS: Tab[] = ["dashboard", "issue", "trade", "portfolio", "explore
 export type Log = { at: string; action: string; detail: string; hash?: Hash };
 
 export type Ctx = {
-  account: Address | ""; chainOk: boolean | null; gated: boolean; busy: string;
+  account: Address | ""; chainOk: boolean | null; gated: boolean; busy: string; phase: TxPhase;
   addrs: Addrs | null; setAddrs: (a: Addrs | null) => void; shared: boolean;
   /** payment token: always NATIVE (tPOT); market: the PotKit contract (same as addrs.vault) */
   usd: Address | ""; market: Address | "";

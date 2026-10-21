@@ -46,9 +46,9 @@ export function Smoke() {
 
     const TRAIL_MS = 140;
     const TENT = [
-      { off: -1, ph: 0.0, col: "111,195,211" },
+      { off: -1, ph: 0.0, col: "155,128,255" },
       { off: -0.4, ph: 1.9, col: "180,138,200" },
-      { off: 0.4, ph: 3.3, col: "111,195,211" },
+      { off: 0.4, ph: 3.3, col: "155,128,255" },
       { off: 1, ph: 4.8, col: "180,138,200" },
     ];
     const loop = (now: number) => {
@@ -97,7 +97,7 @@ export function Smoke() {
       ctx.scale(0.9 * pulse, 1.05 / pulse);
       const g = ctx.createRadialGradient(0, 0, 0, 0, 0, R);
       g.addColorStop(0, `rgba(240,248,250,${vis})`);
-      g.addColorStop(0.25, `rgba(111,195,211,${0.75 * vis})`);
+      g.addColorStop(0.25, `rgba(155,128,255,${0.75 * vis})`);
       g.addColorStop(0.65, `rgba(180,138,200,${0.28 * vis})`);
       g.addColorStop(1, "rgba(180,138,200,0)");
       ctx.fillStyle = g;

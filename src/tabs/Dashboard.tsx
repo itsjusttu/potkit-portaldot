@@ -45,7 +45,7 @@ export function Dashboard({ c }: { c: Ctx }) {
     <div className="dashboard-page">
       <section className="dash-overview">
         <div className="dash-overview-copy"><p className="kicker">Overview · {c.addrs ? `${invoiceWord(c.total)} on PotKit` : "Portaldot V3 testnet"}</p><h1>Your invoice book,<br /><span>from issue to redeem.</span></h1><p>Follow every receipt from issuance through settlement, with activity read directly from the chain.</p>
-          {!c.account && <button className="btn sm dash-connect" onClick={c.connect}>Connect wallet to personalize <Ico n="arrow" /></button>}
+          
           {c.account && c.chainOk === false && <span className="dash-wrong-network">Wrong network · switch from the wallet menu</span>}
         </div>
         <div className="dash-hero-metrics" aria-label="Protocol overview">
@@ -65,10 +65,12 @@ export function Dashboard({ c }: { c: Ctx }) {
               <header><span className="dash-stage-index">0{i + 1}</span><div><b>{stage.title}</b><small>{stage.note}</small></div><strong>{stage.rows.length}</strong></header>
               <div className="dash-stage-items">{stage.rows.slice(0, 4).map((r) => {
                 const listing = open.find((l) => l.receiptId === r.id);
-                return <button className="dash-invoice-mini" key={r.id} onClick={() => c.setTab("verify", { id: String(r.id) })}>
+                const next = stage.key === "issue" ? "issue" : stage.key === "lock" || stage.key === "trade" ? "trade" : stage.key === "settle" ? "portfolio" : "verify";
+                const action = stage.key === "issue" ? "Add terms" : stage.key === "lock" ? "List shares" : stage.key === "trade" ? "Open market" : stage.key === "settle" ? "Open claims" : "View receipt";
+                return <button className="dash-invoice-mini" key={r.id} onClick={() => c.setTab(next, stage.key === "lock" ? { sell: String(r.id) } : { id: String(r.id) })}>
                   <span className="dash-invoice-no">INVOICE #{r.id}</span><b>{r.note || KINDS[r.kind]}</b>
                   <span className="dash-invoice-detail"><span>Face</span><strong>{faceValueOf(r) ? `${fmt(faceValueOf(r), r.settle.decimals)} ${r.settle.symbol}` : "—"}</strong></span>
-                  <span className="dash-invoice-state">{stage.key === "redeem" ? <span className="tag dash-redeemed">REDEEMED</span> : <SettleBadge r={r} terms={false} />}{listing && <small>{units(listing.remaining)} shares listed</small>}</span>
+                  <span className="dash-invoice-state">{stage.key === "redeem" ? <span className="tag dash-redeemed">REDEEMED</span> : <SettleBadge r={r} terms={false} />}{listing && <small>{units(listing.remaining)} shares listed</small>}<small className="dash-next-action">{action} <Ico n="arrow" size={12} /></small></span>
                 </button>;
               })}{!stage.rows.length && <p className="dash-stage-empty">Nothing here yet</p>}</div>
               {stage.rows.length > 4 && <button className="dash-more" onClick={() => c.setTab(stage.key === "trade" ? "trade" : "portfolio")}>View {stage.rows.length - 4} more →</button>}

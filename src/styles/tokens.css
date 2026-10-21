@@ -1,0 +1,51 @@
+/* PotKit app — the ONLY place design tokens are defined. Every other app stylesheet reads these.
+   (Previously 9 stacked blocks redefined --bg/--line/--brand/--surface with different values; the last one won.) */
+html[data-route="app"] {
+  color-scheme: dark;
+  --accent: #8b68ff;
+  --accent-fg: #fff;
+  --accent2: #8b68ff;
+  --accent3: #b48ac8;
+  --bad: #f07a8c;
+  --bg: #07070d;
+  --brand: #8b68ff;
+  --brand-ink: #fff;
+  --fg: #f4f1fb;
+  --glass: rgba(255,255,255,.02);
+  --glass-hi: rgba(255,255,255,.06);
+  --grad: linear-gradient(115deg,#8b68ff 0%,#7652dd 100%);
+  --hud: #8b68ff;
+  --line: rgba(226,220,255,.09);
+  --line-strong: rgba(226,220,255,.17);
+  --muted: #9894a8;
+  --neo-bg: #07070d;
+  --neo-c: #8b68ff;
+  --neo-c-rgb: 139,104,255;
+  --neo-m: #b48ac8;
+  --neo-m-rgb: 180,138,200;
+  --neo-text: #f4f1fb;
+  --ok: #34d399;
+  --r-lg: 18px;
+  --r-md: 13px;
+  --r-sm: 9px;
+  --radius: 1.1rem;
+  --surface: #101019;
+  --surface-2: #151522;
+  --surface-3: #1e1d2c;
+  --warn: #e8c15a;
+  --positive: #34d399;
+  --negative: #f07a8c;
+  --focus: rgba(139,104,255,.38);
+  --accent-rgb: 139,104,255;
+  --line-rgb: 226,220,255;
+
+  /* semantic additions */
+  --surface-glass: rgba(16,16,25,.72);
+  --focus-ring: 0 0 0 3px rgba(139,104,255,.38);
+  --shadow-1: 0 1px 0 rgba(255,255,255,.04) inset, 0 8px 24px rgba(0,0,0,.35);
+  --shadow-2: 0 1px 0 rgba(255,255,255,.06) inset, 0 18px 48px rgba(0,0,0,.5);
+  --glow: 0 0 0 1px rgba(139,104,255,.35), 0 10px 32px rgba(139,104,255,.28);
+  --ease: cubic-bezier(.2,.7,.2,1);
+  --dur-1: .15s; --dur-2: .28s;
+  --tabbar-h: 3.6rem;
+}

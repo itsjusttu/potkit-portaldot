@@ -31,6 +31,11 @@ export function Issue({ c }: { c: Ctx }) {
   const originalSupply = (r: (typeof c.rows)[number]) => r.supply > 0n ? r.supply : (receiptHistory.get(r.id)?.lock?.amount ?? 0n) * 10n ** 18n;
   const needSetup = !c.addrs;
   const dis = Boolean(c.busy) || c.gated;
+  const noteOk = note.trim().length > 0 && note.length <= 140;
+  const faceOk = /^\d+(\.\d+)?$/.test(face.trim()) && Number(face) > 0;
+  const supplyOk = /^\d+$/.test(supply.trim()) && Number(supply) >= 1;
+  const dueOk = !due || new Date(`${due}T23:59:59`).getTime() > Date.now();
+  const connectReason = !c.account ? "Connect your wallet to continue." : c.gated ? "Switch to Portaldot V3 before submitting." : c.busy ? "Wait for the current transaction to finish." : "";
 
   const restart = () => { setWizId(0); setStep(0); };
   const resume = (id: number) => { setWizId(id); const r = c.rows.find((x) => x.id === id); if (r) { setKind(r.kind); setNote(r.note); } document.getElementById("wizard")?.scrollIntoView({ behavior: "smooth", block: "start" }); };
@@ -64,15 +69,16 @@ export function Issue({ c }: { c: Ctx }) {
               <p className="issue-privacy"><b>Public on-chain record.</b> Anyone can read these details. Do not include names, account numbers, invoice files or other sensitive personal data. PotKit records issuer-provided information; it does not independently authenticate the underlying invoice.</p>
               <div className="row fields">
                 <div><label htmlFor="w-kind">Kind</label><select id="w-kind" value={kind} onChange={(e) => setKind(Number(e.target.value))}>{KINDS.map((k, i) => <option key={k} value={i}>{k}</option>)}</select></div>
-                <div style={{ flex: 2 }}><label htmlFor="w-note">Note (1–140 chars)</label><input id="w-note" maxLength={140} value={note} onChange={(e) => setNote(e.target.value)} /></div>
+                <div className="field-grow"><label htmlFor="w-note">Note (1–140 chars)</label><input id="w-note" maxLength={140} value={note} aria-invalid={!noteOk} onChange={(e) => setNote(e.target.value)} />{!noteOk && <small className="field-error">Enter a short public note (1–140 characters).</small>}</div>
               </div>
               <div className="row fields">
-                <div><label htmlFor="w-face">Face value ({PAY_SYMBOL})</label><input id="w-face" inputMode="decimal" value={face} onChange={(e) => setFace(e.target.value)} /></div>
-                <div><label htmlFor="w-due">Due date</label><input id="w-due" type="date" value={due} onChange={(e) => setDue(e.target.value)} /></div>
-                <div><label htmlFor="w-sup">Shares to issue</label><input id="w-sup" inputMode="numeric" value={supply} onChange={(e) => setSupply(e.target.value)} /></div>
+                <div><label htmlFor="w-face">Face value ({PAY_SYMBOL})</label><input id="w-face" inputMode="decimal" value={face} aria-invalid={!faceOk} onChange={(e) => setFace(e.target.value)} />{!faceOk && <small className="field-error">Enter a positive face value in tPOT.</small>}</div>
+                <div><label htmlFor="w-due">Due date</label><input id="w-due" type="date" value={due} aria-invalid={!dueOk} onChange={(e) => setDue(e.target.value)} />{!dueOk && <small className="field-error">Choose a future due date.</small>}</div>
+                <div><label htmlFor="w-sup">Shares to issue</label><input id="w-sup" inputMode="numeric" value={supply} aria-invalid={!supplyOk} onChange={(e) => setSupply(e.target.value)} />{!supplyOk && <small className="field-error">Use a whole number of at least 1.</small>}</div>
               </div>
+              <dl className="issue-summary"><div><dt>Face value</dt><dd>{faceOk ? `${face} ${PAY_SYMBOL}` : "—"}</dd></div><div><dt>Shares</dt><dd>{supplyOk ? supply : "—"}</dd></div><div><dt>Due</dt><dd>{dueOk && due ? new Date(`${due}T12:00:00`).toLocaleDateString() : "—"}</dd></div></dl>
               <div className="wiz-nav"><span className={c.canMint ? "issue-ready-mint" : "muted"}>{c.canMint ? <><i />Ready to mint</> : "Only the issuer or approved minters can mint."}</span>
-                <button className="btn primary" disabled={!note.trim() || !/^\d+(\.\d+)?$/.test(face) || !/^\d+$/.test(supply)} onClick={() => setStep(1)}>Continue <Ico n="arrow" /></button></div>
+                <button className="btn primary" disabled={!noteOk || !faceOk || !supplyOk || !dueOk} title={!noteOk ? "Enter a public note." : !faceOk ? "Enter a positive face value." : !supplyOk ? "Enter a whole number of shares." : !dueOk ? "Choose a future due date." : undefined} onClick={() => setStep(1)}>Continue <Ico n="arrow" /></button></div>
             </div>
           )}
           {cur === 1 && (
@@ -81,10 +87,10 @@ export function Issue({ c }: { c: Ctx }) {
               <p className="muted">Creates an ERC-721 receipt in your wallet. One transaction.</p>
               <dl className="facts"><div><dt>Kind</dt><dd>{KINDS[kind]}</dd></div><div><dt>Note</dt><dd>{note}</dd></div></dl>
               <div className="wiz-nav"><button className="btn" onClick={() => setStep(0)}>Back</button>
-                <button className="btn primary" disabled={dis || !c.addrs || !c.canMint} onClick={() => void c.run("mint", async () => {
+                <button className="btn primary" disabled={Boolean(c.busy) || (Boolean(c.account) && (!c.addrs || !c.canMint))} title={c.account ? (!c.addrs ? "Deploy PotKit first." : !c.canMint ? "Only the issuer or an approved minter can mint." : undefined) : undefined} onClick={() => { if (!c.account) { c.connect(); return; } if (c.gated) { c.switchNetwork(); return; } void c.run("mint", async () => {
                   const m = await mint(c.ready(), c.addrs!.receipt, kind, note.trim());
                   setWizId(m.id); c.note("Receipt minted", `#${m.id} · ${KINDS[kind]}`, m.hash);
-                })}>{c.busy === "mint" ? "Waiting for wallet…" : "Mint receipt"}</button></div>
+                }); }}>{c.busy === "mint" ? "Waiting for wallet…" : !c.account ? "Connect wallet" : c.gated ? "Switch network" : "Mint receipt"}</button></div>
             </div>
           )}
           {cur === 2 && row && (
@@ -97,13 +103,13 @@ export function Issue({ c }: { c: Ctx }) {
                 <div><label htmlFor="w-due2">Due date</label><input id="w-due2" type="date" value={due} onChange={(e) => setDue(e.target.value)} /></div>
               </div>
               <div className="wiz-nav"><button className="btn" onClick={restart}>Start over</button>
-                <button className="btn primary" disabled={dis} onClick={() => void c.run("frac", async () => {
+                <button className="btn primary" disabled={Boolean(c.busy)} title={c.account ? (c.gated ? connectReason : undefined) : undefined} onClick={() => { if (!c.account) { c.connect(); return; } if (c.gated) { c.switchNetwork(); return; } void c.run("frac", async () => {
                   const s = supply.trim(); if (!/^\d+$/.test(s) || Number(s) < 1) throw new Error("Shares must be a whole number ≥ 1.");
                   const v = face.trim(); if (!/^\d+(\.\d+)?$/.test(v) || Number(v) <= 0) throw new Error("Enter a positive face value.");
                   const d = due ? new Date(`${due}T23:59:59`) : undefined; if (d && d.getTime() <= Date.now()) throw new Error("Due date must be in the future.");
                   const f = await fractionalize(c.ready(), c.addrs!, row.id, s, v, d);
                   c.note("Fractionalized", `#${row.id} → ${s} KIT${row.id} · ${v} ${PAY_SYMBOL}${d ? ` due ${d.toLocaleDateString()}` : ""}${f.token ? ` · ${short(f.token)}` : ""}`, f.hash);
-                })}>{c.busy === "frac" ? "Confirm in wallet…" : "Lock & issue shares"}</button></div>
+                }); }}>{c.busy === "frac" ? "Confirm in wallet…" : !c.account ? "Connect wallet" : c.gated ? "Switch network" : "Lock & issue shares"}</button></div>
             </div>
           )}
           {cur === 3 && row && (

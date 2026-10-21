@@ -36,9 +36,11 @@ export function DotSphere({ className = "", speed = 0.16, tilt = 0.38, interacti
   useEffect(() => {
     const cv = ref.current; const ctx = cv?.getContext("2d");
     if (!cv || !ctx) return;
+    const lowPower = matchMedia("(max-width: 600px)").matches;
+    const pointCount = lowPower ? Math.floor(COUNT * 0.52) : COUNT;
     let w = 0, h = 0, raf = 0, rot = 0.8, last = 0, still = reduced() && !interactive, tx = 0, ty = 0, mx = 0, my = 0;
     const move = (e: PointerEvent) => { tx = e.clientX / innerWidth - 0.5; ty = e.clientY / innerHeight - 0.5; };
-    if (interactive && !still) addEventListener("pointermove", move);
+    if (interactive && !still && !lowPower) addEventListener("pointermove", move);
     const size = () => { const r = cv.getBoundingClientRect(); const d = Math.min(devicePixelRatio || 1, 1.5); w = r.width; h = r.height; cv.width = Math.round(w * d); cv.height = Math.round(h * d); ctx.setTransform(d, 0, 0, d, 0, 0); };
     const frame = (now: number) => {
       const t = now / 1000; if (!still && !document.hidden) rot += (t - last) * speed; last = t;
@@ -48,7 +50,7 @@ export function DotSphere({ className = "", speed = 0.16, tilt = 0.38, interacti
       const P = (x: number, y: number, z: number): [number, number, number] => { const x1 = x * cr + z * sr, z1 = -x * sr + z * cr; return [cx + x1 * R, cy + (y * ct - z1 * st) * R, y * st + z1 * ct]; };
       ctx.clearRect(0, 0, w, h);
       DOT_COUNTS.fill(0);
-      for (let i = 0; i < COUNT; i++) {
+      for (let i = 0; i < pointCount; i++) {
         const x = PTS[i * 3]!, y = PTS[i * 3 + 1]!, z = PTS[i * 3 + 2]!;
         const x1 = x * cr + z * sr, z1 = -x * sr + z * cr;
         const px = cx + x1 * R, py = cy + (y * ct - z1 * st) * R, depth = y * st + z1 * ct;
@@ -56,8 +58,8 @@ export function DotSphere({ className = "", speed = 0.16, tilt = 0.38, interacti
         DOT_BINS[layer]![offset] = px; DOT_BINS[layer]![offset + 1] = py; DOT_COUNTS[layer]++;
       }
       const alpha = [0.12, 0.28, 0.55, 0.9];
-      DOT_BINS.forEach((b, k) => { ctx.fillStyle = `rgba(222,240,246,${alpha[k]})`; const s = k > 1 ? 1.7 : 1.1; for (let i = 0; i < DOT_COUNTS[k]! * 2; i += 2) ctx.fillRect(b[i]!, b[i + 1]!, s, s); });
-      ctx.lineWidth = 1; ctx.strokeStyle = "rgba(111,195,211,.55)";
+      DOT_BINS.forEach((b, k) => { ctx.fillStyle = `rgba(232,228,250,${alpha[k]})`; const s = k > 1 ? 1.7 : 1.1; for (let i = 0; i < DOT_COUNTS[k]! * 2; i += 2) ctx.fillRect(b[i]!, b[i + 1]!, s, s); });
+      ctx.lineWidth = 1; ctx.strokeStyle = "rgba(155,128,255,.55)";
       NODES.forEach((a, i) => {
         const b = NODES[(i + 1) % NODES.length]!; ctx.beginPath(); let pen = false;
         for (let s = 0; s <= 24; s++) { const v = arc(a, b, s / 24); const [px, py, z] = P(v[0]!, v[1]!, v[2]!); if (z < -0.05) { pen = false; continue; } if (pen) ctx.lineTo(px, py); else { ctx.moveTo(px, py); pen = true; } }
@@ -66,8 +68,8 @@ export function DotSphere({ className = "", speed = 0.16, tilt = 0.38, interacti
       NODES.forEach((n, i) => {
         const [px, py, z] = P(n[0], n[1], n[2]); if (z < -0.05) return;
         const ph = still ? 0.3 : (t * 0.7 + i * 0.27) % 1;
-        ctx.fillStyle = "#6fc3d3"; ctx.beginPath(); ctx.arc(px, py, 2.6, 0, 7); ctx.fill();
-        ctx.strokeStyle = `rgba(111,195,211,${0.5 * (1 - ph)})`; ctx.beginPath(); ctx.arc(px, py, 4 + ph * 16, 0, 7); ctx.stroke();
+        ctx.fillStyle = "#9b80ff"; ctx.beginPath(); ctx.arc(px, py, 2.6, 0, 7); ctx.fill();
+        ctx.strokeStyle = `rgba(155,128,255,${0.5 * (1 - ph)})`; ctx.beginPath(); ctx.arc(px, py, 4 + ph * 16, 0, 7); ctx.stroke();
       });
       if (!still) raf = requestAnimationFrame(frame);
     };
