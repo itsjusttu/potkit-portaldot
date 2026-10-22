@@ -24,13 +24,13 @@ export function ReceiptArt({ id, kind, note, face, due, supply, stage }: { id?: 
   return (
     <svg className="rart" viewBox="0 0 340 220" role="img" aria-label={`Receipt preview: ${KINDS[kind]} ${note}`}>
       <defs>
-        <linearGradient id="rg" x1="0" x2="1" y1="0" y2="1"><stop offset="0" stopColor="#111126" /><stop offset="1" stopColor="#080a13" /></linearGradient>
-        <pattern id="rgrid" width="14" height="14" patternUnits="userSpaceOnUse"><path d="M14 0H0v14" fill="none" stroke="rgba(155,134,255,.09)" /></pattern>
+        <linearGradient id="rg" x1="0" x2="1" y1="0" y2="1"><stop offset="0" stopColor="#242424" /><stop offset="1" stopColor="#080808" /></linearGradient>
+        <pattern id="rgrid" width="14" height="14" patternUnits="userSpaceOnUse"><path d="M14 0H0v14" fill="none" stroke="rgba(255,255,255,.09)" /></pattern>
       </defs>
       <rect width="340" height="220" fill="url(#rg)" />
       <rect width="340" height="220" fill="url(#rgrid)" />
       <rect x=".5" y=".5" width="339" height="219" fill="none" stroke="rgba(255,255,255,.18)" />
-      <path d="M12 12h18M12 12v18M328 12h-18M328 12v18M12 208h18M12 208v-18M328 208h-18M328 208v-18" stroke="#9b86ff" strokeWidth="1.5" fill="none" />
+      <path d="M12 12h18M12 12v18M328 12h-18M328 12v18M12 208h18M12 208v-18M328 208h-18M328 208v-18" stroke="#999999" strokeWidth="1.5" fill="none" />
       <text x="24" y="40" className="ra-k">POTKIT RECEIPT · {KINDS[kind].toUpperCase()}</text>
       <text x="316" y="40" textAnchor="end" className="ra-id">{id ? `#${id}` : "#—"}</text>
       <text x="24" y="78" className="ra-t">{lines[0] || "Untitled invoice"}</text>

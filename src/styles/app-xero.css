@@ -1,0 +1,378 @@
+/* PotKit app — final design layer (loaded LAST). Black canvas, hairline cards, pill actions, IBM Plex Mono.
+   Only restyles; markup, routes and chain logic are unchanged. Colours come from tokens.css. */
+html[data-route="app"] body { background: #000; font-family: var(--font); }
+html[data-route="app"] body::before { display: none; }
+html[data-route="app"] :is(h1,h2,h3,h4,button,input,select,textarea,.btn) { font-family: var(--font); }
+html[data-route="app"] a { color: #fff; }
+html[data-route="app"] .grad { background: none; -webkit-text-fill-color: currentColor; color: var(--grey-1); }
+html[data-route="app"] ::selection { background: #fff; color: #000; }
+
+/* ---------- shell ---------- */
+html[data-route="app"] .side { background: #000; border-right: 1px solid var(--line); }
+html[data-route="app"] .side-brand b { font-weight: 600; letter-spacing: -.01em; }
+html[data-route="app"] .side-brand small { color: var(--grey-2); text-transform: uppercase; letter-spacing: .08em; font-size: .62rem; }
+html[data-route="app"] .side-new { background: #fff; color: #000; border: 0; border-radius: var(--pill); font-weight: 600; box-shadow: none; }
+html[data-route="app"] .side-new:hover { background: #e6e6e6; transform: none; }
+html[data-route="app"] .side-group-title { color: var(--grey-2); letter-spacing: .12em; }
+html[data-route="app"] .side-item { border-radius: 12px; color: var(--grey-1); border: 1px solid transparent; }
+html[data-route="app"] .side-item:hover { background: var(--ink-2); color: #fff; }
+html[data-route="app"] .side-item.on { background: var(--ink-3); color: #fff; box-shadow: none; border-color: var(--line-strong); }
+html[data-route="app"] main > header.top { background: rgba(0,0,0,.82); border: 0; border-bottom: 1px solid var(--line); border-radius: 0; backdrop-filter: blur(14px); }
+html[data-route="app"] .crumb b { font-weight: 600; }
+
+/* ---------- controls: pill language ---------- */
+html[data-route="app"] .btn { height: 2.7rem; padding: 0 1.2rem; border-radius: var(--pill); background: transparent; border: 1px solid var(--line-strong); color: #fff; font-weight: 500; }
+html[data-route="app"] .btn:hover:not(:disabled) { background: var(--ink-3); border-color: rgba(255,255,255,.4); }
+html[data-route="app"] .btn.sm { height: 2.2rem; padding: 0 .95rem; font-size: .82rem; }
+html[data-route="app"] .btn.primary { background: #fff; color: #000; border-color: #fff; font-weight: 600; box-shadow: none; }
+html[data-route="app"] .btn.primary:hover:not(:disabled) { background: #dcdcdc; border-color: #dcdcdc; color: #000; box-shadow: none; filter: none; }
+html[data-route="app"] .btn.primary:disabled { background: var(--ink-3); border-color: var(--ink-3); color: var(--grey-2); }
+html[data-route="app"] .btn.danger, html[data-route="app"] .btn.bad { color: var(--down); border-color: rgba(239,68,68,.4); }
+html[data-route="app"] :is(input, select, textarea) { background: #1a1a1a; border: 1px solid transparent; border-radius: 10px; color: #fff; }
+html[data-route="app"] :is(input, select, textarea)::placeholder { color: var(--grey-2); }
+html[data-route="app"] :is(input, select, textarea):hover { border-color: var(--line-strong); }
+html[data-route="app"] :is(input, select, textarea):focus { outline: none; border-color: #fff; box-shadow: none; }
+html[data-route="app"] label { color: var(--grey-1); font-size: .72rem; letter-spacing: .1em; text-transform: uppercase; }
+html[data-route="app"] .chip { border-radius: var(--pill); }
+html[data-route="app"] .chip.on { background: #fff; color: #000; border-color: #fff; }
+html[data-route="app"] .trade-amount-presets button { border-radius: var(--pill); background: var(--ink-3); border: 1px solid var(--line); color: #fff; }
+html[data-route="app"] .trade-amount-presets button:hover { background: #fff; color: #000; }
+html[data-route="app"] .tag { border-radius: var(--pill); letter-spacing: .06em; }
+html[data-route="app"] .kicker { color: var(--grey-2); letter-spacing: .14em; text-transform: uppercase; font-size: .68rem; }
+
+/* ---------- cards ---------- */
+html[data-route="app"] .card, html[data-route="app"] .kpi, html[data-route="app"] .lcard, html[data-route="app"] .empty {
+  background: var(--ink-1); border: 1px solid var(--line); border-radius: var(--r-card); box-shadow: none; }
+html[data-route="app"] .card::before { display: none; }
+html[data-route="app"] .card:hover, html[data-route="app"] .lcard:hover { border-color: var(--line-strong); transform: none; background: var(--ink-2); }
+html[data-route="app"] .kpi b, html[data-route="app"] .num { font-weight: 500; letter-spacing: -.02em; }
+html[data-route="app"] .kpi.pos b { color: var(--up); } html[data-route="app"] .kpi.neg b { color: var(--down); }
+/* exchange-style quote rows: LABEL ........ value */
+html[data-route="app"] .facts.compact { display: grid; grid-template-columns: 1fr; gap: 0; padding: 0; border: 0; background: transparent; }
+html[data-route="app"] .facts.compact > div { display: flex; justify-content: space-between; align-items: baseline; gap: 1rem; padding: .7rem 0; border-bottom: 1px solid var(--line); }
+html[data-route="app"] .facts.compact dt { margin: 0; }
+html[data-route="app"] .facts dd { color: #fff; font-weight: 500; text-align: right; }
+html[data-route="app"] table { border-collapse: collapse; }
+html[data-route="app"] th { color: var(--grey-2); font-weight: 500; letter-spacing: .1em; text-transform: uppercase; font-size: .68rem; }
+html[data-route="app"] :is(td, th) { border-color: var(--line); }
+html[data-route="app"] .tscroll, html[data-route="app"] .rtable { border-radius: var(--r-card); }
+
+/* ---------- dashboard ---------- */
+html[data-route="app"] .dash-overview { border: 1px solid var(--line-strong); border-radius: 28px; background: #000; padding: clamp(1.4rem, 3vw, 2.6rem); position: relative; overflow: hidden; }
+html[data-route="app"] .dash-overview::before { content: ""; position: absolute; inset: 0; pointer-events: none; opacity: .5;
+  background-image: radial-gradient(rgba(255,255,255,.16) 1px, transparent 1.2px); background-size: 14px 14px;
+  -webkit-mask-image: radial-gradient(70% 90% at 100% 0%, #000, transparent 70%); mask-image: radial-gradient(70% 90% at 100% 0%, #000, transparent 70%); }
+html[data-route="app"] .dash-overview > * { position: relative; }
+html[data-route="app"] .dash-overview-copy h1 { font-weight: 500; color: #fff; letter-spacing: -.04em; line-height: 1.04; }
+html[data-route="app"] .dash-overview-copy h1 span { color: var(--grey-2); -webkit-text-fill-color: currentColor; background: none; }
+html[data-route="app"] .dash-hero-metrics { gap: .8rem; }
+html[data-route="app"] .dash-hero-metric { background: var(--paper-2); color: #000; border: 0; border-radius: var(--r-card); box-shadow: none; }
+html[data-route="app"] .dash-hero-metric span { color: #6b6b6b; text-transform: uppercase; letter-spacing: .1em; font-size: .68rem; }
+html[data-route="app"] .dash-hero-metric b { color: #000; font-weight: 500; letter-spacing: -.04em; }
+html[data-route="app"] .dash-hero-metric b i { color: #7a7a7a; font-style: normal; font-size: .55em; }
+html[data-route="app"] .dash-hero-metric small { color: #6b6b6b; }
+html[data-route="app"] .dash-hero-metric.tone-green b { color: #0b7a47; }
+html[data-route="app"] .dash-lifecycle, html[data-route="app"] .dash-activity, html[data-route="app"] .dash-wallet { background: var(--ink-1); border: 1px solid var(--line); border-radius: 24px; }
+html[data-route="app"] .dash-wallet { background: linear-gradient(180deg, #1d1d1d, #0b0b0b); }
+html[data-route="app"] .dash-stage { background: var(--ink-2); border: 1px solid var(--line); border-radius: var(--r-card); }
+html[data-route="app"] .dash-stage-index { font-weight: 500; color: var(--grey-2); }
+html[data-route="app"] .dash-invoice-mini { background: #000; border: 1px solid var(--line); border-radius: 12px; }
+html[data-route="app"] .dash-invoice-mini:hover { border-color: #fff; background: #000; transform: none; }
+html[data-route="app"] .dash-live i, html[data-route="app"] .dash-network i.ok { background: var(--up); box-shadow: 0 0 8px var(--up); }
+html[data-route="app"] .dash-wallet-icon { background: #fff; color: #000; border-radius: 50%; }
+
+/* ---------- overlays ---------- */
+html[data-route="app"] .toast, html[data-route="app"] .wmenu-pop, html[data-route="app"] .wd-menu { background: var(--ink-2); border: 1px solid var(--line-strong); border-radius: 14px; }
+html[data-route="app"] .shell::before { background: #fff; }
+
+/* ---------- mobile: bottom bar with floating "+" (new invoice) ---------- */
+@media (max-width: 52rem) {
+  html[data-route="app"] .side { background: rgba(0,0,0,.92); border-top: 1px solid var(--line-strong); border-radius: 22px 22px 0 0; overflow: visible; }
+  html[data-route="app"] .side-new { display: grid; place-items: center; position: absolute; left: 50%; top: -3.2rem; transform: translateX(-50%); width: 3.2rem; height: 3.2rem; min-height: 0; padding: 0; border-radius: 50%; background: #fff; color: #000; box-shadow: 0 0 0 6px #000; z-index: 2; }
+  html[data-route="app"] .side-new:hover { transform: translateX(-50%); }
+  html[data-route="app"] .side-new span { display: none; }
+  html[data-route="app"] .side-new svg { width: 1.4rem; height: 1.4rem; }
+  html[data-route="app"] .side-item { color: var(--grey-2); border-radius: 12px; }
+  html[data-route="app"] .side-item.on { background: transparent; color: #fff; box-shadow: inset 0 2px 0 #fff; border-color: transparent; }
+  html[data-route="app"] .shell main { padding-bottom: calc(var(--tabbar-h) + 2rem + env(safe-area-inset-bottom)); }
+  html[data-route="app"] .dash-overview { border-radius: 22px; }
+}
+
+/* Keep neutral XERO-inspired surfaces with white primary actions and focus. */
+html[data-route="app"] .side-new,
+html[data-route="app"] .btn.primary,
+html[data-route="app"] .chip.on {
+  background: var(--brand);
+  color: var(--brand-ink);
+  border-color: var(--brand);
+}
+html[data-route="app"] .side-new:hover { filter: brightness(.94); }
+html[data-route="app"] .btn.primary:hover:not(:disabled) {
+  background: var(--accent2);
+  border-color: var(--accent2);
+  color: var(--brand-ink);
+  filter: none;
+}
+html[data-route="app"] .side-item.on {
+  background: rgba(var(--accent-rgb), .13);
+  border-color: rgba(var(--accent-rgb), .22);
+  color: #fff;
+  box-shadow: inset 2px 0 var(--brand);
+}
+html[data-route="app"] :is(input, select, textarea):focus {
+  border-color: var(--brand);
+  box-shadow: 0 0 0 2px rgba(var(--accent-rgb), .18);
+}
+html[data-route="app"] :focus-visible { outline-color: var(--brand); }
+@media (max-width: 52rem) {
+  html[data-route="app"] .side-new {
+    background: var(--brand);
+    color: var(--brand-ink);
+    box-shadow: 0 0 0 6px #000;
+  }
+  html[data-route="app"] .side.mobile-open .side-item.on {
+    background: rgba(var(--accent-rgb), .13);
+    box-shadow: inset 2px 0 var(--brand);
+  }
+}
+@media (prefers-reduced-motion: reduce) { html[data-route="app"] * { scroll-behavior: auto !important; } }
+
+/* ---------- product chrome: quiet workspace navigation ---------- */
+html[data-route="app"] .side-mobile-head,
+html[data-route="app"] .mobile-nav-toggle { display: none; }
+html[data-route="app"] .page-head { max-width: 78rem; }
+html[data-route="app"] .page-head .muted { color: var(--grey-1); }
+html[data-route="app"] .tabbody { max-width: 78rem; }
+html[data-route="app"] .side-item { min-height: 2.7rem; }
+html[data-route="app"] .side-item.on { position: relative; }
+html[data-route="app"] .side-item.on::after { content: ""; width: .3rem; height: .3rem; margin-left: auto; border-radius: 50%; background: #fff; }
+html[data-route="app"] .top { min-height: 3.8rem; }
+html[data-route="app"] .netbar { border-radius: var(--r-card); }
+html[data-route="app"] :is(.card, .kpi, .lcard, .empty, .dash-lifecycle, .dash-activity, .dash-wallet) { box-shadow: 0 1px 0 rgba(255,255,255,.03) inset; }
+html[data-route="app"] .empty { padding: clamp(1.4rem, 4vw, 2.6rem); }
+html[data-route="app"] .empty h3 { letter-spacing: -.01em; text-transform: none; font-size: 1rem; }
+/* Receipt previews retain their paper texture but use the same neutral ink and restrained status palette. */
+html[data-route="app"] .prc-paper { background-color: var(--paper-2); border-radius: 12px; }
+html[data-route="app"] .prc-foil { background: linear-gradient(115deg, transparent 25%, #fff 50%, transparent 75%); opacity: .1; }
+html[data-route="app"] .prc-hd b, html[data-route="app"] .prc-big { color: #151515; }
+html[data-route="app"] .prc-kind, html[data-route="app"] .prc dt { color: #595959; }
+html[data-route="app"] .prc-sold i { background: #292929; }
+html[data-route="app"] .prc-stamp { border-color: #555; color: #555; background: rgba(244,244,244,.8); }
+html[data-route="app"] .prc-paid .prc-stamp { border-color: #0b7a47; color: #0b7a47; }
+html[data-route="app"] .prc-late .prc-stamp { border-color: #b3203f; color: #b3203f; }
+html[data-route="app"] .prc { filter: none; transform: none !important; will-change: auto; }
+html[data-route="app"] .prc-wrap:hover .prc { filter: none; }
+html[data-route="app"] .trade-bar, html[data-route="app"] .setup-steps li { border-radius: var(--r-card); background: var(--ink-1); }
+html[data-route="app"] .tb-search { border-radius: 10px; background: var(--ink-2); }
+html[data-route="app"] .lc-disc b.pos, html[data-route="app"] .kpi.pos b { color: var(--up); }
+html[data-route="app"] .claim-banner { border-radius: var(--r-card); }
+html[data-route="app"] .cert { border-radius: var(--r-card); background: var(--ink-1); }
+html[data-route="app"] .tl-ico, html[data-route="app"] .fi { border-radius: 10px; background: var(--ink-2); }
+html[data-route="app"] .timeline li { min-width: 0; }
+html[data-route="app"] .tl-body, html[data-route="app"] .tl-row { min-width: 0; }
+html[data-route="app"] .tl-hash { word-break: break-all; }
+html[data-route="app"] .rtable tbody tr:last-child td { border-bottom: 0; }
+html[data-route="app"] .rtable td, html[data-route="app"] .rtable th { line-height: 1.5; }
+html[data-route="app"] .rtable td.acts { white-space: normal; }
+html[data-route="app"] .rtable td.acts .row { flex-wrap: wrap; }
+html[data-route="app"] .issue-receipt { background: radial-gradient(ellipse at 90% 10%, rgba(255,255,255,.09), transparent 38%), linear-gradient(150deg, #222, #090909 78%); border-color: var(--line-strong); box-shadow: none; }
+html[data-route="app"] .issue-receipt h3, html[data-route="app"] .ir-face, html[data-route="app"] .ir-facts dd { color: var(--white); }
+html[data-route="app"] .issue-receipt :is(.ir-sub, .ir-face small, .ir-facts dt, .ir-meta, .ir-foot, .ir-state) { color: var(--grey-1); }
+html[data-route="app"] .wiz-stage-ready .issue-receipt, html[data-route="app"] .wiz-stage-minted .issue-receipt, html[data-route="app"] .wiz-stage-live .issue-receipt { box-shadow: none; border-color: rgba(255,255,255,.42); }
+html[data-route="app"] .verify-result .cert { background: linear-gradient(140deg, #1d1d1d, #0b0b0b); border-color: var(--line-strong); }
+html[data-route="app"] .issue-intro h2, html[data-route="app"] .verify-intro h2 { color: var(--white); }
+html[data-route="app"] .dash-overview { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+html[data-route="app"] .dash-overview-copy { min-width: 0; }
+html[data-route="app"] .dash-hero-metrics { min-width: 0; }
+html[data-route="app"] .pf-hero h2 { color: var(--white); }
+html[data-route="app"] .pf-hero-metrics > div { background: var(--ink-1); }
+html[data-route="app"] .pf-hero-metrics > div.claim { background: #1c1b14; }
+html[data-route="app"] .pf-tabs, html[data-route="app"] .pf-receipt-filter button { background: var(--ink-1); border-color: var(--line); }
+html[data-route="app"] .pf-tabs button.on, html[data-route="app"] .pf-receipt-filter button.on { color: var(--white); background: var(--ink-3); border-color: var(--line-strong); }
+html[data-route="app"] .dash-kpis, html[data-route="app"] .ex-stats, html[data-route="app"] .pf-kpis { background: var(--ink-1); box-shadow: none; }
+html[data-route="app"] .pf-alloc { background: var(--ink-1); }
+html[data-route="app"] .history-tools, html[data-route="app"] .proof-tx-actions { display: flex; flex-wrap: wrap; align-items: center; gap: .55rem; }
+html[data-route="app"] .history-amount.negative { color: var(--down); }
+html[data-route="app"] .verify-empty, html[data-route="app"] .ex-scan-warning { padding: 1rem 1.25rem; border: 1px solid var(--line); border-radius: var(--r-card); background: var(--ink-1); color: var(--grey-1); }
+html[data-route="app"] .ex-scan-warning { border-color: rgba(232,193,90,.35); }
+html[data-route="app"] .portfolio-loading { min-height: 9rem; }
+html[data-route="app"] .field-error { display: block; margin-top: .4rem; color: #ff9b9b; font-size: .78rem; line-height: 1.45; }
+html[data-route="app"] :is(input, select, textarea)[aria-invalid="true"] { border-color: var(--down); }
+html[data-route="app"] .wiz-nav { flex-wrap: wrap; }
+html[data-route="app"] .trade-market-heading, html[data-route="app"] .trade-board-views { flex-wrap: wrap; }
+@media (max-width: 68rem) { html[data-route="app"] .dash-overview { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 38rem) {
+  html[data-route="app"] .dash-hero-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  html[data-route="app"] .dash-hero-metric:last-child { grid-column: 1 / -1; }
+  html[data-route="app"] .dash-stage-items { grid-template-columns: minmax(0, 1fr); }
+  html[data-route="app"] .ex-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  html[data-route="app"] .profile-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  html[data-route="app"] .timeline .tl-row { flex-wrap: wrap; }
+}
+
+@media (max-width: 52rem) {
+  html[data-route="app"] .mobile-nav-toggle { display: inline-flex; align-items: center; gap: .45rem; margin-left: .35rem; padding: .35rem .6rem; border: 1px solid var(--line); border-radius: var(--pill); background: var(--ink-1); color: var(--grey-1); font: inherit; font-size: .7rem; }
+  html[data-route="app"] .mobile-nav-toggle span { color: #fff; font-size: 1rem; line-height: .7; }
+  html[data-route="app"] .side { height: 0; padding: 0; border: 0; background: transparent; backdrop-filter: none; pointer-events: none; }
+  html[data-route="app"] .side.mobile-open { height: auto; padding: .3rem .2rem calc(.3rem + env(safe-area-inset-bottom)); border-top: 1px solid var(--line-strong); background: #090909; pointer-events: auto; }
+  html[data-route="app"] .side.mobile-open .side-mobile-head { display: flex; align-items: center; justify-content: space-between; padding: .55rem .75rem .7rem; color: var(--grey-1); font-size: .72rem; letter-spacing: .1em; text-transform: uppercase; border-bottom: 1px solid var(--line); }
+  html[data-route="app"] .side-mobile-head button { display: grid; place-items: center; width: 2rem; height: 2rem; border: 1px solid var(--line); border-radius: 50%; background: transparent; color: #fff; }
+  html[data-route="app"] .side.mobile-open .side-nav { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .3rem; padding: .5rem; }
+  html[data-route="app"] .side.mobile-open .side-group { display: contents; }
+  html[data-route="app"] .side.mobile-open .side-item { display: flex; flex-direction: row; justify-content: flex-start; gap: .65rem; min-height: 2.9rem; padding: 0 .75rem; font-size: .72rem; }
+  html[data-route="app"] .side.mobile-open .side-item.on { background: var(--ink-3); box-shadow: inset 2px 0 #fff; }
+  html[data-route="app"] .side.mobile-open .side-item.on::after { display: none; }
+  html[data-route="app"] .side.mobile-open .side-support { display: grid; grid-column: 1 / -1; margin: 0; padding: .5rem; border-top: 1px solid var(--line); }
+  html[data-route="app"] .side:not(.mobile-open) .side-nav { display: none; }
+  html[data-route="app"] .side:not(.mobile-open) .side-mobile-head { display: none; }
+  html[data-route="app"] .side:not(.mobile-open) .side-support { display: none; }
+  html[data-route="app"] .side:not(.mobile-open) .side-new { display: grid; }
+  html[data-route="app"] .side-new { left: auto; right: .9rem; top: -3.25rem; transform: none; pointer-events: auto; }
+  html[data-route="app"] .side.mobile-open .side-new { display: none; }
+  html[data-route="app"] .side-new:hover { transform: none; }
+  html[data-route="app"] .crumb { min-width: 0; flex-wrap: wrap; }
+  html[data-route="app"] .crumb b { max-width: 8rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  html[data-route="app"] .rtable tr { border-radius: var(--r-card); overflow: hidden; background: var(--ink-1); }
+  html[data-route="app"] .rtable td:first-child { display: block; }
+  html[data-route="app"] .rtable td.acts { display: block; }
+  html[data-route="app"] .trade-bar { padding: .85rem; }
+  html[data-route="app"] .trade-grid, html[data-route="app"] .wizard, html[data-route="app"] .ex-grid, html[data-route="app"] .pf-top { grid-template-columns: minmax(0, 1fr); }
+  html[data-route="app"] .trade-row { grid-template-columns: minmax(0, 1fr) auto auto; }
+  html[data-route="app"] .trade-row-invoice { grid-column: 1 / -1; }
+  html[data-route="app"] .trade-row-price { display: block; grid-column: 1; font-size: .78rem; }
+  html[data-route="app"] .trade-row-discount, html[data-route="app"] .trade-row-units { display: none; }
+  html[data-route="app"] .trade-row-apr { grid-column: 1; }
+  html[data-route="app"] .trade-row-due { grid-column: 2; }
+  html[data-route="app"] .trade-row .trade-buy { grid-column: 3; grid-row: auto; }
+  html[data-route="app"] .lcards { grid-template-columns: minmax(0, 1fr); }
+  html[data-route="app"] .wiz-steps { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  html[data-route="app"] .cert .vchecks li { grid-template-columns: 2rem minmax(0, 1fr); }
+  html[data-route="app"] .toasts { top: calc(4rem + env(safe-area-inset-top)); bottom: auto; }
+}
+
+/* ---------- final colour contract ----------
+   White is the action/focus/selection colour. Green is reserved for
+   positive yield and confirmed-success states; network/live indicators stay neutral. */
+html[data-route="app"] .side-new,
+html[data-route="app"] .btn.primary,
+html[data-route="app"] .chip.on,
+html[data-route="app"] .trade-amount-presets button.on {
+  background: var(--pk-accent);
+  border-color: var(--pk-accent);
+  color: var(--pk-accent-text);
+}
+html[data-route="app"] .side-new:hover,
+html[data-route="app"] .btn.primary:hover:not(:disabled) {
+  background: var(--pk-accent-hover);
+  border-color: var(--pk-accent-hover);
+  color: var(--pk-accent-text);
+}
+html[data-route="app"] a.btn.primary,
+html[data-route="app"] a.btn.primary:hover { color: var(--pk-accent-text); }
+html[data-route="app"] .btn.primary:disabled {
+  background: var(--pk-surface-2);
+  border-color: rgba(255,255,255,.25);
+  color: var(--pk-muted);
+  opacity: 1;
+}
+html[data-route="app"] .side-item.on,
+html[data-route="app"] .side.mobile-open .side-item.on {
+  background: rgba(255,255,255,.10);
+  border-color: rgba(255,255,255,.18);
+  color: var(--pk-text);
+  box-shadow: inset 2px 0 var(--pk-accent);
+}
+html[data-route="app"] .side-item.on::after { background: var(--pk-accent); }
+html[data-route="app"] .side-brand .logo,
+html[data-route="app"] .dash-wallet-icon { background: var(--pk-accent); color: var(--pk-accent-text); box-shadow: none; }
+html[data-route="app"] .cw-btn { background: var(--pk-accent); }
+html[data-route="app"] .cw-btn .cw-in { color: #fff; }
+html[data-route="app"] .cw-btn.on .cw-in { color: #fff; }
+html[data-route="app"] .cw-btn:not(.on):hover .cw-in { background: var(--ink-3); color: #fff; }
+html[data-route="app"] .cw-dot,
+html[data-route="app"] .pwr-dot { background: var(--pk-accent); box-shadow: 0 0 0 2px var(--pk-bg); }
+html[data-route="app"] .cw-btn.wrong .cw-dot,
+html[data-route="app"] .pwr.wrong .pwr-dot { background: var(--amber); }
+html[data-route="app"] .cw-btn.unknown .cw-dot,
+html[data-route="app"] .pwr.unknown .pwr-dot { background: var(--grey-1); }
+html[data-route="app"] :is(input, select, textarea):focus {
+  border-color: var(--brand);
+  box-shadow: 0 0 0 2px rgba(var(--accent-rgb), .2);
+}
+html[data-route="app"] :is(button, a, input, select, textarea):focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+html[data-route="app"] .shell::before { background: var(--brand); }
+html[data-route="app"] .shell[data-phase="pending"]::before {
+  background: linear-gradient(90deg, transparent, var(--brand), transparent);
+}
+html[data-route="app"] .dash-live i,
+html[data-route="app"] .explore-live i,
+html[data-route="app"] .dash-network i.ok,
+html[data-route="app"] .profile-network-dot.ok,
+html[data-route="app"] .trade-recent-live i,
+html[data-route="app"] .issue-chain-pill i,
+html[data-route="app"] .verify-network i {
+  background: var(--brand);
+  box-shadow: 0 0 8px rgba(var(--accent-rgb), .45);
+}
+html[data-route="app"] .dash-wallet-status.connected i { background: var(--brand); box-shadow: 0 0 8px rgba(var(--accent-rgb), .45); }
+html[data-route="app"] .dash-hero-metric.tone-green,
+html[data-route="app"] .dash-stage.tone-green { border-top-color: var(--line-strong); }
+html[data-route="app"] .dash-stage.tone-green { --stage: var(--pk-accent); --stage-bg: rgba(255,255,255,.12); }
+html[data-route="app"] .issue-ready-mint i { background: var(--brand); box-shadow: 0 0 8px rgba(var(--accent-rgb), .45); }
+html[data-route="app"] .wiz-stage-minted .wiz-preview-state,
+html[data-route="app"] .wiz-stage-live .wiz-preview-state,
+html[data-route="app"] .wiz-stage-minted .ir-state,
+html[data-route="app"] .wiz-stage-live .ir-state { color: var(--brand); }
+html[data-route="app"] .wiz-stage-minted .wiz-preview-state i,
+html[data-route="app"] .wiz-stage-live .wiz-preview-state i,
+html[data-route="app"] .wiz-stage-minted .ir-state i,
+html[data-route="app"] .wiz-stage-live .ir-state i { background: var(--brand); box-shadow: none; }
+html[data-route="app"] .cert .seal,
+html[data-route="app"] .cert .seal b,
+html[data-route="app"] .vchecks li:not(.pass) .vc-i,
+html[data-route="app"] .proof-trail > header > span { color: var(--brand); }
+html[data-route="app"] .vchecks li:not(.pass) .vc-i { background: rgba(var(--accent-rgb), .12); }
+html[data-route="app"] .profile-chain-tag { color: var(--brand); }
+html[data-route="app"] .profile-rate { background: conic-gradient(var(--pk-accent) 0 var(--rate, 0%), var(--ink-4) var(--rate, 0%) 100%); box-shadow: none; }
+html[data-route="app"] .profile-rate > b { color: var(--pk-text); }
+html[data-route="app"] .profile-trust-stats b.good { color: var(--up); }
+html[data-route="app"] .ex-stage-filters .ex-filter-settled.on { border-color: rgba(255,255,255,.4); background: rgba(255,255,255,.14); color: var(--pk-text); }
+html[data-route="app"] .profile-identity,
+html[data-route="app"] .profile-editor,
+html[data-route="app"] .profile-reputation,
+html[data-route="app"] .profile-badges,
+html[data-route="app"] .profile-gas,
+html[data-route="app"] .profile-activity { background: var(--pk-surface); border-color: var(--pk-border); box-shadow: none; }
+html[data-route="app"] .profile-editor-grid :is(input:not([type="file"]), textarea),
+html[data-route="app"] .profile-network-row { background: var(--pk-surface-2); border-color: var(--pk-border); color: var(--pk-text); }
+html[data-route="app"] .profile-rate::before { background: var(--pk-surface); }
+html[data-route="app"] .profile-badge.earned:not(.green) > i { background: var(--pk-surface-2); border-color: rgba(255,255,255,.25); color: var(--pk-text); }
+html[data-route="app"] .profile-record-tabs button.active { background: rgba(255,255,255,.14); border-color: rgba(255,255,255,.35); color: var(--pk-text); }
+html[data-route="app"] .profile-record-icon { border-color: var(--pk-border); background: var(--pk-surface-2); color: var(--pk-text); }
+html[data-route="app"] .profile-record-icon.investor-icon { border-color: var(--pk-border); background: var(--pk-surface-2); color: var(--pk-text); }
+html[data-route="app"] .profile-faucet { background: var(--pk-surface-2); border-color: var(--pk-border); color: var(--pk-muted); }
+html[data-route="app"] .profile-faucet-heading { color: var(--pk-text); }
+html[data-route="app"] .profile-network-dot:not(.ok) { background: var(--pk-warning); box-shadow: none; }
+html[data-route="app"] .pf-hero-metrics > div.claim { background: var(--pk-surface-2); }
+html[data-route="app"] .proof-event-icon { background: var(--pk-surface-2); border-color: var(--pk-border); color: var(--pk-muted); }
+html[data-route="app"] .proof-events .done .proof-event-icon { background: rgba(255,255,255,.12); border-color: rgba(255,255,255,.3); color: var(--pk-text); }
+html[data-route="app"] .profile-record-tabs button.active,
+html[data-route="app"] .pf-tabs button.on,
+html[data-route="app"] .pf-receipt-filter button.on {
+  background: rgba(var(--accent-rgb), .14);
+  border-color: rgba(var(--accent-rgb), .35);
+  color: #fff;
+}
+html[data-route="app"] .trade-row-discount,
+html[data-route="app"] .trade-row-apr,
+html[data-route="app"] .yield-text,
+html[data-route="app"] .kpi.pos b,
+html[data-route="app"] .lc-kpis dd.pos,
+html[data-route="app"] .pos { color: var(--up); }
+html[data-route="app"] .toast.ok .t-ico,
+html[data-route="app"] .toast.ok { border-left-color: var(--up); }
+html[data-route="app"] .check li.done .box,
+html[data-route="app"] .pass .vc-i { background: var(--up); border-color: var(--up); color: #000; }

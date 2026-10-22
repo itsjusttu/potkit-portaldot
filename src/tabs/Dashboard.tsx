@@ -29,14 +29,15 @@ export function Dashboard({ c }: { c: Ctx }) {
     return new Date(timestamp * 1000).toLocaleDateString(undefined, { month: "short", day: "numeric" });
   };
   const roundedBalance = c.native === null ? c.usdBal || "Reading balance…" : `${fmt(((c.native + 5_000_000_000_000_000n) / 10_000_000_000_000_000n) * 10_000_000_000_000_000n, 18)} tPOTv3`;
-  const mine = c.account ? c.rows.filter((r) => r.depositor === c.account || r.owner === c.account) : c.rows;
+  const mine = c.account ? c.rows.filter((r) => r.depositor.toLowerCase() === c.account.toLowerCase() || r.owner.toLowerCase() === c.account.toLowerCase()) : c.rows;
   const stages = [
-    { key: "issue", title: "Issue", note: "Receipt minted", color: "violet", rows: mine.filter((r) => !r.fraction && !redeemed.has(r.id)) },
+    { key: "issue", title: "Issue", note: "Receipt minted", color: "neutral", rows: mine.filter((r) => !r.fraction && !redeemed.has(r.id)) },
     { key: "lock", title: "Lock & shares", note: "Terms set on-chain", color: "blue", rows: mine.filter((r) => r.fraction && !r.settle.settled && !open.some((l) => l.receiptId === r.id)) },
     { key: "trade", title: "Trade", note: "Shares on market", color: "cyan", rows: mine.filter((r) => open.some((l) => l.receiptId === r.id)) },
     { key: "settle", title: "Settle", note: "Payment received", color: "green", rows: mine.filter((r) => r.settle.settled && !redeemed.has(r.id)) },
     { key: "redeem", title: "Redeem", note: "Receipt returned", color: "gold", rows: mine.filter((r) => redeemed.has(r.id)) },
   ];
+  const dataReady = Boolean(c.addrs) && !c.loading && !c.eventsLoading && c.eventsOk;
   const metric = (label: string, value: ReactNode, hint: string, tone: string) => (
     <article className={`dash-hero-metric tone-${tone}`}><span>{label}</span><b>{value}</b><small>{hint}</small></article>
   );
@@ -49,17 +50,17 @@ export function Dashboard({ c }: { c: Ctx }) {
           {c.account && c.chainOk === false && <span className="dash-wrong-network">Wrong network · switch from the wallet menu</span>}
         </div>
         <div className="dash-hero-metrics" aria-label="Protocol overview">
-          {metric("Face value", <><N l={(c.loading || c.eventsLoading) && Boolean(c.addrs)}>{c.addrs ? fmt(faceValue, 18) : "—"}</N><i> tPOT</i></>, `Across ${invoiceWord(faceRows.length)}`, "violet")}
-          {metric("Settled", <><N l={(c.loading || c.eventsLoading) && Boolean(c.addrs)}>{c.addrs ? fmt(settled, 18) : "—"}</N><i> tPOT</i></>, `Across ${invoiceWord(new Set(settleEvents.map((e) => e.id)).size)}`, "green")}
-          {metric("Claimed", <><N l={(c.loading || c.eventsLoading) && Boolean(c.addrs)}>{c.addrs ? fmt(claimed, 18) : "—"}</N><i> tPOT</i></>, claimedEvents.length ? "By share holders" : "No payouts claimed yet", "blue")}
+          {metric("Face value", <><N l={c.loading && Boolean(c.addrs)}>{c.addrs && !c.loading ? fmt(faceValue, 18) : "—"}</N>{c.addrs && !c.loading && <i> tPOT</i>}</>, c.loading ? "Reading receipts…" : `Across ${invoiceWord(faceRows.length)}`, "neutral")}
+          {metric("Settled", <><N l={(c.loading || c.eventsLoading) && Boolean(c.addrs)}>{dataReady ? fmt(settled, 18) : "—"}</N>{dataReady && <i> tPOT</i>}</>, !c.eventsOk ? "Event history unavailable" : c.eventsLoading ? "Reading events…" : `Across ${invoiceWord(new Set(settleEvents.map((e) => e.id)).size)}`, "green")}
+          {metric("Claimed", <><N l={(c.loading || c.eventsLoading) && Boolean(c.addrs)}>{dataReady ? fmt(claimed, 18) : "—"}</N>{dataReady && <i> tPOT</i>}</>, !c.eventsOk ? "Event history unavailable" : claimedEvents.length ? "By share holders" : "No payouts claimed yet", "blue")}
         </div>
       </section>
 
       <section className="dash-lifecycle" aria-label="Invoice lifecycle">
-        <header className="dash-lifecycle-head"><div><p className="kicker">Your workspace</p><h2>Invoice lifecycle</h2></div><span className="dash-live"><i /> Live · Portaldot V3</span></header>
+        <header className="dash-lifecycle-head"><div><p className="kicker">Your workspace</p><h2>Invoice lifecycle</h2></div><span className="dash-live"><i /> Portaldot V3 · on-chain</span></header>
         {!c.addrs ? <Empty icon="⇄" title="PotKit is not configured" body="Open a judge link to inspect a deployment, or set up the contract from Issue."><button className="btn sm primary" onClick={() => c.setTab("issue")}>Set up PotKit</button></Empty>
           : c.loading ? <p className="muted" role="status">Reading invoices from the chain…</p>
-          : !mine.length ? <Empty icon="▤" title={c.account ? "No invoices for this wallet yet" : "No receipts on this deployment"} body="Mint a receipt or explore invoices already on this deployment."><button className="btn sm primary" onClick={() => c.setTab("issue")}>Create invoice</button><button className="btn sm" onClick={() => c.setTab("explore")}>Explore invoices</button></Empty>
+          : !mine.length ? <Empty icon="▤" title={c.account ? "No invoices for this wallet in the loaded receipts" : "No receipts in the loaded range"} body="Mint a receipt or explore invoices already on this deployment."><button className="btn sm primary" onClick={() => c.setTab("issue")}>Create invoice</button><button className="btn sm" onClick={() => c.setTab("explore")}>Explore invoices</button></Empty>
           : <div className="dash-stage-grid">{stages.map((stage, i) => (
             <section className={`dash-stage tone-${stage.color}`} key={stage.key}>
               <header><span className="dash-stage-index">0{i + 1}</span><div><b>{stage.title}</b><small>{stage.note}</small></div><strong>{stage.rows.length}</strong></header>
@@ -86,7 +87,7 @@ export function Dashboard({ c }: { c: Ctx }) {
           {c.account && <div className="dash-wallet-actions"><button className="btn primary sm" onClick={() => c.setTab("issue")}>＋ Issue invoice</button><button className="btn sm dash-claim-action" onClick={() => c.setTab("portfolio")}>Claim</button></div>}
         </article>
         <section className="card dash-activity"><header className="dash-section-head"><div><p className="kicker">On-chain feed</p><h2>Recent activity</h2></div><button className="btn sm" onClick={() => c.setTab("history")}>Full history <Ico n="arrow" /></button></header>
-          {!c.events.length ? <p className="muted">{c.eventsLoading ? "Reading recent events…" : c.eventsOk ? "No recent activity in the scanned range." : "Event history is unavailable from this RPC."}</p>
+          {!c.events.length ? <p className="muted" role={c.eventsLoading ? "status" : undefined}>{c.eventsLoading ? "Reading recent events…" : c.eventsOk ? "No recent activity in the scanned range." : "Event history is unavailable from this RPC."}</p>
             : <ol className="dash-events">{c.events.slice(0, 5).map((e) => <li key={`${e.hash}-${e.logIndex}`}><span className={`de-${e.kind}`}><Ico n={e.kind === "settle" ? "settle" : e.kind === "buy" ? "cart" : e.kind === "mint" ? "mint" : e.kind === "claim" ? "claim" : "activity"} size={15} /></span><div><b>{e.text}</b><small>Block {e.block.toString()}</small></div><time dateTime={e.time ? new Date(e.time * 1000).toISOString() : undefined} title={e.time ? new Date(e.time * 1000).toLocaleString() : undefined}>{relativeTime(e.time)}</time></li>)}</ol>}
         </section>
       </section>

@@ -1,9 +1,11 @@
 import { lazy, StrictMode, Suspense } from "react";
 import { createRoot } from "react-dom/client";
 import { docRoute, isAppRoute, migrateHashRoute } from "./routes";
+import "./theme-tokens.css";
 import "./styles/tokens.css";
 import "./styles/app.css";
 import "./styles/app-shell.css";
+import "./styles/app-xero.css";
 import { Intro } from "./Intro";
 
 migrateHashRoute();

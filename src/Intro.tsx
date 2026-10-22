@@ -4,6 +4,17 @@ import "./intro.css";
 
 export const INTRO_KEY = "potkit.intro.v2";
 const KEY = INTRO_KEY, TICKS = 48, MS = 3000;
+let forcedIntro: boolean | null = null;
+function consumeIntroParam() {
+  if (forcedIntro !== null) return forcedIntro;
+  const url = new URL(location.href);
+  forcedIntro = url.searchParams.get("intro") === "1";
+  if (forcedIntro) {
+    url.searchParams.delete("intro");
+    history.replaceState(history.state, "", `${url.pathname}${url.search}${url.hash}`);
+  }
+  return forcedIntro;
+}
 const rnd = (() => { let s = 7; return () => ((s = (s * 16807) % 2147483647) - 1) / 2147483646; })();
 /** Dotted "land" globe: Fibonacci sphere, continents faked with a smooth trig field so no map asset is needed. */
 const DOTS = (() => {
@@ -19,10 +30,11 @@ const DOTS = (() => {
 export function Intro() {
   const [phase, setPhase] = useState<"run" | "out" | "done">(() => {
     try {
-      const forced = new URLSearchParams(location.search).has("intro");
-      if ((!forced && sessionStorage.getItem(KEY)) || (!forced && matchMedia("(prefers-reduced-motion: reduce)").matches)) return "done";
-    } catch { /* ignore */ }
-    return "run";
+      const forced = consumeIntroParam();
+      if (!forced && (sessionStorage.getItem(KEY) || matchMedia("(prefers-reduced-motion: reduce)").matches)) return "done";
+      sessionStorage.setItem(KEY, "1");
+      return "run";
+    } catch { return "run"; }
   });
   const [pct, setPct] = useState(0);
   const cv = useRef<HTMLCanvasElement>(null);
@@ -31,9 +43,6 @@ export function Intro() {
     if (done.current) return;
     done.current = true;
     try { sessionStorage.setItem(KEY, "1"); } catch { /* ignore */ }
-    const url = new URL(location.href);
-    url.searchParams.delete("intro");
-    history.replaceState(null, "", `${url.pathname}${url.search}${url.hash}`);
     setPhase("out"); setTimeout(() => setPhase("done"), 900);
   };
 
@@ -46,13 +55,13 @@ export function Intro() {
     const frame = (now: number) => {
       const t = Math.min((now - t0) / MS, 1), e = t < 1 ? 1 - Math.pow(1 - t, 2.2) : 1, a = now / 2600, R = S * 0.46, cx = S / 2;
       g.clearRect(0, 0, S, S);
-      g.strokeStyle = `rgba(151,112,255,${0.16 + Math.sin(now / 700) * .035})`; g.lineWidth = 0.7;       // violet wireframe, coordinated with the PotKit mark
+      g.strokeStyle = `rgba(255,255,255,${0.16 + Math.sin(now / 700) * .035})`; g.lineWidth = 0.7;
       for (let m = 0; m < 6; m++) { g.beginPath(); g.ellipse(cx, cx, R * Math.abs(Math.cos(a + (m * Math.PI) / 6)), R, 0, 0, 7); g.stroke(); }
       for (const l of [-0.5, 0, 0.5]) { g.beginPath(); g.ellipse(cx, cx - l * R, R * Math.sqrt(1 - l * l), R * 0.12 * Math.sqrt(1 - l * l), 0, 0, 7); g.stroke(); }
       const ca = Math.cos(a), sa = Math.sin(a), show = e * DOTS.length;
       for (let i = 0; i < show; i++) {
         const [x, y, z, r] = DOTS[i], X = x * ca + z * sa, Z = -x * sa + z * ca, f = (Z + 1) / 2;
-        g.fillStyle = `rgba(${r > .72 ? "70,153,255" : "157,111,255"},${0.2 + f * 0.75})`;
+        g.fillStyle = `rgba(255,255,255,${0.16 + f * 0.65 + r * 0.08})`;
         g.fillRect(cx + X * R, cx - y * R, 0.8 + f * 1.1 + r * 0.4, 0.8 + f * 1.1 + r * 0.4);
       }
       setPct(Math.round(e * 100));

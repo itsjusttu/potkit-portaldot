@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { parseUnits } from "viem";
 import { deployKit, fmt, fractionalize, KINDS, mint, PAY_SYMBOL, short, units } from "../lib/chain";
 import { Addr, Empty, Ico } from "../AppUi";
 import { type Ctx } from "./ctx";
@@ -19,23 +20,31 @@ export function Issue({ c }: { c: Ctx }) {
   const [step, setStep] = useState(0);
   useEffect(() => { localStorage.setItem(WKEY, JSON.stringify({ kind, note, face, due, supply, wizId })); }, [kind, note, face, due, supply, wizId]);
 
+  const requestedId = c.param("id");
+  useEffect(() => {
+    if (!/^\d+$/.test(requestedId) || !c.account || c.loading) return;
+    const id = Number(requestedId);
+    const selected = c.rows.find((r) => r.id === id && !r.fraction && (r.owner.toLowerCase() === c.account.toLowerCase() || r.depositor.toLowerCase() === c.account.toLowerCase()));
+    if (selected) { setWizId(id); setKind(selected.kind); setNote(selected.note); }
+  }, [requestedId, c.account, c.loading, c.rows]);
   const row = c.rows.find((r) => r.id === wizId);
   // the wizard follows the receipt's real on-chain state once minted
   const chainStep = !wizId || !row ? null : !row.fraction ? 2 : 3;
   const cur = chainStep ?? step;
-  const mine = c.rows.filter((r) => r.depositor === c.account || r.owner === c.account);
+  const mine = c.account ? c.rows.filter((r) => r.depositor.toLowerCase() === c.account.toLowerCase() || r.owner.toLowerCase() === c.account.toLowerCase()) : [];
   // Redemption clears live terms in storage; restore them from the shared event-history reader.
   const receiptHistory = readReceiptHistory(c.events);
   const redeemed = (id: number) => receiptHistory.get(id)?.redeemed ?? false;
   const faceValue = (r: (typeof c.rows)[number]) => r.settle.faceValue > 0n ? r.settle.faceValue : redeemed(r.id) ? receiptHistory.get(r.id)?.terms?.value ?? 0n : 0n;
   const originalSupply = (r: (typeof c.rows)[number]) => r.supply > 0n ? r.supply : (receiptHistory.get(r.id)?.lock?.amount ?? 0n) * 10n ** 18n;
   const needSetup = !c.addrs;
-  const dis = Boolean(c.busy) || c.gated;
   const noteOk = note.trim().length > 0 && note.length <= 140;
-  const faceOk = /^\d+(\.\d+)?$/.test(face.trim()) && Number(face) > 0;
-  const supplyOk = /^\d+$/.test(supply.trim()) && Number(supply) >= 1;
+  const faceOk = (() => { try { return /^\d+(\.\d+)?$/.test(face.trim()) && parseUnits(face.trim(), 18) > 0n; } catch { return false; } })();
+  const supplyOk = /^\d+$/.test(supply.trim()) && Number.isSafeInteger(Number(supply)) && Number(supply) >= 1 && Number(supply) <= 1_000_000_000_000;
   const dueOk = !due || new Date(`${due}T23:59:59`).getTime() > Date.now();
+  const termsOk = faceOk && supplyOk && dueOk;
   const connectReason = !c.account ? "Connect your wallet to continue." : c.gated ? "Switch to Portaldot V3 before submitting." : c.busy ? "Wait for the current transaction to finish." : "";
+  const termsError = !supplyOk ? "Enter a whole number of shares from 1 to 1,000,000,000,000." : !faceOk ? "Enter a positive face value in tPOT." : !dueOk ? "Choose a future due date." : "";
 
   const restart = () => { setWizId(0); setStep(0); };
   const resume = (id: number) => { setWizId(id); const r = c.rows.find((x) => x.id === id); if (r) { setKind(r.kind); setNote(r.note); } document.getElementById("wizard")?.scrollIntoView({ behavior: "smooth", block: "start" }); };
@@ -49,9 +58,9 @@ export function Issue({ c }: { c: Ctx }) {
           <p className="muted">PotKit is one contract: receipts, vault, settlement pool and market. One click, one transaction, once per deployment. Payments use native tPOT, so there is no token to deploy.</p>
           <ol className="setup-steps">
             <li className={c.addrs ? "done" : ""}><span className="box">{c.addrs ? <Ico n="check" /> : 1}</span><span>PotKit</span>
-              {c.addrs ? <Addr a={c.addrs.vault} label="PotKit" /> : <button className="btn sm primary" disabled={dis || !c.account} onClick={() => void c.run("deploy", async () => {
+              {c.addrs ? <Addr a={c.addrs.vault} label="PotKit" /> : <button className="btn sm primary" disabled={Boolean(c.busy)} onClick={() => { if (!c.account) { c.connect(); return; } if (c.gated) { c.switchNetwork(); return; } void c.run("deploy", async () => {
                 const d = await deployKit(c.ready(), c.saveStep); c.note("Contract deployed", `PotKit ${short(d.kit)}`, d.hash);
-              })}>{c.busy === "deploy" ? "Confirm in wallet…" : "Deploy"}</button>}</li>
+              }); }}>{c.busy === "deploy" ? "Confirm in wallet…" : !c.account ? "Connect wallet" : c.gated ? "Switch network" : "Deploy"}</button>}</li>
           </ol>
         </section>
       )}
@@ -69,12 +78,12 @@ export function Issue({ c }: { c: Ctx }) {
               <p className="issue-privacy"><b>Public on-chain record.</b> Anyone can read these details. Do not include names, account numbers, invoice files or other sensitive personal data. PotKit records issuer-provided information; it does not independently authenticate the underlying invoice.</p>
               <div className="row fields">
                 <div><label htmlFor="w-kind">Kind</label><select id="w-kind" value={kind} onChange={(e) => setKind(Number(e.target.value))}>{KINDS.map((k, i) => <option key={k} value={i}>{k}</option>)}</select></div>
-                <div className="field-grow"><label htmlFor="w-note">Note (1–140 chars)</label><input id="w-note" maxLength={140} value={note} aria-invalid={!noteOk} onChange={(e) => setNote(e.target.value)} />{!noteOk && <small className="field-error">Enter a short public note (1–140 characters).</small>}</div>
+                <div className="field-grow"><label htmlFor="w-note">Note (1–140 chars)</label><input id="w-note" maxLength={140} value={note} aria-invalid={!noteOk} aria-describedby={!noteOk ? "w-note-error" : undefined} onChange={(e) => setNote(e.target.value)} />{!noteOk && <small id="w-note-error" className="field-error" role="alert">Enter a short public note (1–140 characters).</small>}</div>
               </div>
               <div className="row fields">
-                <div><label htmlFor="w-face">Face value ({PAY_SYMBOL})</label><input id="w-face" inputMode="decimal" value={face} aria-invalid={!faceOk} onChange={(e) => setFace(e.target.value)} />{!faceOk && <small className="field-error">Enter a positive face value in tPOT.</small>}</div>
-                <div><label htmlFor="w-due">Due date</label><input id="w-due" type="date" value={due} aria-invalid={!dueOk} onChange={(e) => setDue(e.target.value)} />{!dueOk && <small className="field-error">Choose a future due date.</small>}</div>
-                <div><label htmlFor="w-sup">Shares to issue</label><input id="w-sup" inputMode="numeric" value={supply} aria-invalid={!supplyOk} onChange={(e) => setSupply(e.target.value)} />{!supplyOk && <small className="field-error">Use a whole number of at least 1.</small>}</div>
+                <div><label htmlFor="w-face">Face value ({PAY_SYMBOL})</label><input id="w-face" inputMode="decimal" value={face} aria-invalid={!faceOk} aria-describedby={!faceOk ? "w-face-error" : undefined} onChange={(e) => setFace(e.target.value)} />{!faceOk && <small id="w-face-error" className="field-error" role="alert">Enter a positive face value in tPOT, with at most 18 decimal places.</small>}</div>
+                <div><label htmlFor="w-due">Due date</label><input id="w-due" type="date" value={due} aria-invalid={!dueOk} aria-describedby={!dueOk ? "w-due-error" : undefined} onChange={(e) => setDue(e.target.value)} />{!dueOk && <small id="w-due-error" className="field-error" role="alert">Choose a future due date.</small>}</div>
+                <div><label htmlFor="w-sup">Shares to issue</label><input id="w-sup" inputMode="numeric" value={supply} aria-invalid={!supplyOk} aria-describedby={!supplyOk ? "w-sup-error" : undefined} onChange={(e) => setSupply(e.target.value)} />{!supplyOk && <small id="w-sup-error" className="field-error" role="alert">Use a whole number from 1 to 1,000,000,000,000.</small>}</div>
               </div>
               <dl className="issue-summary"><div><dt>Face value</dt><dd>{faceOk ? `${face} ${PAY_SYMBOL}` : "—"}</dd></div><div><dt>Shares</dt><dd>{supplyOk ? supply : "—"}</dd></div><div><dt>Due</dt><dd>{dueOk && due ? new Date(`${due}T12:00:00`).toLocaleDateString() : "—"}</dd></div></dl>
               <div className="wiz-nav"><span className={c.canMint ? "issue-ready-mint" : "muted"}>{c.canMint ? <><i />Ready to mint</> : "Only the issuer or approved minters can mint."}</span>
@@ -98,13 +107,14 @@ export function Issue({ c }: { c: Ctx }) {
               <h2>3 · Lock, set terms &amp; issue shares</h2>
               <p className="muted">Receipt #{row.id} moves into PotKit, its payment terms are fixed (face value in {PAY_SYMBOL}, optional due date) and {supply || "N"} ERC-20 shares (KIT{row.id}) are minted to you. One transaction, no approval needed. With terms set, anyone can settle by paying at least the face value.</p>
               <div className="row fields">
-                <div><label htmlFor="w-sup2">Shares to issue</label><input id="w-sup2" inputMode="numeric" value={supply} onChange={(e) => setSupply(e.target.value)} /></div>
-                <div><label htmlFor="w-face2">Face value ({PAY_SYMBOL})</label><input id="w-face2" inputMode="decimal" value={face} onChange={(e) => setFace(e.target.value)} /></div>
-                <div><label htmlFor="w-due2">Due date</label><input id="w-due2" type="date" value={due} onChange={(e) => setDue(e.target.value)} /></div>
+                <div><label htmlFor="w-sup2">Shares to issue</label><input id="w-sup2" inputMode="numeric" value={supply} aria-invalid={!supplyOk} aria-describedby={!supplyOk ? "w-sup2-error" : undefined} onChange={(e) => setSupply(e.target.value)} />{!supplyOk && <small id="w-sup2-error" className="field-error" role="alert">Use a whole number from 1 to 1,000,000,000,000.</small>}</div>
+                <div><label htmlFor="w-face2">Face value ({PAY_SYMBOL})</label><input id="w-face2" inputMode="decimal" value={face} aria-invalid={!faceOk} aria-describedby={!faceOk ? "w-face2-error" : undefined} onChange={(e) => setFace(e.target.value)} />{!faceOk && <small id="w-face2-error" className="field-error" role="alert">Enter a positive face value in tPOT.</small>}</div>
+                <div><label htmlFor="w-due2">Due date</label><input id="w-due2" type="date" value={due} aria-invalid={!dueOk} aria-describedby={!dueOk ? "w-due2-error" : undefined} onChange={(e) => setDue(e.target.value)} />{!dueOk && <small id="w-due2-error" className="field-error" role="alert">Choose a future due date, or leave it blank.</small>}</div>
               </div>
               <div className="wiz-nav"><button className="btn" onClick={restart}>Start over</button>
-                <button className="btn primary" disabled={Boolean(c.busy)} title={c.account ? (c.gated ? connectReason : undefined) : undefined} onClick={() => { if (!c.account) { c.connect(); return; } if (c.gated) { c.switchNetwork(); return; } void c.run("frac", async () => {
-                  const s = supply.trim(); if (!/^\d+$/.test(s) || Number(s) < 1) throw new Error("Shares must be a whole number ≥ 1.");
+                <span className={termsOk ? "issue-ready-mint" : "field-error"} role="status">{termsOk ? <><i />Ready to issue</> : termsError}</span>
+                <button className="btn primary" disabled={Boolean(c.busy) || !termsOk} title={!termsOk ? termsError : c.account ? (c.gated ? connectReason : undefined) : undefined} onClick={() => { if (!c.account) { c.connect(); return; } if (c.gated) { c.switchNetwork(); return; } void c.run("frac", async () => {
+                  const s = supply.trim(); if (!/^\d+$/.test(s) || !Number.isSafeInteger(Number(s)) || Number(s) < 1 || Number(s) > 1_000_000_000_000) throw new Error("Shares must be a whole number from 1 to 1,000,000,000,000.");
                   const v = face.trim(); if (!/^\d+(\.\d+)?$/.test(v) || Number(v) <= 0) throw new Error("Enter a positive face value.");
                   const d = due ? new Date(`${due}T23:59:59`) : undefined; if (d && d.getTime() <= Date.now()) throw new Error("Due date must be in the future.");
                   const f = await fractionalize(c.ready(), c.addrs!, row.id, s, v, d);
@@ -142,8 +152,8 @@ export function Issue({ c }: { c: Ctx }) {
       </section>
 
       <section className="card" style={{ marginTop: "1rem" }}>
-        <div className="row" style={{ justifyContent: "space-between" }}><h2>My issued invoices</h2><button className="btn sm" onClick={() => void c.refresh()}>Refresh</button></div>
-        {!mine.length ? <Empty icon="▤" title="No invoices yet" body="Use the wizard above to mint your first invoice receipt." /> : (
+        <div className="row" style={{ justifyContent: "space-between" }}><h2>My issued invoices <span className="muted">{mine.length}</span></h2><button className="btn sm" disabled={c.loading} onClick={() => void c.refresh()}>{c.loading ? "Refreshing…" : "Refresh"}</button></div>
+        {!c.account ? <Empty icon="▤" title="Connect to see your invoices" body="Connect a wallet to view the receipts you issued or own." /> : c.loading && !mine.length ? <p className="muted" role="status">Loading your invoices…</p> : !mine.length ? <Empty icon="▤" title="No invoices yet" body="Use the wizard above to mint your first invoice receipt." /> : (
           <table className="rtable">
             <thead><tr><th scope="col">Invoice</th><th scope="col">Status</th><th scope="col" className="num">Face value</th><th scope="col" className="num">Sold</th><th scope="col">Next</th></tr></thead>
             <tbody>

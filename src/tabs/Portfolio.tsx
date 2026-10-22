@@ -16,13 +16,12 @@ export function Portfolio({ c }: { c: Ctx }) {
   const [to, setTo] = useState(""); const [amt, setAmt] = useState("100");
   const dis = Boolean(c.busy) || c.gated;
   const holdings = c.rows.filter((r) => r.fraction && (c.held.get(r.id) ?? 0n) > 0n);
-  const receipts = c.rows.filter((r) => r.owner === c.account || r.depositor === c.account);
+  const receipts = c.rows.filter((r) => r.owner.toLowerCase() === c.account.toLowerCase() || r.depositor.toLowerCase() === c.account.toLowerCase());
   const receiptHistory = readReceiptHistory(c.events);
-  const myListings = c.listings.filter((l) => l.seller === c.account && l.remaining > 0n);
+  const myListings = c.listings.filter((l) => l.seller.toLowerCase() === c.account.toLowerCase() && l.remaining > 0n);
   const claimable = c.rows.filter((r) => r.settle.settled && (c.claims.get(r.id) ?? 0n) > 0n);
   const dec = 18; // native tPOT
   // settled, every share claimed, still locked: the depositor takes the receipt NFT back
-  const redeemable = c.rows.filter((r) => r.settle.settled && r.fraction && r.supply === 0n && r.depositor === c.account && r.owner === c.addrs?.vault);
   const valueAt = (id: number, bal: bigint) => { const r = c.rows.find((x) => x.id === id)!; return (faceShare(r) * bal) / 10n ** 18n; };
   // cost basis from on-chain Bought events where you were the buyer
   const buys = new Map<number, { shares: bigint; cost: bigint }>();
@@ -39,8 +38,9 @@ export function Portfolio({ c }: { c: Ctx }) {
   const historyReceipts = receipts.filter((r) => isRedeemed(r.id));
   const visibleReceipts = receiptScope === "active" ? activeReceipts : receiptScope === "history" ? historyReceipts : receipts;
 
-  if (c.loading) return <div className="portfolio"><section className="card"><SkelRows n={4} cols={5} /></section></div>;
-  if (!holdings.length && !receipts.length && !myListings.length && !claimable.length && !redeemable.length)
+  if (!c.account) return <div className="portfolio portfolio-empty"><Empty icon="◉" title="Connect a wallet to view your portfolio" body="Your receipts, share positions, listings and claimable payouts are tied to the connected wallet."><button className="btn primary" onClick={c.connect}>Connect wallet</button></Empty></div>;
+  if (c.loading) return <div className="portfolio portfolio-loading"><section className="card" aria-busy="true"><SkelRows n={4} cols={5} /></section></div>;
+  if (!holdings.length && !receipts.length && !myListings.length && !claimable.length)
     return <Empty icon="▤" title="Nothing in your portfolio yet" body="Issue an invoice and lock it into shares, or buy discounted shares on Trade. Holdings, P&L and payouts appear here, read from the chain."><div className="row"><button className="btn sm primary" onClick={() => c.setTab("trade")}>Browse Trade</button><button className="btn sm" onClick={() => c.setTab("issue")}>Issue an invoice</button></div></Empty>;
 
   return (
@@ -54,19 +54,6 @@ export function Portfolio({ c }: { c: Ctx }) {
               <button key={r.id} className="btn primary sm" disabled={dis} onClick={() => void c.run(`claim${r.id}`, async () => {
                 const h = await claim(c.ready(), c.addrs!.vault, r.id); c.note("Payout claimed", `#${r.id} · ${fmt(c.claims.get(r.id) ?? 0n, r.settle.decimals)} ${r.settle.symbol}`, h);
               })}>{c.busy === `claim${r.id}` ? "Claiming…" : `Claim #${r.id} · ${fmt(c.claims.get(r.id) ?? 0n, r.settle.decimals)}`}</button>
-            ))}
-          </div>
-        </section>
-      )}
-      {redeemable.length > 0 && (
-        <section className="claim-banner" role="status">
-          <Ico n="check" size={22} />
-          <div><b>Paid out in full</b><span className="muted">Every share of {redeemable.map((r) => `#${r.id}`).join(", ")} has been claimed. Redeem to take the receipt NFT back (frees its storage, refunding the deposit).</span></div>
-          <div className="row">
-            {redeemable.map((r) => (
-              <button key={r.id} className="btn sm" disabled={dis} onClick={() => void c.run(`red${r.id}`, async () => {
-                const h = await redeem(c.ready(), c.addrs!.vault, r.id); c.note("Redeemed", `#${r.id} back to you`, h);
-              })}>{c.busy === `red${r.id}` ? "Redeeming…" : `Redeem #${r.id}`}</button>
             ))}
           </div>
         </section>

@@ -1,0 +1,15 @@
+/* PotKit shared monochrome theme. Status colours are intentionally separate from brand chrome. */
+:root {
+  --pk-bg: #000000;
+  --pk-surface: #0a0a0a;
+  --pk-surface-2: #141414;
+  --pk-border: rgba(255,255,255,0.10);
+  --pk-text: #ffffff;
+  --pk-muted: #8a8a8a;
+  --pk-accent: #ffffff;
+  --pk-accent-text: #000000;
+  --pk-accent-hover: #e6e6e6;
+  --pk-success: #22c55e;
+  --pk-danger: #ef4444;
+  --pk-warning: #f59e0b;
+}

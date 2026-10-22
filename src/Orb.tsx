@@ -59,7 +59,7 @@ export function DotSphere({ className = "", speed = 0.16, tilt = 0.38, interacti
       }
       const alpha = [0.12, 0.28, 0.55, 0.9];
       DOT_BINS.forEach((b, k) => { ctx.fillStyle = `rgba(232,228,250,${alpha[k]})`; const s = k > 1 ? 1.7 : 1.1; for (let i = 0; i < DOT_COUNTS[k]! * 2; i += 2) ctx.fillRect(b[i]!, b[i + 1]!, s, s); });
-      ctx.lineWidth = 1; ctx.strokeStyle = "rgba(155,128,255,.55)";
+      ctx.lineWidth = 1; ctx.strokeStyle = "rgba(255,255,255,.55)";
       NODES.forEach((a, i) => {
         const b = NODES[(i + 1) % NODES.length]!; ctx.beginPath(); let pen = false;
         for (let s = 0; s <= 24; s++) { const v = arc(a, b, s / 24); const [px, py, z] = P(v[0]!, v[1]!, v[2]!); if (z < -0.05) { pen = false; continue; } if (pen) ctx.lineTo(px, py); else { ctx.moveTo(px, py); pen = true; } }
@@ -68,8 +68,8 @@ export function DotSphere({ className = "", speed = 0.16, tilt = 0.38, interacti
       NODES.forEach((n, i) => {
         const [px, py, z] = P(n[0], n[1], n[2]); if (z < -0.05) return;
         const ph = still ? 0.3 : (t * 0.7 + i * 0.27) % 1;
-        ctx.fillStyle = "#9b80ff"; ctx.beginPath(); ctx.arc(px, py, 2.6, 0, 7); ctx.fill();
-        ctx.strokeStyle = `rgba(155,128,255,${0.5 * (1 - ph)})`; ctx.beginPath(); ctx.arc(px, py, 4 + ph * 16, 0, 7); ctx.stroke();
+        ctx.fillStyle = "#969696"; ctx.beginPath(); ctx.arc(px, py, 2.6, 0, 7); ctx.fill();
+        ctx.strokeStyle = `rgba(255,255,255,${0.5 * (1 - ph)})`; ctx.beginPath(); ctx.arc(px, py, 4 + ph * 16, 0, 7); ctx.stroke();
       });
       if (!still) raf = requestAnimationFrame(frame);
     };

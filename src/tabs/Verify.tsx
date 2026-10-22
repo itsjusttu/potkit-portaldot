@@ -8,7 +8,7 @@ import { readReceiptHistory } from "./receipt-history";
 type Check = { ok: boolean | null; k: string; v: ReactNode };
 
 export function Verify({ c }: { c: Ctx }) {
-  const [input, setInput] = useState(c.param("id") || "1");
+  const [input, setInput] = useState(c.param("id") || "");
   const [msg, setMsg] = useState("");
   const [loading, setLoading] = useState(false);
   const [res, setRes] = useState<{ row: Row; name: string; kind: string; at: Date } | null>(null);
@@ -17,22 +17,30 @@ export function Verify({ c }: { c: Ctx }) {
     try { await navigator.clipboard.writeText(value); setCopied(key); window.setTimeout(() => setCopied(""), 1500); } catch { /* Clipboard may be unavailable outside a secure context. */ }
   };
   const check = useCallback(async (raw: string) => {
-    if (!c.addrs) return setMsg("No contracts configured.");
+    setRes(null);
+    if (!c.addrs) return setMsg("No contracts configured. Open a PotKit link or deploy from Issue.");
     const v = raw.trim();
-    let n = Number(v.replace(/^#/, ""));
-    if (/^0x[0-9a-fA-F]{40}$/.test(v)) { const r = c.rows.find((x) => x.fraction && x.fraction.toLowerCase() === v.toLowerCase()); if (!r) return setMsg("That address is not a PotKit share token on this vault."); n = r.id; }
-    if (!Number.isInteger(n) || n < 1) return setMsg("Enter a receipt id (e.g. 1) or a KIT share-token address.");
+    let n = /^#?[1-9]\d*$/.test(v) ? Number(v.replace(/^#/, "")) : NaN;
+    if (/^0x[0-9a-fA-F]{40}$/.test(v)) { const r = c.rows.find((x) => x.fraction && x.fraction.toLowerCase() === v.toLowerCase()); if (!r) return setMsg("Share token not found among loaded receipts. Search its receipt id instead."); n = r.id; }
+    if (!Number.isSafeInteger(n) || n < 1) return setMsg("Enter a positive receipt id (e.g. 1) or a loaded KIT share-token address.");
     setMsg(""); setLoading(true); setRes(null);
     try {
       const [row] = await loadRows(c.addrs.vault, n, 1);
       if (!row) { setMsg(`Receipt #${n} does not exist on this contract.`); return; }
       const meta = await readTokenUri(c.addrs.receipt, n);
       setRes({ row, name: meta.name, kind: String(meta.attributes[0]?.value ?? ""), at: new Date() });
+      lastLookup.current = `${c.addrs.vault}:${n}`;
       const q = new URLSearchParams(location.search); q.set("tab", "verify"); q.set("id", String(n)); history.replaceState(null, "", `${location.pathname}?${q}`);
     } catch (e) { setMsg(explain(e)); } finally { setLoading(false); }
   }, [c.addrs, c.rows]);
-  const ran = useRef(false);
-  useEffect(() => { if (c.addrs && !ran.current) { ran.current = true; void check(input); } }, [c.addrs, check, input]);
+  const lastLookup = useRef("");
+  const routeId = c.param("id");
+  useEffect(() => {
+    if (!routeId || !c.addrs || lastLookup.current === `${c.addrs.vault}:${routeId}`) return;
+    lastLookup.current = `${c.addrs.vault}:${routeId}`;
+    setInput(routeId);
+    void check(routeId);
+  }, [routeId, c.addrs, check]);
 
   const r = res?.row;
   const vaultHeld = Boolean(r && c.addrs && r.owner.toLowerCase() === c.addrs.vault.toLowerCase());
@@ -89,6 +97,7 @@ export function Verify({ c }: { c: Ctx }) {
       </form>
       {msg && <p className="banner err" role="alert">{msg}</p>}
       {loading && !res && <p className="muted" role="status">Reading Portaldot…</p>}
+      {!res && !loading && !msg && <p className="muted verify-empty">Enter a receipt id to inspect its current on-chain state. Share-token address lookup covers loaded receipts only.</p>}
       {res && r && (
         <div className="verify-result" aria-live="polite">
           <article className={`cert ${fails ? "bad" : verdict === "VERIFIED" || redeemedPaid ? "good" : "warn"}`}>
@@ -125,7 +134,7 @@ export function Verify({ c }: { c: Ctx }) {
               <li key={step.key} className={step.done ? "done" : "pending"}>
                 <span className="proof-event-icon"><Ico n={step.done ? "check" : "dash"} size={14} /></span>
                 <div className="proof-event-body"><b>{step.title}</b>
-                  {step.event ? <><small>Block {step.event.block.toString()}{step.event.time ? ` · ${step.event.timeApprox ? "~" : ""}${new Date(step.event.time * 1000).toLocaleString()}` : ""}</small><button type="button" className="proof-tx" title="Copy full transaction hash" onClick={() => void copy(step.event!.hash, step.event!.hash)}><code>{short(step.event.hash)}</code><span>{copied === step.event.hash ? "Copied" : "Copy tx"}</span></button></>
+                  {step.event ? <><small>Block {step.event.block.toString()}{step.event.time ? ` · ${step.event.timeApprox ? "~" : ""}${new Date(step.event.time * 1000).toLocaleString()}` : ""}</small><div className="proof-tx-actions"><a className="proof-tx" href={`https://node-console.portaldot.dev/?rpc=wss%3A%2F%2Ftest-node-v3.portaldot.dev#/explorer/query/${step.event.hash}`} target="_blank" rel="noreferrer" aria-label={`Open transaction ${step.event.hash} in explorer`}><code>{short(step.event.hash)}</code><span>Open tx ↗</span></a><button type="button" className="proof-tx" title="Copy full transaction hash" onClick={() => void copy(step.event!.hash, step.event!.hash)}>{copied === step.event.hash ? "Copied" : "Copy tx"}</button></div></>
                     : <small>{step.done ? step.fallback : c.eventsOk ? step.fallback : "Not found in the readable event range"}</small>}
                 </div>
               </li>

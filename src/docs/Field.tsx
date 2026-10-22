@@ -34,7 +34,7 @@ export function Field() {
     const onVis = () => { if (!document.hidden && visible && !raf) raf = requestAnimationFrame(draw); };
     document.addEventListener("visibilitychange", onVis);
     const t0 = performance.now();
-    const C = "111,195,211", M = "180,138,200";
+    const C = "255,255,255", M = "160,160,160";
     const draw = (now: number) => {
       if (document.hidden || !visible) { raf = 0; return; }
       const t = reduce ? 4 : (now - t0) / 1000;

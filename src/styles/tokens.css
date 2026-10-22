@@ -1,51 +1,69 @@
-/* PotKit app — the ONLY place design tokens are defined. Every other app stylesheet reads these.
-   (Previously 9 stacked blocks redefined --bg/--line/--brand/--surface with different values; the last one won.) */
+/* PotKit app aliases for the shared monochrome theme in theme-tokens.css.
+   Type: IBM Plex Mono (SIL OFL) everywhere. */
+:root {
+  --font: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --ink-0: var(--pk-bg);      /* canvas */
+  --ink-1: var(--pk-surface);  /* raised surface */
+  --ink-2: var(--pk-surface-2); /* cards / inputs */
+  --ink-3: #1d1d1d;      /* hover / track */
+  --ink-4: #2a2a2a;
+  --paper: #e8e8e8;      /* light section canvas */
+  --paper-2: #f4f4f4;    /* light card */
+  --white: #ffffff;
+  --grey-1: #a3a3a3;     /* secondary text */
+  --grey-2: var(--pk-muted); /* tertiary text */
+  --up: var(--pk-success);
+  --down: var(--pk-danger);
+  --amber: var(--pk-warning);
+  --pill: 999px;
+  --r-card: 16px;
+  --r-frame: 40px;
+}
 html[data-route="app"] {
   color-scheme: dark;
-  --accent: #8b68ff;
-  --accent-fg: #fff;
-  --accent2: #8b68ff;
-  --accent3: #b48ac8;
-  --bad: #f07a8c;
-  --bg: #07070d;
-  --brand: #8b68ff;
-  --brand-ink: #fff;
-  --fg: #f4f1fb;
-  --glass: rgba(255,255,255,.02);
-  --glass-hi: rgba(255,255,255,.06);
-  --grad: linear-gradient(115deg,#8b68ff 0%,#7652dd 100%);
-  --hud: #8b68ff;
-  --line: rgba(226,220,255,.09);
-  --line-strong: rgba(226,220,255,.17);
-  --muted: #9894a8;
-  --neo-bg: #07070d;
-  --neo-c: #8b68ff;
-  --neo-c-rgb: 139,104,255;
-  --neo-m: #b48ac8;
-  --neo-m-rgb: 180,138,200;
-  --neo-text: #f4f1fb;
-  --ok: #34d399;
-  --r-lg: 18px;
-  --r-md: 13px;
-  --r-sm: 9px;
-  --radius: 1.1rem;
-  --surface: #101019;
-  --surface-2: #151522;
-  --surface-3: #1e1d2c;
-  --warn: #e8c15a;
-  --positive: #34d399;
-  --negative: #f07a8c;
-  --focus: rgba(139,104,255,.38);
-  --accent-rgb: 139,104,255;
-  --line-rgb: 226,220,255;
+  --accent: var(--pk-accent);
+  --accent-fg: var(--pk-accent-text);
+  --accent2: var(--pk-accent-hover);
+  --accent3: var(--pk-muted);
+  --bad: var(--down);
+  --bg: var(--ink-0);
+  --brand: var(--pk-accent);
+  --brand-ink: var(--pk-accent-text);
+  --fg: #f5f5f5;
+  --glass: rgba(255,255,255,.03);
+  --glass-hi: rgba(255,255,255,.07);
+  --grad: linear-gradient(var(--pk-accent), var(--pk-accent));
+  --hud: var(--pk-accent);
+  --line: var(--pk-border);
+  --line-strong: rgba(255,255,255,.20);
+  --muted: var(--grey-1);
+  --neo-bg: var(--ink-0);
+  --neo-c: var(--pk-accent);
+  --neo-c-rgb: 255,255,255;
+  --neo-m: var(--pk-muted);
+  --neo-m-rgb: 163,163,163;
+  --neo-text: #f5f5f5;
+  --ok: var(--up);
+  --r-lg: 20px;
+  --r-md: 14px;
+  --r-sm: 10px;
+  --radius: 1rem;
+  --surface: var(--ink-1);
+  --surface-2: var(--ink-2);
+  --surface-3: var(--ink-3);
+  --warn: var(--amber);
+  --positive: var(--up);
+  --negative: var(--down);
+  --focus: rgba(255,255,255,.38);
+  --accent-rgb: 255,255,255;
+  --line-rgb: 255,255,255;
 
-  /* semantic additions */
-  --surface-glass: rgba(16,16,25,.72);
-  --focus-ring: 0 0 0 3px rgba(139,104,255,.38);
-  --shadow-1: 0 1px 0 rgba(255,255,255,.04) inset, 0 8px 24px rgba(0,0,0,.35);
-  --shadow-2: 0 1px 0 rgba(255,255,255,.06) inset, 0 18px 48px rgba(0,0,0,.5);
-  --glow: 0 0 0 1px rgba(139,104,255,.35), 0 10px 32px rgba(139,104,255,.28);
+  --surface-glass: rgba(0,0,0,.82);
+  --focus-ring: 0 0 0 2px var(--pk-bg), 0 0 0 4px var(--pk-accent);
+  --shadow-1: 0 1px 0 rgba(255,255,255,.04) inset, 0 8px 24px rgba(0,0,0,.45);
+  --shadow-2: 0 1px 0 rgba(255,255,255,.06) inset, 0 18px 48px rgba(0,0,0,.6);
+  --glow: 0 0 0 1px rgba(255,255,255,.45);
   --ease: cubic-bezier(.2,.7,.2,1);
   --dur-1: .15s; --dur-2: .28s;
-  --tabbar-h: 3.6rem;
+  --tabbar-h: 4rem;
 }

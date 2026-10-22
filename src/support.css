@@ -1,5 +1,5 @@
 html[data-route="app"] .support-backdrop { position: fixed; inset: 0; z-index: 100; display: grid; place-items: center; padding: 1rem; background: rgba(0,0,0,.72); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); animation: support-fade .18s ease both; }
-html[data-route="app"] .support-dialog { width: min(100%, 38rem); max-height: min(92dvh, 54rem); overflow: auto; padding: 1.45rem 1.65rem 1.25rem; border: 1px solid var(--line-strong); border-radius: 1.4rem; background: #17171c; box-shadow: var(--shadow-2); color: var(--fg); animation: support-rise .2s var(--ease) both; }
+html[data-route="app"] .support-dialog { width: min(100%, 38rem); max-height: min(92dvh, 54rem); overflow: auto; padding: 1.45rem 1.65rem 1.25rem; border: 1px solid var(--line-strong); border-radius: 1.4rem; background: var(--pk-surface-2); box-shadow: var(--shadow-2); color: var(--fg); animation: support-rise .2s var(--ease) both; }
 html[data-route="app"] .support-head { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-bottom: 1.15rem; }
 html[data-route="app"] .support-head h2 { margin: 0; font-size: 1.05rem; font-weight: 650; letter-spacing: -.02em; }
 html[data-route="app"] .support-dialog .t-x { display: grid; place-items: center; width: 2.75rem; height: 2.75rem; border-radius: 50%; color: var(--muted); }
@@ -9,8 +9,8 @@ html[data-route="app"] .support-note a { color: var(--fg); font-weight: 600; tex
 html[data-route="app"] .support-dialog form { display: grid; gap: .85rem; }
 html[data-route="app"] .support-label { margin: .1rem 0 -.35rem; font-size: .9rem; font-weight: 620; }
 html[data-route="app"] .support-label span { color: var(--muted); font-weight: 450; }
-html[data-route="app"] .support-dialog :is(input[type="email"], select, textarea) { width: 100%; min-height: 3rem; padding: .75rem .9rem; border: 1px solid var(--line-strong); border-radius: var(--r-md); background: #15151a; color: var(--fg); font: inherit; }
-html[data-route="app"] .support-dialog :is(input, select, textarea)::placeholder { color: #77747f; }
+html[data-route="app"] .support-dialog :is(input[type="email"], select, textarea) { width: 100%; min-height: 3rem; padding: .75rem .9rem; border: 1px solid var(--line-strong); border-radius: var(--r-md); background: var(--pk-surface-2); color: var(--fg); font: inherit; }
+html[data-route="app"] .support-dialog :is(input, select, textarea)::placeholder { color: var(--pk-muted); }
 html[data-route="app"] .support-dialog input[type="email"]:focus, html[data-route="app"] .support-dialog select:focus, html[data-route="app"] .support-dialog textarea:focus { border-color: var(--brand); outline: none; box-shadow: var(--focus-ring); }
 html[data-route="app"] .support-country { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin: .15rem 0; padding: .6rem 0; border-block: 1px solid var(--line); }
 html[data-route="app"] .support-country select { width: min(15rem, 55%); border-radius: 999px; }

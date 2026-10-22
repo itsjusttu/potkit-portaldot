@@ -53,13 +53,14 @@ export function Explore({ c }: { c: Ctx }) {
   return (
     <div className="explore">
       <section className="explore-intro"><div><p className="kicker">Loaded receipts · {R.length} of {c.total}</p><h2>Explore real-world receivables</h2><p>Review issuer-provided invoice details, on-chain terms and shares currently listed.</p></div><span className="explore-live"><i /> Live from Portaldot V3</span></section>
-      <section className="ex-stats" aria-label="Network overview">
+      {!c.eventsOk && !c.eventsLoading && <p className="banner ex-scan-warning" role="status">Event scan incomplete. Trade totals and redeemed statuses may omit transactions outside the readable range.</p>}
+      <section className="ex-stats" aria-label="Loaded network overview">
         <div className="kpi"><span>Receipts on contract</span><b className="num"><N l={c.loading}><CountUp v={c.total} /></N></b><small><N l={c.loading}>{R.filter((r) => r.fraction).length} locked among loaded receipts</N></small></div>
-        <div className="kpi"><span>Outstanding face value</span><b className="num"><N l={c.loading}><CountUp v={fmt(outstanding, 18)} /></N></b><small>tPOT owed by debtors</small></div>
-        <div className="kpi"><span>Settled volume</span><b className="num"><N l={c.loading}><CountUp v={fmt(settledVol, 18)} /></N></b><small>tPOT paid into PotKit</small></div>
+        <div className="kpi"><span>Outstanding · loaded</span><b className="num"><N l={c.loading}><CountUp v={fmt(outstanding, 18)} /></N></b><small>tPOT owed by debtors</small></div>
+        <div className="kpi"><span>Settled · loaded</span><b className="num"><N l={c.loading}><CountUp v={fmt(settledVol, 18)} /></N></b><small>tPOT paid into PotKit</small></div>
         <div className="kpi"><span>Open listings</span><b className="num"><N l={c.loading}><CountUp v={open.length} /></N></b><small><N l={c.loading}>{fmt(listedVal, 18)} tPOT asked</N></small></div>
-        <div className="kpi"><span>Traded</span><b className="num"><N l={c.loading}><CountUp v={fmt(traded, 18)} /></N></b><small>tPOT in recent buys</small></div>
-        <div className={`kpi ${R.some((r) => r.status === "Overdue") ? "neg" : ""}`}><span>Overdue</span><b className="num"><N l={c.loading}><CountUp v={R.filter((r) => r.status === "Overdue").length} /></N></b><small>past due, unpaid</small></div>
+        <div className="kpi"><span>Traded · scanned events</span><b className="num">{c.eventsLoading ? "Reading…" : !c.eventsOk ? "—" : <CountUp v={fmt(traded, 18)} />}</b><small>{c.eventsOk ? "tPOT in scanned buys" : "Incomplete event scan"}</small></div>
+        <div className={`kpi ${R.some((r) => r.status === "Overdue") ? "neg" : ""}`}><span>Overdue · loaded</span><b className="num"><N l={c.loading}><CountUp v={R.filter((r) => r.status === "Overdue").length} /></N></b><small>past due, unpaid</small></div>
       </section>
 
       <div className="ex-grid">
@@ -74,7 +75,7 @@ export function Explore({ c }: { c: Ctx }) {
             </div>
             <div className="tb-search"><Ico n="search" /><input aria-label="Search receipts" placeholder="Search id, note, status or address" value={q} onChange={(e) => setQ(e.target.value)} /></div>
           </div>
-          {c.loading ? <SkelRows /> : !rows.length ? <Empty icon="▤" title="No receipts match" body="Clear the search to see everything on this vault." /> : view === "cards" ? (
+          {c.loading ? <SkelRows /> : !rows.length ? <Empty icon="▤" title={R.length ? "No receipts match" : "No receipts loaded"} body={R.length ? "Change the search or lifecycle filter to see more receipts." : c.total > 0 ? "No receipt details were returned by the RPC. Try refreshing the page." : "No receipts have been issued on this vault yet."} /> : view === "cards" ? (
             <div className="explore-card-grid">
               {rows.map((r) => {
                 const onMkt = open.filter((l) => l.receiptId === r.id).reduce((s, l) => s + l.remaining, 0n);
@@ -87,7 +88,7 @@ export function Explore({ c }: { c: Ctx }) {
                     <header><span className="explore-icon"><Ico n={redeemed ? "redeem" : isSettled(r) ? "check" : r.fraction ? "swap" : "terms"} size={17} /></span><span className="ex-id">INVOICE #{r.id}</span>{redeemed ? <span className="tag explore-redeemed-tag">REDEEMED</span> : <SettleBadge r={r} terms={false} />}</header>
                     <h3>{r.note || KINDS[r.kind]}</h3><p className="explore-issuer">{KINDS[r.kind]} · issuer wallet {short(r.depositor || r.owner)}</p>
                     <div className="explore-card-facts"><div><small>Face value</small><b>{face ? `${fmt(face, r.settle.decimals)} ${r.settle.symbol}` : "Terms pending"}</b></div><div><small>Due</small><b>{dueDate ? new Date(dueDate * 1000).toLocaleDateString("en-US", { month: "short", day: "2-digit", year: "numeric" }) : redeemed ? "No due date" : "—"}</b></div></div>
-                    <div className="explore-meter-label"><span>{redeemed ? "Shares sold" : "Currently listed"}</span><b>{redeemed && totalShares > 0n ? `${units(totalShares)}/${units(totalShares)} sold` : totalShares > 0n ? `${units(onMkt)} / ${units(totalShares)}` : "Not issued"}</b></div><div className="explore-meter"><i style={{ width: `${marketPct}%` }} /></div>
+                    <div className="explore-meter-label"><span>{redeemed ? "Shares issued before redemption" : "Currently listed"}</span><b>{redeemed && totalShares > 0n ? units(totalShares) : totalShares > 0n ? `${units(onMkt)} / ${units(totalShares)}` : "Not issued"}</b></div><div className="explore-meter"><i style={{ width: `${redeemed ? 0 : marketPct}%` }} /></div>
                     <div className="explore-card-foot"><span>{redeemed ? "Lifecycle complete" : r.fraction ? `${units(totalShares)} shares` : "Receipt only"}</span><b>{redeemed && receiptHistory.get(r.id)?.settled ? <>Settled · {fmt(receiptHistory.get(r.id)?.settle?.value ?? r.settle.amount, r.settle.decimals)} {r.settle.symbol} paid</> : p === undefined ? (redeemed ? "REDEEMED" : "Not listed") : <>{fmt(p, 18)} <small>tPOT / share</small></>}</b></div>
                     <footer><button className="btn sm" onClick={() => c.setTab("verify", { id: String(r.id) })}><Ico n="shield" /> Verify</button>{!redeemed && r.fraction && !r.settle.settled && <button className="btn sm primary" onClick={() => p !== undefined ? c.setTab("trade") : c.openPay(r.id)}>{p !== undefined ? "View market" : "Pay invoice"}</button>}</footer>
                   </article>

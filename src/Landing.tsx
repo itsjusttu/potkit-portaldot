@@ -1,130 +1,85 @@
-import { useEffect, useRef, useState } from "react";
+import { useMemo, useState, type FormEvent } from "react";
+import "./theme-tokens.css";
 import "./landing.css";
 import "./landing-polish.css";
+import "./landing-xero.css";
 import { Footer, Header, L, Reveal, app, ext, page, useLenis, Arrow } from "./docs/Chrome";
-import { DotSphere } from "./Orb";
-import { Ico, MarketArt, ReceiptArt, VaultArt } from "./docs/Art";
+import { Ico } from "./docs/Art";
 
-/** HUD ring around the share field: slow counter-rotating ticks + three labelled readouts. */
-const Hud = () => (
-  <svg className="lx-hud" viewBox="0 0 600 600" aria-hidden>
-    <g className="lx-hud-r1">{Array.from({ length: 72 }, (_, i) => <path key={i} d={`M300 ${i % 6 ? 22 : 14}V30`} transform={`rotate(${i * 5} 300 300)`} />)}</g>
-    <g className="lx-hud-r2"><circle cx="300" cy="300" r="250" /><path d="M300 42a258 258 0 0 1 180 74" className="arc" /><path d="M120 484a258 258 0 0 1-60-80" className="arc m" /></g>
-    <path d="M40 70V40h30M560 70V40h-30M40 530v30h30M560 530v30h-30" className="lx-hud-k" />
-  </svg>
-);
-const READOUTS = [["Receipt", "locked in vault"], ["Shares", "fixed supply"], ["Payout", "pro-rata"]];
-
-/** Full-page spatial dust field: fades in on entry and subtly bends around the pointer. */
-function SpatialField() {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    const context = canvas?.getContext("2d", { alpha: true });
-    if (!canvas || !context) return;
-    const ctx = context;
-    const count = Math.min(460, Math.max(280, Math.round(innerWidth * innerHeight / 2600)));
-    let width = 0, height = 0, dpr = 1, raf = 0, start = performance.now(), scroll = scrollY;
-    let px = innerWidth / 2, py = innerHeight / 2, sx = px, sy = py, pointerOn = false;
-    const points = Array.from({ length: count }, (_, i) => {
-      const angle = i * 2.399963 + Math.random() * .3;
-      const radius = Math.sqrt((i + .5) / count) * .72 + Math.random() * .12;
-      return { x: .5 + Math.cos(angle) * radius * .62, y: .48 + Math.sin(angle) * radius * .76, phase: Math.random() * 6.28, size: .65 + Math.random() * 1.35, drift: .25 + Math.random() * .8 };
-    });
-    const resize = () => {
-      dpr = Math.min(devicePixelRatio || 1, 1.25); width = innerWidth; height = innerHeight;
-      canvas.width = Math.round(width * dpr); canvas.height = Math.round(height * dpr);
-      canvas.style.width = `${width}px`; canvas.style.height = `${height}px`;
-      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    };
-    const move = (event: PointerEvent) => { if (event.pointerType !== "touch") { px = event.clientX; py = event.clientY; pointerOn = true; } };
-    const leave = () => { pointerOn = false; };
-    const onScroll = () => { scroll = scrollY; };
-    const draw = (now: number) => {
-      ctx.clearRect(0, 0, width, height);
-      const entry = Math.min(1, (now - start) / 1700);
-      const time = now * .00032;
-      const cx = width * .5, cy = height * .49 - scroll * .035;
-      const influence = pointerOn ? 1 : 0;
-      sx += (px - sx) * .08; sy += (py - sy) * .08;
-      const smoothPX = sx, smoothPY = sy;
-      ctx.globalAlpha = entry * .76;
-      if (influence) {
-        const glow = ctx.createRadialGradient(smoothPX, smoothPY, 0, smoothPX, smoothPY, 210);
-        glow.addColorStop(0, "rgba(111,129,255,.11)"); glow.addColorStop(1, "rgba(111,129,255,0)");
-        ctx.fillStyle = glow; ctx.fillRect(0, 0, width, height);
-      }
-      for (const p of points) {
-        const wave = Math.sin(time * p.drift + p.phase);
-        let x = p.x * width + Math.cos(time * .55 + p.phase) * 28 * p.drift;
-        let y = p.y * height + Math.sin(time * .7 + p.phase) * 32 * p.drift - scroll * .035;
-        const dx = x - smoothPX, dy = y - smoothPY, dist = Math.hypot(dx, dy);
-        if (influence && dist < 230) {
-          const force = (1 - dist / 230) * 38;
-          x += (dx / (dist || 1) + -dy / (dist || 1) * .32) * force;
-          y += (dy / (dist || 1) + dx / (dist || 1) * .32) * force;
-        }
-        const centerDist = Math.hypot((x - cx) / (width * .52), (y - cy) / (height * .6));
-        const alpha = Math.max(.05, (1 - centerDist * .72) * (.44 + (wave + 1) * .2));
-        ctx.fillStyle = `rgba(${Math.round(164 + (p.phase % 1) * 70)},${Math.round(187 + (p.phase % 1) * 38)},255,${alpha})`;
-        ctx.beginPath(); ctx.arc(x, y, p.size, 0, Math.PI * 2); ctx.fill();
-      }
-      ctx.globalAlpha = 1;
-      raf = requestAnimationFrame(draw);
-    };
-    resize();
-    addEventListener("resize", resize); addEventListener("pointermove", move, { passive: true });
-    document.documentElement.addEventListener("pointerleave", leave); addEventListener("scroll", onScroll, { passive: true });
-    raf = requestAnimationFrame(draw);
-    return () => { cancelAnimationFrame(raf); removeEventListener("resize", resize); removeEventListener("pointermove", move); document.documentElement.removeEventListener("pointerleave", leave); removeEventListener("scroll", onScroll); };
-  }, []);
-  return <canvas ref={canvasRef} className="lx-spatial-field" aria-hidden="true" />;
+/* ---------- ASCII field: static value-noise "land" drawn in characters (own pattern, no map data) ---------- */
+const ramp = " ..:-=+*#%@";
+function asciiField(cols: number, rows: number) {
+  const h = (x: number, y: number) => { let n = Math.imul(x, 374761393) + Math.imul(y, 668265263); n = Math.imul(n ^ (n >>> 13), 1274126177); return ((n ^ (n >>> 16)) >>> 0) / 4294967296; };
+  const sm = (t: number) => t * t * (3 - 2 * t);
+  const vn = (x: number, y: number) => { const xi = Math.floor(x), yi = Math.floor(y), xf = sm(x - xi), yf = sm(y - yi); const a = h(xi, yi), b = h(xi + 1, yi), c = h(xi, yi + 1), d = h(xi + 1, yi + 1); return a + (b - a) * xf + (c - a) * yf + (a - b - c + d) * xf * yf; };
+  const out: string[] = [];
+  for (let y = 0; y < rows; y++) {
+    let line = "";
+    for (let x = 0; x < cols; x++) {
+      const v = vn(x / 17, y / 9) * .62 + vn(x / 7 + 40, y / 4 + 11) * .38;
+      if (v < .5) { line += " "; continue; }
+      const k = Math.min(ramp.length - 1, Math.floor((v - .5) / .32 * (ramp.length - 1)) + 1);
+      line += ramp[k];
+    }
+    out.push(line);
+  }
+  return out.join("\n");
 }
 
-function useScrollField() {
-  useEffect(() => {
-    const orb = document.querySelector<HTMLElement>(".lx-orb");
-    const dust = document.querySelector<HTMLElement>(".lx-bg");
-    if (!orb || !dust) return;
-    let raf = 0;
-    const update = () => {
-      if (raf) return;
-      raf = requestAnimationFrame(() => {
-        raf = 0;
-        const progress = Math.max(0, Math.min(1, scrollY / Math.max(innerHeight * .9, 1)));
-        orb.style.setProperty("--scroll-y", `${-progress * 92}px`);
-        orb.style.setProperty("--scroll-scale", `${1 - progress * .2}`);
-        dust.style.setProperty("--scroll-bg-y", `${progress * 38}px`);
-      });
-    };
-    addEventListener("scroll", update, { passive: true }); addEventListener("resize", update); update();
-    return () => { cancelAnimationFrame(raf); removeEventListener("scroll", update); removeEventListener("resize", update); };
-  }, []);
+/* ---------- schematic device mock: explanatory labels, never sample balances or returns ---------- */
+function Phone({ variant }: { variant: "book" | "buy" }) {
+  return (
+    <div className={`lx-phone ${variant}`} role="img" aria-label={variant === "book" ? "Illustration of the PotKit invoice book" : "Illustration of buying invoice shares"}>
+      <div className="lx-phone-screen">
+        <div className="lx-phone-bar"><b>9:41</b><i /></div>
+        {variant === "book" ? (
+          <>
+            <small className="cap">PotKit · illustrative flow</small>
+            <div className="big">Invoice <em>receipt</em></div>
+            <div className="lx-phone-flow">
+              <div><span>01</span><b>Mint receipt</b><small>Record terms on-chain</small></div>
+              <div><span>02</span><b>Lock in vault</b><small>Create fixed-supply shares</small></div>
+              <div><span>03</span><b>List shares</b><small>Offer at a chosen price</small></div>
+              <div><span>04</span><b>Settle &amp; claim</b><small>After the debtor pays</small></div>
+            </div>
+          </>
+        ) : (
+          <>
+            <b className="ttl">Trade invoice shares</b>
+            <small className="cap">PotKit · illustrative flow</small>
+            <div className="lx-phone-flow">
+              <div><span>01</span><b>Browse listings</b><small>Review terms and due date</small></div>
+              <div><span>02</span><b>Buy shares</b><small>Pay the listed price in tPOT</small></div>
+              <div><span>03</span><b>Wait for settlement</b><small>Debtor pays into the pool</small></div>
+              <div><span>04</span><b>Claim your share</b><small>Pro-rata on-chain payout</small></div>
+            </div>
+            <div className="go">Illustrative flow · testnet only</div>
+          </>
+        )}
+      </div>
+    </div>
+  );
 }
 
 const ROLES = [
-  { id: "issuers", k: "Issuers", t: "Unlock liquidity from work already delivered", d: "Create an issuer-provided on-chain receipt, lock it and offer fixed-supply shares at a discount. If investors buy, you receive tPOT now; the receipt is not independently authenticated.", cta: ["Issue an invoice", "?tab=issue"], art: "doc" },
-  { id: "investors", k: "Investors", t: "Buy discounted claims on receivables", d: "Every listing shows its discount to face value and due date. Shares are escrowed by the market, prices are in tPOT, and payouts are pro-rata on settlement.", cta: ["Browse listings", "?tab=trade"], art: "flow" },
-  { id: "debtors", k: "Debtors & judges", t: "Settle once. Check the on-chain record", d: "A debtor can pay once in tPOT and holders can claim pro-rata. Share a read-only proof of custody, terms and settlement state; it does not attest to off-chain invoice authenticity.", cta: ["Verify a receipt", "?tab=verify"], art: "seal" },
+  { id: "issuers", k: "Issuers", t: "Unlock liquidity from work already delivered", d: "Create an issuer-provided on-chain receipt, lock it and offer fixed-supply shares at a discount. If investors buy, you receive tPOT now; the receipt is not independently authenticated.", cta: ["Issue an invoice", "?tab=issue"] },
+  { id: "investors", k: "Investors", t: "Buy discounted claims on receivables", d: "Every listing shows its discount to face value and due date. Shares are escrowed by the market, prices are in tPOT, and payouts are pro-rata on settlement.", cta: ["Browse listings", "?tab=trade"] },
+  { id: "debtors", k: "Debtors & judges", t: "Settle once. Check the on-chain record", d: "A debtor can pay once in tPOT and holders can claim pro-rata. Share a read-only proof of custody, terms and settlement state; it does not attest to off-chain invoice authenticity.", cta: ["Verify a receipt", "?tab=verify"] },
 ] as const;
 
-const Panel = ({ art }: { art: string }) => (
-  <div className="lx-panel" aria-hidden>
-    <svg viewBox="0 0 400 300">
-      <defs><pattern id={`g-${art}`} width="20" height="20" patternUnits="userSpaceOnUse"><path d="M20 0H0v20" fill="none" className="lx-pg" /></pattern></defs>
-      <rect width="400" height="300" fill={`url(#g-${art})`} />
-      {art === "doc" && <g className="lx-float"><rect x="150" y="50" width="100" height="140" className="lx-st" /><rect x="140" y="62" width="100" height="140" className="lx-st dim" /><path d="M165 80h70M165 98h70M165 116h44" className="lx-st" /><path d="M150 190l8 8 8-8 8 8 8-8 8 8 8-8 8 8 8-8 8 8 8-8 8 8 8-8" className="lx-st" /></g>}
-      {art === "flow" && <g><path d="M30 230 C120 230 140 90 230 90 S330 150 370 110" className="lx-st" />{Array.from({ length: 7 }, (_, i) => <circle key={i} r="3" className="lx-dot" style={{ animationDelay: `${-i * 0.9}s` }} />)}</g>}
-      {art === "seal" && <g className="lx-float"><circle cx="200" cy="140" r="70" className="lx-st" /><circle cx="200" cy="140" r="54" className="lx-st dim" /><path d="M172 140l20 20 36-40" className="lx-st thick" /></g>}
-    </svg>
-  </div>
-);
+const NODES = [
+  { n: "Receipt", ic: "mint", x: 26, y: 16 }, { n: "Vault", ic: "lock", x: 74, y: 16 },
+  { n: "Shares", ic: "trade", x: 9, y: 50 }, { n: "Market", ic: "settle", x: 91, y: 50 },
+  { n: "Escrow", ic: "escrow", x: 26, y: 84 }, { n: "Proof", ic: "tests", x: 74, y: 84 },
+] as const;
 
-const CONTRACTS = [
-  { n: "Receipt", d: "ERC-721 invoice record with issuer, kind and note, read straight from chain state.", tag: "ERC-721", Art: ReceiptArt },
-  { n: "Vault", d: "Locks the receipt, fixes its terms, mints the shares, takes payment in tPOT and pays holders pro-rata.", tag: "Custody", Art: VaultArt },
-  { n: "Market", d: "Fixed-price listings with escrowed shares, partial buys and exact native-tPOT pricing.", tag: "Liquidity", Art: MarketArt },
-];
+const BENTO = [
+  { k: "dark", ic: "mint", n: "Receipt", tag: "ERC-721", d: "Invoice record with issuer, kind and note, read straight from chain state." },
+  { k: "light", ic: "trade", n: "Market", tag: "Liquidity", d: "Fixed-price listings with escrowed shares, partial buys and exact native-tPOT pricing." },
+  { k: "light", ic: "lock", n: "Vault", tag: "Custody", d: "Locks the receipt, fixes its terms, mints the shares and takes payment in tPOT." },
+  { k: "dark", ic: "settle", n: "Payout", tag: "Pro-rata", d: "The debtor pays once; every holder claims their share of the pool on-chain." },
+] as const;
+
 const SNIPPETS: Record<string, string[]> = {
   "settle (PotKit.yul)": [
     "/// anyone pays msg.value >= faceValue tPOT into the pool",
@@ -156,100 +111,170 @@ const SAFETY = [
   ["guard", "Checks before calls", "Checks-effects-interactions on every value-moving function: tPOT is sent last."],
   ["tests", "Automated tests", "ERC-721/ERC-20 behaviour, pro-rata rounding, status lifecycle, market rules and network switching, on a local chain."],
 ] as const;
+const DOCS = [
+  { t: "How it works", d: "One invoice, four contract moves: mint, lock, trade, settle.", m: "Lifecycle", h: "/how-it-works", seed: 3 },
+  { t: "Protocol reference", d: "Every function, event and storage rule of the single Yul contract.", m: "Reference", h: "/protocol", seed: 8 },
+  { t: "Security model and its limits", d: "What is enforced on-chain and what is not, stated plainly.", m: "Security", h: "/security", seed: 15 },
+] as const;
+const STACK = ["Portaldot V3", "Yul", "ERC-721", "ERC-20", "tPOT", "viem", "Vite", "React"];
 
 export function Landing() {
   const [tab, setTab] = useState<keyof typeof SNIPPETS>("settle (PotKit.yul)");
+  const [role, setRole] = useState(0);
+  const [rid, setRid] = useState("");
   const scrolled = useLenis();
-  useScrollField();
   const judgeParams = new URLSearchParams(location.search);
   const hasJudge = ["kit", "vault", "receipt"].some((key) => judgeParams.has(key));
   const launch = app(hasJudge ? location.search : "");
+  const ascii = useMemo(() => asciiField(170, 74), []);
+  const docArt = useMemo(() => DOCS.map((d) => asciiField(46, 14).split("\n").map((l, i) => (i + d.seed) % 3 ? l : l.replace(/ /g, "·")).join("\n")), []);
+  const r = ROLES[role]!;
+  const go = (e: FormEvent) => {
+    e.preventDefault();
+    const n = rid.trim().replace(/^#/, "");
+    const params = new URLSearchParams(hasJudge ? location.search : "");
+    params.set("tab", "verify");
+    if (/^\d+$/.test(n)) params.set("id", n);
+    location.href = app(`?${params.toString()}`);
+  };
 
   return (
-    <div className="lx">
-      <div className="lx-bg" aria-hidden />
-      <SpatialField />
-      <Header scrolled={scrolled} />
+    <div className="lx lx-x">
       <main>
-        <section className="lx-hero" id="top">
+        {/* ===== hero: black frame, ASCII field, centred copy, device peeking from the bottom ===== */}
+        <section className="lx-hero lx-hero-x" id="top">
           <div className="lx-hero-frame">
+            <pre className="lx-ascii" aria-hidden>{ascii}</pre>
+            <Header scrolled={scrolled} />
             <div className="lx-hero-copy">
-              <Reveal><span className="lx-tag">RWA · Portaldot V3 testnet</span></Reveal>
-              <Reveal delay={80}><h1>Invoices that<br />pay you now</h1></Reveal>
-              <Reveal delay={160}><p>Turn an unpaid invoice into vault-backed, tradeable shares. Holders can claim on-chain only when the debtor pays.</p></Reveal>
+              <Reveal><a className="lx-chip" href={page("/how-it-works")}><i /> Portaldot V3 testnet <span>|</span> How it works <Arrow /></a></Reveal>
+              <Reveal delay={80}><p className="lx-eyebrow">ON-CHAIN RECEIVABLES MARKET</p></Reveal>
+              <Reveal delay={120}><h1>Make invoices<br /><span>work sooner.</span></h1></Reveal>
+              <Reveal delay={180}><p>PotKit turns an unpaid invoice into a locked receipt and tradeable shares—so issuers can access liquidity and holders can claim pro-rata when the debtor settles.</p></Reveal>
+              <Reveal delay={240}>
+                <div className="lx-cta-row">
+                  <a className="lx-btn primary lg" href={launch}>Launch App <Arrow /></a>
+                  <a className="lx-btn lg" href={page("/how-it-works")}>See how it works</a>
+                </div>
+              </Reveal>
+              <Reveal delay={300}>
+                <ul className="lx-trust">
+                  <li><Ico n="escrow" />Escrowed on-chain</li>
+                  <li><Ico n="lock" />Testnet · no real value</li>
+                  <li><Ico n="tests" />1 contract · hand-written Yul</li>
+                </ul>
+              </Reveal>
+              <Reveal delay={340}>
+                <form className="lx-pillform" onSubmit={go}>
+                  <label htmlFor="hero-receipt">Already have a receipt?</label>
+                  <input id="hero-receipt" value={rid} onChange={(e) => setRid(e.target.value)} inputMode="numeric" placeholder="Enter receipt #" aria-label="Receipt number to verify" />
+                  <button type="submit" aria-label="Verify receipt on-chain"><Arrow /></button>
+                </form>
+              </Reveal>
             </div>
-            <div className="lx-orb"><DotSphere className="lx-sphere" speed={0.42} interactive /><Hud />
-              {READOUTS.map(([k, v], i) => <span key={k} className={`lx-ro r${i}`}><i />{k}<b>{v}</b></span>)}
+            <div className="lx-hero-device">
+              <div className="lx-float-note l"><b>ISSUE &amp; LOCK</b>Receipt locked, shares minted</div>
+              <Phone variant="book" />
+              <div className="lx-float-note r"><b>TRADE &amp; SETTLE</b>Paid when the debtor settles</div>
             </div>
-            <Reveal delay={240} className="lx-hero-entry"><div className="lx-cta-row"><a className="lx-btn primary" href={launch}>Launch App <Arrow /></a><a className="lx-btn" href={page("/how-it-works")}>How it works</a></div></Reveal>
-            <Reveal delay={300} className="lx-hero-stats">
-              <div><small>Network</small><b>Portaldot V3</b></div>
-              <div><small>Chain ID</small><b className="mono">420420777</b></div>
-              <div><small>Contracts</small><b>1 contract · Yul</b></div>
-            </Reveal>
           </div>
         </section>
 
-        <div className="lx-strip" aria-hidden>
-          <div className="lx-strip-in">{[0, 1].map((k) => <span key={k}>ERC-721 receipts · Vault custody · ERC-20 shares · Escrowed market · Pro-rata payout · On-chain status · Shareable proofs · </span>)}</div>
-        </div>
+        <div className="lx-paper">
+          {/* ===== two feature cards ===== */}
+          <section id="how" className="lx-psec">
+            <Reveal className="lx-phead"><h2>From invoice<br />to payout</h2><p>One invoice, four contract moves: mint it, lock it, trade the shares, settle once. Every step is a readable rule on-chain.</p></Reveal>
+            <div className="lx-duo">
+              <Reveal as="article" className="lx-wcard">
+                <span className="lx-pillbadge"><Ico n="mint" />Issue &amp; lock</span>
+                <div className="lx-peek a"><Phone variant="book" /></div>
+                <h3>Mint a receipt, lock it, sell shares at a discount.</h3>
+              </Reveal>
+              <Reveal as="article" delay={120} className="lx-wcard">
+                <span className="lx-pillbadge"><Ico n="trade" />Trade &amp; settle</span>
+                <div className="lx-peek b"><Phone variant="buy" /></div>
+                <h3>Buy discounted claims. Claim pro-rata when it settles.</h3>
+              </Reveal>
+            </div>
+          </section>
 
-        <section id="how" className="lx-sec">
-          <Reveal className="lx-sec-head"><span className="lx-tag">How it works</span><h2>One invoice, four contract moves</h2></Reveal>
-          <ol className="lx-steps">
-            {[["mint", "Mint", "The invoice becomes an ERC-721 receipt."], ["lock", "Lock", "The Vault holds it and issues fixed shares."], ["trade", "Trade", "Sell shares at a discount for cash today."], ["settle", "Settle", "Debtor pays once; holders claim pro-rata."]].map(([ic, t, d], i) => (
-              <Reveal as="article" key={t} delay={i * 90} className="lx-step"><div className="lx-step-h"><span className="mono">0{i + 1}</span><Ico n={ic} /></div><h3>{t}</h3><p>{d}</p></Reveal>
-            ))}
-          </ol>
-          <Reveal className="lx-more"><a className="lx-link" href={page("/how-it-works")}>Learn the full lifecycle <Arrow /></a></Reveal>
-        </section>
-
-        {ROLES.map((r, i) => (
-          <section key={r.k} id={r.id} className={`lx-sec lx-role ${i % 2 ? "flip" : ""}`}>
-            <Reveal className="lx-role-art"><Panel art={r.art} /></Reveal>
-            <Reveal delay={120} className="lx-role-copy">
-              <span className="lx-tag">{r.k}</span>
-              <h2>{r.t}</h2>
-              <p>{r.d}</p>
-              <a className="lx-link" href={app(r.cta[1])}>{r.cta[0]} <Arrow /></a>
+          {/* ===== roles: tab list + node diagram ===== */}
+          <section id="roles" className="lx-psec">
+            <Reveal className="lx-flow">
+              <ul className="lx-rolelist" role="tablist" aria-label="Roles">
+                {ROLES.map((x, i) => <li key={x.id}><button role="tab" aria-selected={role === i} className={role === i ? "on" : ""} onClick={() => setRole(i)}>{x.k}{role === i && <Arrow />}</button></li>)}
+              </ul>
+              <div className="lx-diagram" aria-hidden>
+                <svg className="lx-lines" viewBox="0 0 100 100" preserveAspectRatio="none">
+                  {NODES.map((n) => <path key={n.n} d={`M50 50 C ${(50 + n.x) / 2} 50, ${(50 + n.x) / 2} ${n.y}, ${n.x} ${n.y}`} vectorEffect="non-scaling-stroke" />)}
+                </svg>
+                {NODES.map((n) => <span key={n.n} className="lx-node" style={{ left: `${n.x}%`, top: `${n.y}%` }} title={n.n}><Ico n={n.ic} /></span>)}
+                <span className="lx-core"><i />PotKit</span>
+              </div>
+              <div className="lx-rolecopy" key={r.id}>
+                <h3>{r.t}</h3>
+                <p>{r.d}</p>
+                <a className="lx-link dark" href={app(r.cta[1])}>{r.cta[0]} <Arrow /></a>
+              </div>
             </Reveal>
           </section>
-        ))}
 
-        <section id="protocol" className="lx-sec lx-center">
-          <Reveal className="lx-sec-head"><span className="lx-tag">Protocol</span><h2>One contract powering PotKit</h2></Reveal>
-          <div className="lx-cards">
-            {CONTRACTS.map((c, i) => (
-              <Reveal as="article" key={c.n} delay={i * 100} className="lx-card">
-                <div className="lx-card-art"><c.Art /></div>
-                <span className="lx-tag">{c.tag}</span><h3>{c.n}</h3><p>{c.d}</p>
-              </Reveal>
-            ))}
-          </div>
-          <p className="lx-note">All three roles live in <b>one ~3.9 KB contract</b> (hand-written Yul, so deploying costs a fraction of the old four-contract setup). Every lock gets its own ERC-20 share token: an 82-byte forwarder. Payments are native <b>tPOT</b>.</p>
-          <Reveal className="lx-more"><a className="lx-link" href={page("/protocol")}>Read the protocol reference <Arrow /></a></Reveal>
-        </section>
+          {/* ===== bento: black / white cards around a device ===== */}
+          <section id="protocol" className="lx-psec">
+            <Reveal className="lx-bento">
+              {BENTO.map((b, i) => (
+                <article key={b.n} className={`lx-bcard ${b.k} p${i}`}>
+                  <header><span className="lx-bico"><Ico n={b.ic} /></span><a className="lx-bgo" href={page("/protocol")} aria-label={`${b.n} in the protocol reference`}><Arrow /></a></header>
+                  <div><small>{b.tag}</small><h3>{b.n}</h3><p>{b.d}</p></div>
+                </article>
+              ))}
+              <div className="lx-bphone"><Phone variant="buy" /></div>
+            </Reveal>
+            <p className="lx-pnote">All of it lives in <b>one ~3.9 KB contract</b> (hand-written Yul). Every lock gets its own ERC-20 share token, an 82-byte forwarder. Payments are native <b>tPOT</b>.</p>
+          </section>
 
-        <section id="mechanism" className="lx-sec lx-center">
-          <Reveal className="lx-sec-head"><h2>Open by default, minimal by design</h2><p>Every rule is a few readable lines of Yul, enforced on-chain.</p></Reveal>
-          <Reveal className="lx-code">
-            <div className="lx-code-tabs" role="tablist">{Object.keys(SNIPPETS).map((k) => <button key={k} role="tab" aria-selected={tab === k} className={tab === k ? "on" : ""} onClick={() => setTab(k as keyof typeof SNIPPETS)}>{k}</button>)}</div>
-            <pre><code>{SNIPPETS[tab].map((l, i) => <span key={i}><i>{i + 1}</i>{l}{"\n"}</span>)}</code></pre>
-          </Reveal>
-        </section>
+          {/* ===== code + security: black block ===== */}
+          <section id="mechanism" className="lx-psec">
+            <Reveal className="lx-darkblock">
+              <div className="lx-dhead"><span className="lx-tag">Open by default</span><h2>Minimal by design.</h2><p>Every rule is a few readable lines of Yul, enforced on-chain.</p></div>
+              <div className="lx-code">
+                <div className="lx-code-tabs" role="tablist">{Object.keys(SNIPPETS).map((k) => <button key={k} role="tab" aria-selected={tab === k} className={tab === k ? "on" : ""} onClick={() => setTab(k as keyof typeof SNIPPETS)}>{k}</button>)}</div>
+                <pre><code>{SNIPPETS[tab].map((l, i) => <span key={i}><i>{i + 1}</i>{l}{"\n"}</span>)}</code></pre>
+              </div>
+              <div className="lx-safety" id="security">
+                {SAFETY.map(([ic, t, d]) => <article key={t}><Ico n={ic} /><h3>{t}</h3><p>{d}</p></article>)}
+              </div>
+            </Reveal>
+          </section>
 
-        <section id="security" className="lx-sec">
-          <Reveal className="lx-sec-head"><span className="lx-tag">Security</span><h2>Simple rules, enforced on-chain</h2></Reveal>
-          <div className="lx-safety">
-            {SAFETY.map(([ic, t, d], i) => <Reveal as="article" key={t} delay={i * 90}><Ico n={ic} /><h3>{t}</h3><p>{d}</p></Reveal>)}
-          </div>
-          <Reveal className="lx-more"><a className="lx-link" href={page("/security")}>See the security model and its limits <Arrow /></a></Reveal>
-        </section>
+          {/* ===== docs cards (ASCII art in place of photos) ===== */}
+          <section id="learn" className="lx-psec">
+            <Reveal className="lx-rowhead"><h2>Docs &amp; reference</h2><a className="lx-link dark" href={page("/help")}>All guides <Arrow /></a></Reveal>
+            <div className="lx-docs">
+              {DOCS.map((d, i) => (
+                <Reveal as="article" key={d.t} delay={i * 90} className="lx-dcard">
+                  <a href={page(d.h)}>
+                    <div className="lx-dart" aria-hidden><pre>{docArt[i]}</pre></div>
+                    <small>{d.m}</small><h3>{d.t}</h3><p>{d.d}</p>
+                    <span className="lx-dmeta">Read <Arrow /></span>
+                  </a>
+                </Reveal>
+              ))}
+            </div>
+          </section>
 
-        <section id="hackathon" className="lx-sec lx-final">
-          <Reveal className="lx-final-in">
+          {/* ===== stack marquee ===== */}
+          <section className="lx-psec lx-stack" aria-label="Built with">
+            <h2>Built with</h2>
+            <div className="lx-marq" aria-hidden><div className="lx-marq-in">{[0, 1].map((k) => <span key={k}>{STACK.map((s) => <b key={s}>{s}</b>)}</span>)}</div></div>
+          </section>
+        </div>
+
+        {/* ===== final call to action ===== */}
+        <section id="hackathon" className="lx-final-x">
+          <Reveal className="lx-final-in2">
             <div><h2>Built for Portaldot Hacker House 2026</h2><p>Track 4 · Ecosystem DApps (RWA). Testnet demo settled in native tPOT, no real value.</p></div>
-            <div className="lx-cta-row"><a className="lx-btn primary" href={launch}>Launch App</a><a className="lx-btn" href={L.hackathon} {...ext}>View on DoraHacks</a></div>
+            <div className="lx-cta-row"><a className="lx-btn primary lg" href={launch}>Launch App <Arrow /></a><a className="lx-btn lg" href={L.hackathon} {...ext}>View on DoraHacks</a></div>
           </Reveal>
         </section>
       </main>

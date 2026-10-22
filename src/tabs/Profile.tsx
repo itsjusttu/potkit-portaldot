@@ -16,8 +16,8 @@ const savedProfile = (address: string): LocalProfile => {
 };
 
 function avatarStyle(address: string, image: string): CSSProperties {
-  const hue = Number.parseInt(address.slice(2, 8) || "0", 16) % 360;
-  return image ? { backgroundImage: `url(${image})` } : { background: `conic-gradient(from ${hue}deg, hsl(${hue} 90% 66%), #6b55f5, hsl(${(hue + 150) % 360} 80% 62%), hsl(${hue} 90% 66%))` };
+  const angle = Number.parseInt(address.slice(2, 8) || "0", 16) % 360;
+  return image ? { backgroundImage: `url(${image})` } : { background: `conic-gradient(from ${angle}deg, var(--pk-accent), var(--pk-surface-2), var(--pk-muted), var(--pk-accent))` };
 }
 
 export function Profile({ c }: { c: Ctx }) {
@@ -70,24 +70,24 @@ export function Profile({ c }: { c: Ctx }) {
   const bought = [...buyById.entries()].sort((a, b) => b[0] - a[0]);
   const hashFor = (id: number, kind: ChainEvent["kind"]) => c.events.find((e) => e.id === id && e.kind === kind && e.actors.some((a) => same(a, target)));
   const badgeList = [
-    { name: "First invoice", icon: "✦", earned: issuerIds.size > 0, tone: "violet" },
+    { name: "First invoice", icon: "✦", earned: issuerIds.size > 0, tone: "neutral" },
     { name: "First settle", icon: "✓", earned: settledCount > 0, tone: "green" },
     { name: "Redeemed", icon: "↻", earned: redeemedIds.size > 0, tone: "gold" },
     { name: "On-time payer", icon: "◷", earned: events.some((e) => e.kind === "settle" && same(e.actors[0], target) && Boolean(e.time && terms.get(e.id)?.dueDate && e.time <= (terms.get(e.id)?.dueDate ?? 0))), tone: "blue" },
     { name: "First share buy", icon: "◇", earned: buys.length > 0, tone: "pink" },
   ];
-  const copy = async (value: string, key: string) => {
-    try { await navigator.clipboard.writeText(value); setCopied(key); window.setTimeout(() => setCopied(""), 1400); }
-    catch { toast({ kind: "err", title: "Copy failed", detail: value }); }
+  const copy = async (value: string, key: string): Promise<boolean> => {
+    try { await navigator.clipboard.writeText(value); setCopied(key); window.setTimeout(() => setCopied(""), 1400); return true; }
+    catch { toast({ kind: "err", title: "Copy failed", detail: value }); return false; }
   };
   const share = async () => {
     if (!target) return;
-    await copy(profileShareUrl(target, c.addrs?.vault), "share");
-    toast({ kind: "ok", title: "Profile link copied", detail: "The link shows this wallet's on-chain record." });
+    if (await copy(profileShareUrl(target, c.addrs?.vault), "share")) toast({ kind: "ok", title: "Profile link copied", detail: "The link shows this wallet's on-chain record." });
   };
   const save = () => {
     if (!target || !isOwner) return;
-    localStorage.setItem(profileKey(target), JSON.stringify(draft)); setProfile(draft); setEditing(false);
+    try { localStorage.setItem(profileKey(target), JSON.stringify(draft)); setProfile(draft); setEditing(false); }
+    catch { toast({ kind: "err", title: "Profile not saved", detail: "Browser storage is unavailable or full. Try a smaller avatar image." }); }
   };
   const pickAvatar = (file?: File) => {
     if (!file) return;
@@ -110,7 +110,7 @@ export function Profile({ c }: { c: Ctx }) {
         <div className="profile-avatar" style={avatarStyle(target, isOwner ? profile.avatar : "")} aria-label="Wallet avatar" />
         <div className="profile-id-main">
           <div className="profile-title-line"><h2>{publicView ? short(target) : profile.name || short(target)}</h2>{roleIssuer && <span className="profile-role issuer">Issuer</span>}{roleInvestor && <span className="profile-role investor">Investor</span>}</div>
-          <div className="profile-addresses"><span>EVM <Addr a={target} /></span><span>Portaldot <b className="mono">{short(mappedAddress(target))}</b><button className="profile-copy" aria-label="Copy mapped Portaldot address" onClick={() => void copy(mappedAddress(target), "mapped")}>{copied === "mapped" ? "Copied" : "Copy"}</button></span><a className="profile-explorer" href="https://node-console.portaldot.dev/?rpc=wss://test-node-v3.portaldot.dev#/accounts" target="_blank" rel="noreferrer">Open account in node console ↗</a></div>
+          <div className="profile-addresses"><span>EVM <Addr a={target} /></span><span>Portaldot <b className="mono">{short(mappedAddress(target))}</b><button className="profile-copy" aria-label="Copy mapped Portaldot address" onClick={() => void copy(mappedAddress(target), "mapped")}>{copied === "mapped" ? "Copied" : "Copy"}</button></span><a className="profile-explorer" href="https://node-console.portaldot.dev/?rpc=wss%3A%2F%2Ftest-node-v3.portaldot.dev#/accounts" target="_blank" rel="noreferrer">Open node console accounts ↗</a></div>
           {!publicView && profile.bio && <p className="profile-bio">{profile.bio}</p>}
           <small className="profile-note">{publicView ? "Public chain record · identity details are not published" : "Name, bio and avatar are saved in this browser only"}</small>
         </div>
@@ -127,7 +127,7 @@ export function Profile({ c }: { c: Ctx }) {
 
       <div className="profile-main-grid">
         <section className="profile-reputation">
-          <header><div><p className="kicker">Issuer reputation</p><h3>Payment track record</h3></div><span className={`profile-chain-tag ${c.eventsOk ? "ok" : "partial"}`}>{c.eventsOk ? "CHAIN EVENTS READ" : "PARTIAL RPC SCAN"}</span></header>
+          <header><div><p className="kicker">Issuer reputation</p><h3>Payment track record</h3></div><span className={`profile-chain-tag ${c.eventsOk && !c.eventsLoading ? "ok" : "partial"}`}>{c.eventsLoading ? "READING EVENTS" : c.eventsOk ? "SCANNED EVENTS" : "PARTIAL RPC SCAN"}</span></header>
           <div className="profile-reputation-body">{onTimeRate === null ? <div className="profile-rate-empty"><b>No rated invoices yet</b>{isOwner && <button className="btn primary sm" onClick={() => c.setTab("issue")}>Issue your first invoice</button>}</div> : <div className="profile-rate" style={{ "--rate": `${onTimeRate}%` } as CSSProperties}><b>{onTimeRate}%</b><small>ON-TIME<br />DATED INVOICES</small></div>}
             <div className="profile-trust-stats"><div><span>Invoices issued</span><b>{issuerIds.size}</b></div><div><span>Settled on time</span><b className="good">{onTimeIds.length}</b></div><div><span>Late / overdue</span><b className={lateIds.length ? "late" : ""}>{lateIds.length}</b></div><div><span>Settled volume</span><b>{fmt(settledAmount, 18)} <small>tPOT</small></b></div></div>
           </div>
@@ -142,12 +142,13 @@ export function Profile({ c }: { c: Ctx }) {
             </div> : <div className="profile-role-section"><h4><span className="profile-role investor">Investor</span><small>Shares bought by this wallet in readable events</small></h4>
               {!bought.length ? <p className="profile-empty">No share purchases found in the readable event range.</p> : <div className="profile-record-list">{bought.slice(0, 8).map(([id, value]) => { const r = c.rows.find((x) => x.id === id); return <div className="profile-record-row investor-row" key={id}><span className="profile-record-icon investor-icon"><Ico n="swap" size={15} /></span><span className="profile-record-title"><b>{r?.note || `Invoice #${id}`}</b><small>INVOICE #{id} · {units(value.shares)} shares bought</small></span><span className="profile-record-status investor-cost">{fmt(value.cost, 18)} tPOT</span></div>; })}</div>}
             </div>}
-            {!c.eventsOk && <p className="profile-scan-warning">The RPC could not read the full requested event range. Counts and history above may be incomplete.</p>}
+            {c.eventsLoading && <p className="profile-scan-warning" role="status">Reading on-chain activity. Event-based counts may change.</p>}
+            {!c.eventsLoading && !c.eventsOk && <p className="profile-scan-warning">The RPC could not read the full requested event range. Counts and history above may be incomplete.</p>}
         </section>
 
         <div className="profile-right-rail">
           <section className="profile-badges"><header><h3>Achievements</h3><span>{badgeList.filter((b) => b.earned).length}/{badgeList.length}</span></header><div className="profile-badge-list">{badgeList.map((b) => <div key={b.name} className={`profile-badge ${b.earned ? `earned ${b.tone}` : "locked"}`} title={b.earned ? "Earned from on-chain activity" : "Earn this through on-chain activity"}><i>{b.icon}</i><span>{b.name}</span></div>)}</div></section>
-          {!publicView && <section className="profile-gas"><header><div><p className="kicker">Wallet readiness</p><h3>Gas &amp; network</h3></div><span className={`profile-network-dot ${c.chainOk ? "ok" : ""}`} /></header><div className="profile-gas-balance"><span>Available tPOTv3</span><b>{c.native !== null ? formatNative(c.native) : c.nativeLoading ? "Reading balance…" : c.nativeError ? "Balance unavailable" : "Connect wallet"}</b></div><div className="profile-network-row"><div><b>{c.chainOk ? "Portaldot V3 Testnet" : c.chainOk === false ? "Wrong network" : "Network not verified"}</b><small>Chain ID {420420777}</small></div><button className="btn sm" disabled={Boolean(c.busy)} onClick={c.switchNetwork}>{c.busy === "net" ? "Switching…" : "Switch network"}</button></div><div className="profile-faucet"><div className="profile-faucet-heading"><Ico n="info" /><b>Need gas?</b></div><p>Send test tPOTv3 to this mapped account to fund transaction fees.</p><div className="profile-faucet-account"><code>{mappedAddress(target)}</code><button className="profile-copy" aria-label="Copy mapped gas account" onClick={() => void copy(mappedAddress(target), "mapped")}>{copied === "mapped" ? "Copied" : "Copy"}</button></div><FaucetButton account={target} compact hideManualAddress onFunded={() => void c.refresh()} /></div></section>}
+          {!publicView && <section className="profile-gas"><header><div><p className="kicker">Wallet readiness</p><h3>Gas &amp; network</h3></div><span className={`profile-network-dot ${c.chainOk ? "ok" : ""}`} /></header><div className="profile-gas-balance"><span>Available tPOTv3</span><b>{c.native !== null ? formatNative(c.native) : c.nativeLoading ? "Reading balance…" : c.nativeError ? "Balance unavailable" : "Connect wallet"}</b></div><div className="profile-network-row"><div><b>{c.chainOk ? "Portaldot V3 Testnet" : c.chainOk === false ? "Wrong network" : "Network not verified"}</b><small>Chain ID {420420777}</small></div>{c.chainOk !== true && <button className="btn sm" disabled={Boolean(c.busy)} onClick={c.switchNetwork}>{c.busy === "net" ? "Switching…" : "Switch network"}</button>}</div><div className="profile-faucet"><div className="profile-faucet-heading"><Ico n="info" /><b>Need gas?</b></div><p>Send test tPOTv3 to this mapped account to fund transaction fees.</p><div className="profile-faucet-account"><code>{mappedAddress(target)}</code><button className="profile-copy" aria-label="Copy mapped gas account" onClick={() => void copy(mappedAddress(target), "mapped")}>{copied === "mapped" ? "Copied" : "Copy"}</button></div><FaucetButton account={target} compact hideManualAddress onFunded={() => void c.refresh()} /></div></section>}
         </div>
       </div>
     </div>

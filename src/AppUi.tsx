@@ -98,7 +98,7 @@ export function Empty({ icon, title, body, children, tone = "" }: { icon: string
 }
 
 // ---------------- board charts (SVG) ----------------
-export const STATUS_COLORS: Record<string, string> = { Free: "#5b6a6e", Pending: "#b48ac8", "Due soon": "#c9a95a", Overdue: "#cf7487", Settled: "#3fae84" };
+export const STATUS_COLORS: Record<string, string> = { Free: "#8a8a8a", Pending: "#d1d1d1", "Due soon": "#f59e0b", Overdue: "#ef4444", Settled: "#22c55e" };
 
 export function StatusBars({ rows, loading = false }: { rows: Row[]; loading?: boolean }) {
   const counts = STATUSES.map((s) => ({ s, c: rows.filter((r) => r.status === s).length }));
@@ -233,7 +233,7 @@ export function Donut({ parts, center, sub }: { parts: { label: string; value: n
   );
 }
 
-export const PALETTE = ["#7c6cff", "#b48ac8", "#c9a95a", "#3fae84", "#cf7487", "#7f9fc8", "#7aa7ae", "#9b8aa8"];
+export const PALETTE = ["#ffffff", "#c9c9c9", "#a9a9a9", "#8a8a8a", "#707070", "#595959", "#dedede", "#999999"];
 
 // ---------------- v21: count-up for metric values ----------------
 const reduceMotion = () => typeof matchMedia !== "undefined" && matchMedia("(prefers-reduced-motion: reduce)").matches;

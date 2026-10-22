@@ -1,4 +1,4 @@
-.dx.dx-help { --c: #8b68ff; --c-rgb: 139,104,255; }
+.dx.dx-help { --c: #ffffff; --c-rgb: 255,255,255; }
 .dx-help .dx-hero { padding-bottom: 2.4rem; }
 .dx-help .dx-hero h1 { font-size: clamp(2.7rem, 6vw, 4.7rem); }
 .dx-help .dx-wrap { grid-template-columns: 13.5rem minmax(0, 1fr); }
@@ -14,7 +14,7 @@
 .help-browse h3 { margin: .8rem 0 -.35rem; color: var(--tx); font-size: 1rem; font-weight: 600; }
 .help-cards { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .75rem; }
 .help-card { position: relative; display: grid; align-content: start; gap: .48rem; min-height: 8.5rem; padding: 1rem 2.3rem 1rem 1rem; border: 1px solid var(--hair); border-radius: 12px; background: rgba(255,255,255,.025); transition: transform .18s ease, border-color .18s ease, background .18s ease; }
-.help-card:hover { transform: translateY(-2px); border-color: rgba(139,104,255,.48); background: rgba(139,104,255,.055); }
+.help-card:hover { transform: translateY(-2px); border-color: rgba(255,255,255,.48); background: rgba(255,255,255,.055); }
 .help-card small, .help-contact small { color: var(--c); font-size: .68rem; font-weight: 650; letter-spacing: .08em; text-transform: uppercase; }
 .help-card b { color: var(--tx); font-size: .98rem; font-weight: 600; }
 .help-card > span { color: var(--mu); font-size: .83rem; line-height: 1.5; }
@@ -27,7 +27,7 @@
 .help-faq details[open] summary span { transform: rotate(45deg); }
 .help-faq details p { max-width: 48rem; margin: 0 2rem 1.2rem 0; color: var(--mu); font-size: .9rem; line-height: 1.65; }
 .help-empty { margin: 0; padding: 1.25rem; border: 1px dashed var(--hair); border-radius: 10px; color: var(--mu); }
-.help-contact { display: flex; align-items: center; justify-content: space-between; gap: 1.5rem; padding: 1.4rem; border: 1px solid var(--hair); border-radius: 14px; background: linear-gradient(130deg, rgba(139,104,255,.09), rgba(255,255,255,.02)); }
+.help-contact { display: flex; align-items: center; justify-content: space-between; gap: 1.5rem; padding: 1.4rem; border: 1px solid var(--hair); border-radius: 14px; background: linear-gradient(130deg, rgba(255,255,255,.09), rgba(255,255,255,.02)); }
 .help-contact h3 { margin: .45rem 0; color: var(--tx); font-size: 1.15rem; }
 .help-contact p { max-width: 39rem; margin: 0; color: var(--mu); font-size: .88rem; line-height: 1.6; }
 .help-contact-link { display: inline-flex; flex: 0 0 auto; align-items: center; gap: .5rem; min-height: 2.8rem; padding: .65rem .9rem; border-radius: 9px; background: var(--c); color: #fff; font-size: .84rem; font-weight: 600; }

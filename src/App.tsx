@@ -96,17 +96,30 @@ export function App() {
   const [shared, setShared] = useState(init.shared);
   const [tab, setTabState] = useState<Tab>(initialTab);
   const [supportOpen, setSupportOpen] = useState(false);
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
+  useEffect(() => {
+    if (!mobileNavOpen) return;
+    const close = (event: KeyboardEvent) => { if (event.key === "Escape") setMobileNavOpen(false); };
+    window.addEventListener("keydown", close);
+    return () => window.removeEventListener("keydown", close);
+  }, [mobileNavOpen]);
   const [params, setParams] = useState<Record<string, string>>(initialParams);
   const setTab = (t: Tab, p: Record<string, string> = {}) => {
-    setTabState(t); setParams(p);
+    setTabState(t); setParams(p); setMobileNavOpen(false);
     const q = new URLSearchParams(location.search);
     [...q.keys()].filter((k) => !TAB_KEEP.includes(k)).forEach((k) => q.delete(k));
     if (t !== "issue") q.set("tab", t);
     Object.entries(p).forEach(([k, v]) => q.set(k, v));
     const path = /^\/profile\/0x[0-9a-fA-F]{40}\/?$/.test(location.pathname) ? (isAppHost() ? "/" : "/app") : location.pathname;
-    history.replaceState(null, "", `${path}${q.toString() ? `?${q}` : ""}`);
+    const next = `${path}${q.toString() ? `?${q}` : ""}`;
+    if (`${location.pathname}${location.search}` !== next) history.pushState(null, "", next);
     window.scrollTo({ top: 0 });
   };
+  useEffect(() => {
+    const restoreRoute = () => { setTabState(initialTab()); setParams(initialParams()); setMobileNavOpen(false); };
+    window.addEventListener("popstate", restoreRoute);
+    return () => window.removeEventListener("popstate", restoreRoute);
+  }, []);
   const wallet = useWalletStatus();
   const { account, chainOk, wallets, tick: provTick } = wallet;
   const [notice, setNotice] = useState("");
@@ -160,7 +173,8 @@ export function App() {
   const refreshSeq = useRef(0); // only the newest refresh may write state (account switch / rapid actions)
   const rowsLen = useRef(0); rowsLen.current = rows.length;
   const refresh = useCallback(async () => {
-    if (!addrs) return;
+    if (!addrs) { ++refreshSeq.current; setLoading(false); setRows([]); setHeld(new Map()); setClaims(new Map()); setListings([]); setEvents([]); setTotal(0); setNotice(""); return; }
+    setNotice("");
     const seq = ++refreshSeq.current;
     const stale = () => seq !== refreshSeq.current;
     try {
@@ -239,13 +253,14 @@ export function App() {
   const needsWallet = tab !== "dashboard" && tab !== "issue" && tab !== "trade" && tab !== "explore" && tab !== "verify" && !publicProfile;
   return (
     <div className="shell" data-phase={phase} data-wallet={wallet.status}>
-      <aside className="side">
+      <aside className={`side ${mobileNavOpen ? "mobile-open" : ""}`}>
+        <div className="side-mobile-head"><span>All sections</span><button type="button" onClick={() => setMobileNavOpen(false)} aria-label="Close navigation"><Ico n="x" /></button></div>
         <a className="side-brand" href={homeUrl()} aria-label="PotKit home" data-tip="Home">
           <span className="logo" aria-hidden><span className="lg-d">◆</span><span className="lg-a">←</span></span>
           <span><b>Pot<span className="grad">Kit</span></b><small>Invoice protocol</small></span>
         </a>
         <button className="side-new" onClick={() => setTab("issue")}><TabIco t="issue" /><span>New invoice</span></button>
-        <nav className="side-nav" aria-label="Sections">
+        <nav id="app-sections" className="side-nav" aria-label="Sections">
           {([
             ["Overview", ["dashboard"]],
             ["Issue", ["issue"]],
@@ -274,6 +289,7 @@ export function App() {
               <svg viewBox="0 0 24 24" aria-hidden><path d="M3 11.5 12 4l9 7.5" /><path d="M5.5 10v9.5h13V10" /><path d="M10 19.5v-5h4v5" /></svg>
             </a>
             <span className="muted crumb-root">PotKit /</span> <b>{TITLES[tab][0]}</b>
+            <button type="button" className="mobile-nav-toggle" aria-expanded={mobileNavOpen} aria-controls="app-sections" onClick={() => setMobileNavOpen((open) => !open)}>{mobileNavOpen ? "Close" : "Sections"}<span aria-hidden>{mobileNavOpen ? "−" : "+"}</span></button>
           </div>
           <nav>
             <WalletButton account={account} label={short(account)} net={chainOk ? "ok" : chainOk === false ? "wrong" : "unknown"}
@@ -296,7 +312,7 @@ export function App() {
           <p className="kicker">PotKit · {TITLES[tab][0]}</p>
           <h1 key={tab}>{TITLES[tab][0]}</h1>
           <p className="muted">{TITLES[tab][1]}</p>
-          {tab === "explore" && addrs && <button className="btn sm ph-act" onClick={() => void navigator.clipboard?.writeText(judgeLink).then(() => toast({ kind: "ok", title: "Judge link copied", detail: "Opens these exact contracts." }))}><Ico n="link" /> Copy judge link</button>}
+          {tab === "explore" && addrs && <button className="btn sm ph-act" onClick={() => void navigator.clipboard?.writeText(judgeLink).then(() => toast({ kind: "ok", title: "Deployment link copied", detail: "Opens this contract." })).catch(() => toast({ kind: "err", title: "Copy failed", detail: "Your browser could not access the clipboard." }))}><Ico n="link" /> Copy deployment link</button>}
           {tab === "issue" && <div className="quick-route"><span><i>01</i> Connect wallet</span><b>→</b><span><i>02</i> Check Portaldot &amp; gas</span><b>→</b><span><i>03</i> Create a receipt</span>{!account ? <button onClick={connectWallet}>Connect wallet <Ico n="arrow" /></button> : <a href="#wizard">Start issuing <Ico n="arrow" /></a>}</div>}
         </div>
 
