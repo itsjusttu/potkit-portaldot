@@ -4,45 +4,32 @@
 
 PotKit turns a real-world receipt (an invoice, a content right, a piece of equipment) into an
 **ERC-721**, locks it, and issues a fixed supply of **ERC-20 shares** against it.
-The shares are *backed*: while they exist the NFT cannot move, and whoever gathers 100% of them
-can take the NFT back. When the debtor **pays the invoice in native tPOT**, every holder burns their shares and
-**claims a pro-rata payout**. A public **board** reads everything straight from the chain.
+The NFT is held by the contract while shares are outstanding. Shares provide a claim on a pro-rata payout **only if the receipt is settled in native tPOT**; an NFT alone does not verify an off-chain invoice. A public board reads contract state without a wallet.
 
-Since v31 everything lives in **one contract, `PotKit`** (hand-written Yul, 3.9 KB): the receipt NFT, the vault,
-the settlement pool and the share market. Each share token is an 82-byte forwarder whose ERC-20 logic also runs in `PotKit`.
+The deployed version uses **one contract, `PotKit`** (hand-written Yul): receipt NFT, vault, settlement pool and share market. Each share token is an 82-byte forwarder whose ERC-20 balances live in PotKit.
 
-```
-Issuer ── mint ──▶ PotKit (ERC-721 receipts, ERC-165, tokenURI)
-Owner ── fractionalize(id, units, face, due) ──▶ PotKit: NFT locked, terms fixed, KIT<id> ERC-20 shares minted to owner
-Holders ── transfer / list / buy shares (tPOT) ──▶ anyone      100% holder ── redeem ──▶ NFT returns, shares burned
-Anyone (debtor) ── settle{value ≥ face} ──▶ PotKit (marked settled, trading closes)
-Each holder ── claim ──▶ burns own shares, receives amount × shares / supplyAtSettlement
-After every share is claimed ── depositor redeems ──▶ NFT returns as a "paid" receipt
-```
+## How it works
+1. **Mint:** The deployer (issuer) or an issuer-approved minter creates an ERC-721 receipt with a type and note. No invoice document or debtor signature is checked by the contract.
+2. **Lock:** The NFT owner calls `fractionalize(id, units, faceValue, dueDate)`. PotKit holds the NFT, fixes the terms for this lock cycle, and issues all fixed-supply shares to the depositor. The due date is optional.
+3. **Trade:** Holders can transfer shares or escrow them in fixed-price tPOT listings; buyers pay the seller directly when purchasing. A listing can be cancelled by its seller to return unsold shares.
+4. **Settle:** Anyone can pay at least the face value in native tPOT once. That amount enters the payout pool, and further listings and buys are blocked. No one is compelled to make this payment.
+5. **Claim:** Each wallet holding shares calls `claim` to burn its entire balance and receive its pro-rata tPOT. Sellers must cancel any remaining listings to recover escrowed shares before they can claim those shares. After all claims, the depositor may redeem the paid NFT. Before settlement, a holder of *all* outstanding shares may instead redeem the NFT, burning those shares.
 
 ## Architecture
 ```mermaid
 flowchart LR
-  subgraph Browser["Browser (React 19 + viem)"]
-    UI["dApp /app<br/>Issue · Trade · Portfolio · Explore · Verify · History"]
-    LENS["Lens.sol bytecode<br/>(never deployed)"]
-  end
-  subgraph Vercel["Vercel"]
-    META["api/r.ts<br/>tokenURI JSON"]
-    FAUCET["api/faucet.ts<br/>test-gas faucet"]
-  end
-  subgraph Chain["Portaldot V3 testnet (EVM, chain 420420777)"]
-    KIT["PotKit.yul (one contract)<br/>ERC-721 receipts · vault · settle/claim · escrow market"]
-    SHARE["KIT&lt;id&gt; share token<br/>82-byte forwarder, ERC-20"]
-  end
-  UI -- "writes: mint / lock / list / buy / settle / claim / redeem" --> KIT
-  UI -- "eth_call + Lens bytecode" --> LENS
-  LENS -- "peek(slots)" --> KIT
-  KIT -- "events from token address" --> SHARE
-  META -- "Lens.tokenJson via eth_call" --> KIT
-  UI -- "request gas" --> FAUCET
-  WALLET["Wallet (MetaMask)"] --- UI
+  WALLET["EVM wallet"] --> REACT["React app + viem"]
+  REACT -- "transactions" --> RPC["Portaldot V3 EVM RPC\nchain 420420777"]
+  REACT -- "eth_call with Lens bytecode" --> RPC
+  RPC --> KIT["PotKit.yul\n(one deployed kit contract)"]
+  RPC -. "deployless eth_call" .-> LENS["Lens.sol\nnever deployed"]
+  LENS -. "peek packed storage" .-> KIT
+  KIT --> SHARE["Per-receipt ERC-20\n82-byte forwarder"]
+  REACT -- "request test gas" --> FAUCET["api/faucet.ts\nfaucet API"]
+  META["api/r.ts\ntokenURI JSON"] -- "eth_call" --> RPC
 ```
+
+The React app uses viem for wallet writes and read-only RPC calls. PotKit.yul is the deployed contract containing the ERC-721 receipt, vault, native-tPOT settlement pool, and fixed-price market. Lens.sol is not deployed: its bytecode runs inside `eth_call` and reads PotKit's packed storage through `peek`.
 
 **Lifecycle**
 ```mermaid
@@ -83,6 +70,45 @@ sequenceDiagram
 | Invoice status | Pending / Due soon (≤ 3 days) / Overdue / Settled, derived by `Lens` from on-chain due date + settlement |
 | Frontend state | Everything comes from the chain (`Lens` run inside `eth_call`): shareable "judge link", no database |
 | Reproducible builds | `scripts/compile.mjs` with pinned `solc@0.8.28` (Yul + Solidity), optimizer runs = 1, EVM `paris` (no PUSH0), no metadata |
+
+## Share ownership & repayment
+A share is a fixed-fraction claim on the **native tPOT settlement pool for this locked receipt**. It is not legal ownership of the underlying invoice, a debtor signature, or a guaranteed investment return. At lock time, `units × 10¹⁸` ERC-20 share units are issued to the depositor; the supply cannot be increased for that lock cycle. Shares can be transferred or traded before settlement. The NFT remains in PotKit while shares are outstanding, so a holder of every outstanding share can redeem before settlement.
+
+Anyone can call `settle(id)` with at least the face value. The entire payment, including any overpayment, becomes the pool. Settlement closes listing and buying. Each holder claims once; `claim` burns all shares held by that caller and pays the pro-rata amount using cumulative rounding. A seller must cancel an open listing first so its escrowed shares return to a wallet. After every share is claimed, only the original depositor can redeem the paid receipt NFT.
+
+## Default / overdue handling
+The optional due date is used only by `Lens.statuses`: an unpaid locked receipt becomes **Overdue** after that timestamp. This is a read-only status derived from the current block time; no keeper or contract transition runs at the due date. There is currently no default procedure, penalty, collateral liquidation, forced repayment, recovery waterfall, or automatic investor compensation. A late `settle` is still accepted at any time, and holders cannot claim until settlement. Default handling is a roadmap item rather than a shipped feature.
+
+## Assumptions & limitations
+- Invoice notes and terms are issuer/depositor self-reported. The contract does not verify the invoice, delivery, debtor identity, debtor consent, or legal enforceability.
+- There is no oracle, KYC, debtor attestation, credit underwriting, stablecoin, or mainnet deployment. All payments here use testnet native tPOT.
+- The app simulates the roles of issuer, seller, buyer/investor, and debtor with wallets; the contract does not know which wallet is the real debtor.
+- The RPC can discard old block state/log ranges. The app estimates event timestamps from the latest block at roughly six seconds per block and labels those times approximate; block numbers and transaction hashes remain the evidence.
+- Open listings are not automatically cancelled at settlement. Sellers must cancel them before claiming, and the depositor cannot redeem until all shares have been claimed.
+
+## Portaldot integration
+PotKit is deployed to Portaldot V3 EVM testnet, chain ID **420420777**, using the public RPC `https://test-evm-rpc-v3.portaldot.dev`. The deployed kit address is `0x3c26351ad8b9dc7bb4f837c5b921879c35e20fb7`. The app reads the kit and the never-deployed Lens through `eth_call`; writes use the wallet on the same network. Portaldot's EVM address maps to a Substrate gas account: use the [node console](https://node-console.portaldot.dev/) → Developer → Runtime calls → `reviveApi` → `accountId` to find it, then fund that mapped account with **tPOTv3**. Transaction proof links use the [Portaldot node console explorer](https://node-console.portaldot.dev/?rpc=wss%3A%2F%2Ftest-node-v3.portaldot.dev#/explorer).
+
+## Testnet evidence
+The following is the recorded end-to-end testnet run for kit `0x3c26351ad8b9dc7bb4f837c5b921879c35e20fb7` on chain 420420777. Each hash can be checked with `eth_getTransactionReceipt` against the RPC above.
+
+| Step | Block | Transaction hash |
+|---|---:|---|
+| Deploy kit | 97421 | `0x5ce8a4a4661025a4cac0fe059dd3f10b111a05890c4530abb5d6490c9bf41614` |
+| Mint receipt #1 | 97600 | `0x734848b6b369f4b54fd204f0fe96253bab46bb6cd73ff495f5f36bba2bcd7bee` |
+| Lock + terms + issue 100 shares | 97632 | `0x6b36874b7e82cb29098017292314243aea17accc1825169b6ea81223637a846d` |
+| List 90 shares | 97654 | `0x36d70079020ad47a3b7350794c706bc68a87980cac1e08789a0516f4cc7ede4d` |
+| Buy 90 shares | 97684 | `0xd9adf39c377817b8761e9e48814ba18c605dd464e9e3fd7515b9fbab8b930cb5` |
+| Settle, 1 tPOT | 97706 | `0xa3c4e3920fc77a62d5c6c9902994285ff22345f92feb69e824d6583db81df25c` |
+| Claim, investor | 97713 | `0x41e96b79547671cf597ee0c3f7b27635fbfaf82c55b8b1231cecf47b640dd557` |
+| Claim, issuer | 97719 | `0x83cc9d7f3606d28e9cdd4c9dcd58525731987b79ffdf404a1952dd2bcf420e66` |
+| Redeem paid receipt | 97722 | `0x8e4f7704cce8d0224116c855f5789a5ef18260714a9520eddb00ed4e0cdf1b89` |
+
+## Roadmap
+- Add debtor attestation/signatures, issuer reputation, and invoice-document verification without pretending that on-chain metadata is proof.
+- Define an explicit default/recovery policy, including partial payments and any permitted restructuring or buyout flow.
+- Add an indexer and explorer links when Portaldot V3 history is reliably available; preserve approximate-time labels when it is not.
+- Explore optional stablecoin settlement, KYC/compliance integrations, and deeper secondary-market mechanisms for a production deployment.
 
 ## Landing page
 `/` is a monochrome HUD-style intro (v7): fixed header (centred logo, X / Discord / GitHub) and fixed footer (Docs / Portaldot /
@@ -172,25 +198,7 @@ exactly as `msg.value` (that also replaces a slippage cap: the price can't chang
 - **Profile** (wallet menu → My Profile): address, wallet, balances, holdings, recent activity, the **mapped gas account** (with Copy), and **Reset saved deployment**.
 - **Demo guide** (floating button): 7-step checklist — mint, lock + terms, list, buy, settle, claim, redeem — computed from contract state (listings, held shares), with the local action log as fallback, so it works even when the RPC limits `eth_getLogs`.
 
-Deployed on Portaldot V3 Testnet (chain 420420777):
-- PotKit: `0x3c26351ad8b9dc7bb4f837c5b921879c35e20fb7`
-- Deploy tx: `0x5ce8a4a4661025a4cac0fe059dd3f10b111a05890c4530abb5d6490c9bf41614`
-- Deploy block: `97421`
-- Judge link: https://app.potkit.pro/?kit=0x3c26351ad8b9dc7bb4f837c5b921879c35e20fb7
-
-### Full lifecycle executed on Portaldot V3 testnet
-Run with two wallets (issuer/seller and investor/debtor). Hashes can be checked with `eth_getTransactionReceipt` on `https://test-evm-rpc-v3.portaldot.dev`.
-
-| # | Step | Block | Tx hash |
-|---|---|---:|---|
-| 1 | Mint receipt #1 | 97600 | `0x734848b6b369f4b54fd204f0fe96253bab46bb6cd73ff495f5f36bba2bcd7bee` |
-| 2 | Lock + set terms + issue 100 shares | 97632 | `0x6b36874b7e82cb29098017292314243aea17accc1825169b6ea81223637a846d` |
-| 3 | List 90 shares @ 0.009 tPOT | 97654 | `0x36d70079020ad47a3b7350794c706bc68a87980cac1e08789a0516f4cc7ede4d` |
-| 4 | Buy 90 shares (0.81 tPOT) | 97684 | `0xd9adf39c377817b8761e9e48814ba18c605dd464e9e3fd7515b9fbab8b930cb5` |
-| 5 | Settle (debtor pays 1 tPOT) | 97706 | `0xa3c4e3920fc77a62d5c6c9902994285ff22345f92feb69e824d6583db81df25c` |
-| 6 | Claim (investor, 0.9 tPOT) | 97713 | `0x41e96b79547671cf597ee0c3f7b27635fbfaf82c55b8b1231cecf47b640dd557` |
-| 7 | Claim (issuer, 0.1 tPOT) | 97719 | `0x83cc9d7f3606d28e9cdd4c9dcd58525731987b79ffdf404a1952dd2bcf420e66` |
-| 8 | Redeem paid receipt NFT | 97722 | `0x8e4f7704cce8d0224116c855f5789a5ef18260714a9520eddb00ed4e0cdf1b89` |
+Deployed kit and recorded transaction hashes are collected under [Testnet evidence](#testnet-evidence). Judge link: https://app.potkit.pro/?kit=0x3c26351ad8b9dc7bb4f837c5b921879c35e20fb7
 
 ## On-chain cost (Portaldot storage deposit)
 Portaldot V3 (pallet-revive) charges a **storage deposit**: about 0.079 tPOT for each byte of deployed code, ~13.3 tPOT per contract,
@@ -248,20 +256,10 @@ No third-party Solidity/Yul code is used in the contracts (`PotKit.yul`, `Lens.s
 Assets: wallet logos are bundled locally (see `src/assets/wallets/SOURCES.md`: web3icons MIT, simple-icons CC0; trademarks belong to their owners). Fonts Inter, JetBrains Mono and Space Grotesk are loaded from Google Fonts (SIL Open Font License). Landing and dApp visuals were created for this project.
 
 ## Known limitations
-- **No debtor attestation yet.** Anyone can mint an invoice and the contract cannot verify that the debtor agreed to it; trust in the issuer is off-chain. Debtor signatures and issuer reputation are on the roadmap.
-- **Shares left in an open listing at settlement** stay in escrow until the seller cancels; the depositor cannot redeem the NFT until every share is claimed, so sellers should cancel before or right after settlement.
-- **Testnet only.** Payments use native tPOT; there is no stablecoin option or KYC for mainnet yet.
-- **Contract is immutable** and its `tokenURI` points at `https://potkit.pro/api/r`; the JSON is built off-chain from chain state.
+See [Assumptions & limitations](#assumptions--limitations) and [Default / overdue handling](#default--overdue-handling). The contract is immutable and its `tokenURI` points at `https://potkit.pro/api/r`; the JSON is built off-chain from chain state.
 
 ## License
 MIT, see [LICENSE](./LICENSE).
-
-## Beyond the hackathon (roadmap)
-- Redeem-by-vote / partial buyout so fragmented holders can still exit
-- ~~Revenue distribution: pay an invoice once, split pro-rata to share holders~~ ✅ shipped (`settle` / `claim`)
-- ~~Secondary market for share tokens~~ ✅ fixed-price escrow market shipped; next: AMM pool / auctions
-- ~~Invoice status~~ ✅ due date + Pending / Due soon / Overdue / Settled; next: partial payments, debtor attestation
-- Indexer + explorer links once a Portaldot V3 explorer is available
 
 ## Gas faucet
 

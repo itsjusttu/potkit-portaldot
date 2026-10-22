@@ -156,6 +156,7 @@ const DOCS: Record<string, Doc> = {
         <p>A business that has delivered work usually waits 30–90 days to be paid.</p>
         <p>PotKit lets the issuer <b>record</b> that receivable as an NFT, <b>lock</b> it so it cannot be moved or sold twice, and <b>fractionalise</b> it into ERC-20 shares.</p>
         <p>Investors buy shares at a discount to face value; when the debtor pays, the money is split among whoever holds the shares at that moment. Every payment is native <b>tPOT</b>.</p>
+        <Callout tone="warn"><b>How it works / Risks:</b> Minted invoice details are issuer self-reported; no oracle, KYC, debtor signature, or off-chain document is checked. Each share is a pro-rata claim on the tPOT pool only if someone settles, not legal ownership of the invoice or a guaranteed return. If the due date passes unpaid, the receipt is marked Overdue, but nothing is automatically recovered or paid: late settlement is still possible and holders wait to claim.</Callout>
         <Lifecycle />
       </> },
       { id: "roles", t: "Roles", body: <>
