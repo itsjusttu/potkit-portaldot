@@ -1,5 +1,7 @@
 # PotKit - tokenised receipts on Portaldot V3
 
+**Links:** [Live app](https://app.potkit.pro) · [Website](https://potkit.pro) · [Demo video](https://youtu.be/3rF0QRqJNAU) · [X](https://x.com/potkitpro) · [Judge link](https://app.potkit.pro/?kit=0x3c26351ad8b9dc7bb4f837c5b921879c35e20fb7)
+
 **Track:** Ecosystem DApps (RWA tokenisation) · Portaldot Hacker House 2026
 
 PotKit turns a real-world receipt (an invoice, a content right, a piece of equipment) into an
@@ -19,14 +21,14 @@ The deployed version uses **one contract, `PotKit`** (hand-written Yul): receipt
 ```mermaid
 flowchart LR
   WALLET["EVM wallet"] --> REACT["React app + viem"]
-  REACT -- "transactions" --> RPC["Portaldot V3 EVM RPC\nchain 420420777"]
+  REACT -- "transactions" --> RPC["Portaldot V3 EVM RPC<br/>chain 420420777"]
   REACT -- "eth_call with Lens bytecode" --> RPC
-  RPC --> KIT["PotKit.yul\n(one deployed kit contract)"]
-  RPC -. "deployless eth_call" .-> LENS["Lens.sol\nnever deployed"]
+  RPC --> KIT["PotKit.yul<br/>(one deployed kit contract)"]
+  RPC -. "deployless eth_call" .-> LENS["Lens.sol<br/>never deployed"]
   LENS -. "peek packed storage" .-> KIT
-  KIT --> SHARE["Per-receipt ERC-20\n82-byte forwarder"]
-  REACT -- "request test gas" --> FAUCET["api/faucet.ts\nfaucet API"]
-  META["api/r.ts\ntokenURI JSON"] -- "eth_call" --> RPC
+  KIT --> SHARE["Per-receipt ERC-20<br/>82-byte forwarder"]
+  REACT -- "request test gas" --> FAUCET["api/faucet.ts<br/>faucet API"]
+  META["api/r.ts<br/>tokenURI JSON"] -- "eth_call" --> RPC
 ```
 
 The React app uses viem for wallet writes and read-only RPC calls. PotKit.yul is the deployed contract containing the ERC-721 receipt, vault, native-tPOT settlement pool, and fixed-price market. Lens.sol is not deployed: its bytecode runs inside `eth_call` and reads PotKit's packed storage through `peek`.
@@ -111,12 +113,9 @@ The following is the recorded end-to-end testnet run for kit `0x3c26351ad8b9dc7b
 - Explore optional stablecoin settlement, KYC/compliance integrations, and deeper secondary-market mechanisms for a production deployment.
 
 ## Landing page
-`/` is a monochrome HUD-style intro (v7): fixed header (centred logo, X / Discord / GitHub) and fixed footer (Docs / Portaldot /
-Website + Whitepaper, Launch dApp + Read docs CTAs, live scroll coordinate, Hackathon). Pinned scroll stage: (1) hero over a rotating particle
-globe with nebula + radar grid, (2) camera zooms in, receipt markers pop up over the globe + 4 feature points, (3) globe pans
-away, 4 line-icon cards, (4) dark full-width horizontal bands that expand on hover or scroll, each with an animated glowing line-art object.
-The dApp is a separate full page at **`/app`** (own sidebar layout). Old `#/app` links redirect to `/app` keeping the query string; judge links are `/app?kit=0x…` (old `?vault=` / `?receipt=` links still work). A faint, short-lived cursor smoke trail (canvas) appears only while the mouse or finger moves and fades out within ~0.6 s. Motion always runs (reduced-motion only slows it).
-Social links were checked against the hrefs on https://portaldot.world/.
+`/` uses the current monochrome XERO redesign: a black hero with an ASCII-text field, invoice-focused copy, app/docs CTAs, a receipt-number verification form, and illustrative phone mockups. The white sections below show the issue/trade flow, issuer/investor/debtor roles with a node diagram, black-and-white protocol cards, Yul snippets and security notes, docs links, and the technology stack. A closing Portaldot Hacker House section links to the app and DoraHacks. The phone screens are labelled as illustrative, not live balances or returns.
+
+The dApp has its own sidebar layout at **`/app`**; judge links can pass the kit address in the URL. The landing styles are in `landing-xero.css` alongside the shared landing styles, and the app's XERO styling is in `styles/app-xero.css`.
 
 ## Hosting on Vercel
 `vercel.json` rewrites every path except `/api/*` to `index.html`, so `/app` works on refresh (static assets are served first).
@@ -144,7 +143,7 @@ VITE_RPC_URL=http://localhost:8545 npm run dev        # open /app?kit=0x… (imp
 Requires Node.js 20+.
 ```bash
 npm install
-npm test        # compiles contracts + 28 tests (14 PotKit tests on a local ganache chain, faucet, network switch)
+npm test        # compiles contracts + 30 tests (PotKit on local Ganache, faucet, network switch, transaction errors)
 npm run dev     # open the URL Vite prints (http://localhost:8080 by default)
 npm run build   # type-check + production build into dist/
 ```
@@ -231,13 +230,15 @@ Limits from packing: face value and listing price ≤ 2^96−1 wei, share units 
 
 ## Layout
 ```
-contracts/   PotKit.yul (the deployed contract)  IPotKit.sol (ABI)  Lens.sol (eth_call only)  test/TestReceiver.sol  v30/ (previous version, reference)
-scripts/     compile.mjs  yulprep.mjs (revert codes)  seed-local.mjs  measure.mjs + measure/Harness.sol (live cost measurement)
-api/         faucet.ts  r.ts (tokenURI JSON)
-test/        potkit.test.mjs  faucet.test.mjs  netswitch.test.mjs
-src/         main.tsx  Landing.tsx  landing.css  App.tsx  lib/chain.ts (viem)  styles.css
+contracts/   PotKit.yul (deployed kit), IPotKit.sol (ABI), Lens.sol (eth_call only), test/, v30/ (reference)
+scripts/     compile.mjs, yulprep.mjs, seed-local.mjs, measure.mjs and measure/ (cost measurement)
+api/         faucet.ts, r.ts (tokenURI JSON)
+test/        potkit.test.mjs, faucet.test.mjs, netswitch.test.mjs, txerrors.test.mjs
+src/         main.tsx, App.tsx, Landing.tsx, lib/chain.ts (viem), tabs/ (app views), docs/ (guides)
+             theme-tokens.css, landing.css, landing-polish.css, landing-xero.css
+             styles/app.css, styles/app-xero.css (dApp styles)
 ```
-After editing a contract run `npm run compile` and commit `src/generated/`.
+Contract builds generate `src/generated/`; no contract changes are part of this README update.
 
 ## Third-party software and assets
 No third-party Solidity/Yul code is used in the contracts (`PotKit.yul`, `Lens.sol` are original). The web app and tooling use:
@@ -257,9 +258,6 @@ Assets: wallet logos are bundled locally (see `src/assets/wallets/SOURCES.md`: w
 
 ## Known limitations
 See [Assumptions & limitations](#assumptions--limitations) and [Default / overdue handling](#default--overdue-handling). The contract is immutable and its `tokenURI` points at `https://potkit.pro/api/r`; the JSON is built off-chain from chain state.
-
-## License
-MIT, see [LICENSE](./LICENSE).
 
 ## Gas faucet
 
@@ -293,3 +291,6 @@ the same as wallets). A native transfer to a 0x address credits that address's m
 - `npm run dev` serves `/api/faucet` through a small Vite dev middleware. Put `FAUCET_PRIVATE_KEY=…` in `.env.local` (git-ignored, server-only) to enable it; without it the button shows the manual-funding fallback (mapped `5…` address + Copy).
 - Or run `vercel dev` to emulate the platform exactly.
 - `vite preview` / static hosts have no API → the UI falls back automatically.
+
+## License
+MIT, see [LICENSE](./LICENSE).
