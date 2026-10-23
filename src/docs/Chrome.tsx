@@ -50,6 +50,7 @@ const footer = (): [string, Link[]][] => [
 
 export const IcoX = () => <svg viewBox="0 0 24 24" aria-hidden><path d="M17.8 3h3.1l-6.8 7.8L22 21h-6.2l-4.9-6.4L5.3 21H2.2l7.3-8.3L2 3h6.4l4.4 5.8zM16.7 19.2h1.7L7.4 4.7H5.6z" fill="currentColor" /></svg>;
 export const IcoDiscord = () => <svg viewBox="0 0 24 24" aria-hidden><path fill="currentColor" d="M19.6 5.3A17 17 0 0 0 15.4 4l-.5 1a15.6 15.6 0 0 0-5.8 0l-.5-1a17 17 0 0 0-4.2 1.3C1.7 9.3 1 13.2 1.3 17a17 17 0 0 0 5.2 2.6l1.1-1.8a11 11 0 0 1-1.7-.8l.4-.3a12.2 12.2 0 0 0 11.4 0l.4.3c-.5.3-1.1.6-1.7.8l1.1 1.8a17 17 0 0 0 5.2-2.6c.4-4.4-.7-8.3-3.1-11.7zM8.7 14.7c-1 0-1.9-1-1.9-2.1s.8-2.1 1.9-2.1 1.9 1 1.9 2.1-.8 2.1-1.9 2.1zm6.6 0c-1 0-1.9-1-1.9-2.1s.8-2.1 1.9-2.1 1.9 1 1.9 2.1-.8 2.1-1.9 2.1z" /></svg>;
+export const IcoTelegram = () => <svg viewBox="0 0 24 24" aria-hidden><path fill="currentColor" d="M21.9 4.3 18.6 19.6c-.2 1.1-.9 1.3-1.8.8l-5-3.7-2.4 2.3c-.3.3-.5.5-1 .5l.4-5.1 9.3-8.4c.4-.4-.1-.6-.6-.2L6.1 13.1 1.2 11.6c-1.1-.3-1.1-1.1.2-1.6L20.6 2.7c.9-.3 1.7.2 1.3 1.6z"/></svg>;
 export const Arrow = () => <svg viewBox="0 0 16 16" aria-hidden className="lx-arr"><path d="M4 12 12 4M6 4h6v6" fill="none" stroke="currentColor" strokeWidth="1.5" /></svg>;
 
 function Menu({ label, items }: { label: string; items: Link[] }) {
@@ -122,8 +123,9 @@ export function Header({ scrolled, active }: { scrolled: boolean; active?: strin
         <Menu label="Community" items={COMMUNITY} />
       </nav>
       <div className="lx-right">
-        <a className="lx-ico" href={L.x} {...ext} aria-label="Portaldot on X" title="Portaldot on X"><IcoX /></a>
+        <a className="lx-ico" href="https://x.com/potkitpro" {...ext} aria-label="PotKit on X" title="PotKit on X"><IcoX /></a>
         <a className="lx-ico" href={L.discord} {...ext} aria-label="Portaldot Discord" title="Portaldot Discord"><IcoDiscord /></a>
+        <a className="lx-ico" href="https://t.me/itsjusttu" {...ext} aria-label="Telegram" title="Telegram"><IcoTelegram /></a>
         <a className="lx-btn primary" href={app(hasJudge ? location.search : "")}>{hasJudge ? "Open demo" : "Launch App"}</a>
         <button className="lx-burger" aria-label="Menu" aria-expanded={mnav} onClick={() => setMnav(!mnav)}><i /><i /></button>
       </div>
@@ -142,7 +144,7 @@ export function Footer() {
       <div className="lx-foot-base">
         <span className="lx-logo sm"><img src="/potkit-p-circle-black.svg" alt="" width={22} height={22} style={{marginRight:8,verticalAlign:"middle"}} />PotKit</span>
         <span>© 2026 PotKit · Not affiliated with Portaldot · Testnet only</span>
-        <span className="lx-foot-soc"><a href={L.x} {...ext} aria-label="Portaldot on X"><IcoX /></a><a href={L.discord} {...ext} aria-label="Portaldot Discord"><IcoDiscord /></a></span>
+        <span className="lx-foot-soc"><a href="https://x.com/potkitpro" {...ext} aria-label="PotKit on X"><IcoX /></a><a href="https://t.me/itsjusttu" {...ext} aria-label="Telegram"><IcoTelegram /></a><a href={L.discord} {...ext} aria-label="Portaldot Discord"><IcoDiscord /></a><a href="https://github.com/itsjusttu/potkit-portaldot" {...ext} aria-label="PotKit on GitHub"><svg viewBox="0 0 24 24" aria-hidden><path fill="currentColor" d="M12 2a10 10 0 0 0-3.16 19.49c.5.09.68-.22.68-.48v-1.7c-2.77.6-3.35-1.18-3.35-1.18-.45-1.15-1.1-1.46-1.1-1.46-.9-.62.07-.61.07-.61 1 .07 1.53 1.02 1.53 1.02.89 1.52 2.34 1.08 2.91.83.09-.64.35-1.08.63-1.33-2.21-.25-4.53-1.1-4.53-4.94 0-1.09.39-1.98 1.03-2.68-.1-.25-.45-1.27.1-2.64 0 0 .84-.27 2.75 1.02A9.55 9.55 0 0 1 12 6.66c.85 0 1.7.11 2.5.34 1.91-1.29 2.75-1.02 2.75-1.02.55 1.37.2 2.39.1 2.64.64.7 1.03 1.59 1.03 2.68 0 3.85-2.32 4.69-4.54 4.94.36.31.68.92.68 1.85v2.92c0 .27.18.58.69.48A10 10 0 0 0 12 2z" /></svg></a><a href="mailto:levantu170605@gmail.com" aria-label="Email"><svg viewBox="0 0 24 24" aria-hidden><path d="M3 5h18v14H3zM3 6l9 7 9-7" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" /></svg></a></span>
       </div>
       <div className="lx-word" aria-hidden>POTKIT</div>
     </footer>

@@ -40,7 +40,7 @@ export function Support({ open, onClose, account }: { open: boolean; onClose: ()
     <div className="support-backdrop" onMouseDown={(event) => event.target === event.currentTarget && onClose()}>
       <section className="support-dialog" role="dialog" aria-modal="true" aria-labelledby="support-title" ref={dialog}>
         <header className="support-head"><h2 id="support-title">Support</h2><button type="button" className="t-x" aria-label="Close support" onClick={onClose}><Ico n="x" /></button></header>
-        <p className="support-note">Describe your issue, or join the <a href={L.discord} target="_blank" rel="noreferrer">Discord community</a> for help.</p>
+        <p className="support-note">Describe your issue below, or contact the builder directly on <a href="https://t.me/itsjusttu" target="_blank" rel="noreferrer">Telegram</a> or by <a href="mailto:levantu170605@gmail.com">email</a>. You can also join the <a href={L.discord} target="_blank" rel="noreferrer">Discord community</a>.</p>
         <form onSubmit={submit}>
           <label className="support-label" htmlFor="support-email">Email</label>
           <input id="support-email" type="email" autoComplete="email" placeholder="you@email.com" required value={email} onChange={(e) => setEmail(e.target.value)} />
