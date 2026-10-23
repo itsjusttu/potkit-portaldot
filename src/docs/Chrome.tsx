@@ -115,7 +115,7 @@ export function Header({ scrolled, active }: { scrolled: boolean; active?: strin
   const nav = [["/help", "Help"], ["/how-it-works", "How it works"], ["/protocol", "Protocol"], ["/security", "Security"]];
   return (
     <header className={`lx-head ${scrolled ? "scrolled" : ""}`}>
-      <a className="lx-logo" href={page("/")} aria-label="PotKit home"><span className="mark">◆</span>PotKit</a>
+      <a className="lx-logo" href={page("/")} aria-label="PotKit home"><img src="/potkit-p-circle-black.svg" alt="" width={22} height={22} style={{marginRight:8,verticalAlign:"middle"}} />PotKit</a>
       <nav className={`lx-nav ${mnav ? "open" : ""}`} aria-label="Main">
         {nav.map(([h, t]) => <a key={h} href={page(h)} aria-current={active === h ? "page" : undefined}>{t}</a>)}
         <Menu label="Resources" items={RESOURCES} />
@@ -140,7 +140,7 @@ export function Footer() {
         ))}
       </div>
       <div className="lx-foot-base">
-        <span className="lx-logo sm"><span className="mark">◆</span>PotKit</span>
+        <span className="lx-logo sm"><img src="/potkit-p-circle-black.svg" alt="" width={22} height={22} style={{marginRight:8,verticalAlign:"middle"}} />PotKit</span>
         <span>© 2026 PotKit · Not affiliated with Portaldot · Testnet only</span>
         <span className="lx-foot-soc"><a href={L.x} {...ext} aria-label="Portaldot on X"><IcoX /></a><a href={L.discord} {...ext} aria-label="Portaldot Discord"><IcoDiscord /></a></span>
       </div>

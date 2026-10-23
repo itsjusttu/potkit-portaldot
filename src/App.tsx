@@ -256,7 +256,7 @@ export function App() {
       <aside className={`side ${mobileNavOpen ? "mobile-open" : ""}`}>
         <div className="side-mobile-head"><span>All sections</span><button type="button" onClick={() => setMobileNavOpen(false)} aria-label="Close navigation"><Ico n="x" /></button></div>
         <a className="side-brand" href={homeUrl()} aria-label="PotKit home" data-tip="Home">
-          <span className="logo" aria-hidden><span className="lg-d">◆</span><span className="lg-a">←</span></span>
+          <img src="/potkit-p-circle-black.svg" alt="" width={34} height={34} aria-hidden />
           <span><b>Pot<span className="grad">Kit</span></b><small>Invoice protocol</small></span>
         </a>
         <button className="side-new" onClick={() => setTab("issue")}><TabIco t="issue" /><span>New invoice</span></button>

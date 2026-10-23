@@ -1,5 +1,4 @@
 import { useEffect, useRef, useState } from "react";
-import logo from "./assets/logo.jpg";
 import "./intro.css";
 
 export const INTRO_KEY = "potkit.intro.v2";
@@ -79,7 +78,7 @@ export function Intro() {
       <div className="pk-stage">
         {[1.32, 1.62, 2.05, 2.7].map((k, i) => <i key={i} className="pk-orbit" style={{ width: `calc(var(--pk-g) * ${k})`, animationDelay: `${i * 0.15}s` }} />)}
         <canvas ref={cv} aria-hidden />
-        <img className="pk-logo" src={logo} alt="" width={44} height={44} />
+        <img className="pk-logo" src="/potkit-p-circle-black.svg" alt="" width={44} height={44} />
       </div>
       <div className="pk-load">
         <span>{pct === 100 ? "Workspace ready" : "Preparing your PotKit workspace"}</span>
