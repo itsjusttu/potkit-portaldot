@@ -36,6 +36,7 @@ export function Trade({ c }: { c: Ctx }) {
   const [sellPrice, setSellPrice] = useState("0.009");
   const [quickBudget, setQuickBudget] = useState("0.50");
   const [marketView, setMarketView] = useState<"market" | "mine">("market");
+  const [filtersOpen, setFiltersOpen] = useState(false);
   const dis = Boolean(c.busy) || c.gated;
   const [pending, setPending] = useState<Pending | null>(null);
   /** issue time = mint (or lock) event timestamp; falls back to a 30-day term before the due date */
@@ -133,13 +134,16 @@ export function Trade({ c }: { c: Ctx }) {
       </section>
       {cards.length > 0 && <div className="trade-bar" role="search">
         <div className="tb-search"><Ico n="search" /><input aria-label="Search listings" placeholder="Search invoice, id or kind" value={q} onChange={(e) => setQ(e.target.value)} /></div>
-        <div className="chips" role="group" aria-label="Quick filters">
-          {([["all", "All"], ["discount", "Discount > 5%"], ["due", "Due < 30d"]] as const).map(([key, label]) => <button key={key} className={`chip ${quick === key ? "on" : ""}`} aria-pressed={quick === key} onClick={() => setQuick(key)}>{label}</button>)}
-        </div>
-        <div className="chips trade-status-chips" role="group" aria-label="Filter by status">
-          {["all", "Pending", "Due soon", "Overdue", "Settled"].map((s) => <button key={s} className={`chip ${status === s ? "on" : ""}`} aria-pressed={status === s} onClick={() => setStatus(s)}>{s === "all" ? "Any status" : s}</button>)}
-        </div>
         <label className="tb-sort"><span>Sort</span><select value={sort} onChange={(e) => setSort(e.target.value as keyof typeof SORTS)}>{Object.entries(SORTS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select></label>
+        <button type="button" className="btn sm" aria-expanded={filtersOpen} aria-controls="trade-filters" onClick={() => setFiltersOpen((value) => !value)}>Filters</button>
+        {filtersOpen && <div id="trade-filters" className="trade-filters">
+          <div className="chips" role="group" aria-label="Quick filters">
+            {([["all", "All"], ["discount", "Discount > 5%"], ["due", "Due < 30d"]] as const).map(([key, label]) => <button key={key} className={`chip ${quick === key ? "on" : ""}`} aria-pressed={quick === key} onClick={() => setQuick(key)}>{label}</button>)}
+          </div>
+          <div className="chips trade-status-chips" role="group" aria-label="Filter by status">
+            {["all", "Pending", "Due soon", "Overdue", "Settled"].map((s) => <button key={s} className={`chip ${status === s ? "on" : ""}`} aria-pressed={status === s} onClick={() => setStatus(s)}>{s === "all" ? "Any status" : s}</button>)}
+          </div>
+        </div>}
       </div>}
 
       <div className="trade-grid">
