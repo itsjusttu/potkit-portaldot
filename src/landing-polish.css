@@ -57,3 +57,6 @@ html[data-route="landing"] .lx :is(h1,h2,h3,h4,button,input) { font-family: var(
 @media (prefers-reduced-motion: reduce) { .lx-rv { transition: none; transform: none; opacity: 1; } .lx-strip-in { animation: none; } }
 
 .lx-right .lx-btn { white-space: nowrap; }
+
+.lx-nav { flex-wrap: nowrap; white-space: nowrap; }
+@media (min-width: 52.01rem) and (max-width: 72rem) { .lx-head { gap: 1rem; } .lx-nav > a, .lx-menu > button { padding: .5rem .5rem; font-size: .78rem; } }
