@@ -23,7 +23,7 @@ export function useTx(refresh: () => Promise<void>) {
   useEffect(() => {
     const click = (e: MouseEvent) => { lastBtn.current = (e.target as HTMLElement).closest("button"); };
     document.addEventListener("click", click, true);
-    const off = onTx((e) => { if (busyRef.current) setPhase(e.state === "pending" ? "pending" : e.state === "confirmed" ? "success" : "error"); });
+    const off = onTx((e) => { if (busyRef.current) setPhase(e.state === "pending" || e.state === "slow" ? "pending" : e.state === "confirmed" ? "success" : "error"); });
     return () => { document.removeEventListener("click", click, true); off(); };
   }, []);
 

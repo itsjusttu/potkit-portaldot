@@ -265,7 +265,7 @@ export async function disconnectWallet() {
 }
 
 // ---- tx lifecycle events (UI toasts subscribe) -----------------------------
-export type TxEvent = { hash: Hash; state: "pending" | "confirmed" | "failed" };
+export type TxEvent = { hash: Hash; state: "pending" | "slow" | "confirmed" | "failed" };
 const txListeners = new Set<(e: TxEvent) => void>();
 export const onTx = (f: (e: TxEvent) => void) => { txListeners.add(f); return () => { txListeners.delete(f); }; };
 const emitTx = (e: TxEvent) => txListeners.forEach((f) => f(e));
@@ -273,10 +273,15 @@ const emitTx = (e: TxEvent) => txListeners.forEach((f) => f(e));
 async function confirm(hash: Hash) {
   emitTx({ hash, state: "pending" });
   try {
-    const r = await reader.waitForTransactionReceipt({ hash, pollingInterval: 2_000, timeout: 120_000 }).catch((e) => {
-      if (/timed? ?out|WaitForTransactionReceiptTimeout/i.test(`${(e as Error).name} ${(e as Error).message}`))
-        throw new TxError("Still unconfirmed after 2 minutes — the testnet may be slow. Check the hash before retrying", hash);
-      throw new TxError("Could not confirm the transaction", hash, e);
+    const r = await reader.waitForTransactionReceipt({ hash, pollingInterval: 2_000, timeout: 60_000 }).catch((e) => {
+      if (!/timed? ?out|WaitForTransactionReceiptTimeout/i.test(`${(e as Error).name} ${(e as Error).message}`))
+        throw new TxError("Could not confirm the transaction", hash, e);
+      emitTx({ hash, state: "slow" });
+      return reader.waitForTransactionReceipt({ hash, pollingInterval: 2_000, timeout: 600_000 }).catch((retryError) => {
+        if (/timed? ?out|WaitForTransactionReceiptTimeout/i.test(`${(retryError as Error).name} ${(retryError as Error).message}`))
+          throw new TxError("Still unconfirmed after 10 minutes — the testnet may be slow. Check the hash before retrying", hash);
+        throw new TxError("Could not confirm the transaction", hash, retryError);
+      });
     });
     if (r.status !== "success") throw new TxError("Transaction reverted on-chain", hash);
     emitTx({ hash, state: "confirmed" });

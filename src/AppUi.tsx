@@ -18,6 +18,10 @@ export function Toasts() {
     const off = onTx((e: TxEvent) => {
       setList((l) => {
         const i = l.findIndex((x) => x.hash === e.hash);
+        if (e.state === "slow") {
+          const next = i >= 0 ? l.map((x, j) => (j === i ? { ...x, kind: "pending", title: "Still confirming", detail: "Testnet is slow. Keep this tab open, no need to retry." } as Toast : x)) : [...l, { id: ++id, kind: "pending", title: "Still confirming", detail: "Testnet is slow. Keep this tab open, no need to retry.", hash: e.hash } as Toast];
+          return next;
+        }
         if (e.state === "pending") return i >= 0 ? l : [...l.slice(-4), { id: ++id, kind: "pending", title: "Transaction pending", hash: e.hash }];
         const kind = e.state === "confirmed" ? "ok" : "err";
         const title = e.state === "confirmed" ? "Transaction confirmed" : "Transaction failed";
