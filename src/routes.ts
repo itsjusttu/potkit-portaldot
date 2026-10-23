@@ -10,8 +10,8 @@ export const APP_ORIGIN = ((import.meta.env.VITE_APP_URL as string | undefined) 
 const isLocal = () => /^(localhost|127\.|0\.0\.0\.0|\[::1\])/.test(window.location.hostname) || window.location.hostname.endsWith(".vercel.app");
 export const appUrl = (search = window.location.search) => {
   const params = new URLSearchParams(search.startsWith("?") ? search.slice(1) : search);
-  params.set("intro", "1");
-  const query = `?${params.toString()}`;
+  const qs = params.toString();
+  const query = qs ? `?${qs}` : "";
   if (isAppHost()) return `/${query}`;
   if (APP_ORIGIN && !isLocal()) return `${APP_ORIGIN}/${query}`;
   return `/app${query}`;
