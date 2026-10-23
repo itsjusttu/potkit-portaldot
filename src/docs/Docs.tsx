@@ -4,7 +4,7 @@ import "./docs.css";
 import "../landing-polish.css";
 import "./docs-polish.css";
 import "./help.css";
-import { Footer, Header, Reveal, app, page, useLenis, Arrow } from "./Chrome";
+import { Footer, Header, Reveal, app, page, useLenis, Arrow, IcoTelegram } from "./Chrome";
 import { MarketArt, ReceiptArt, VaultArt } from "./Art";
 
 type Sec = { id: string; t: string; body: ReactNode };
@@ -144,7 +144,7 @@ const DOCS: Record<string, Doc> = {
     next: ["/how-it-works", "How PotKit works"],
     secs: [
       { id: "answers", t: "Find an answer", body: <HelpBrowse /> },
-      { id: "contact", t: "Still need help?", body: <div className="help-contact"><div><small>PotKit builder</small><h3>Ask the builder directly</h3><p>Questions, bugs or feedback about PotKit? Message the builder on Telegram or email and get a direct reply.</p></div><div style={{display:"flex",gap:".6rem",flexWrap:"wrap"}}><a className="help-contact-link" href="https://t.me/itsjusttu" target="_blank" rel="noreferrer">Telegram <Arrow /></a><a className="help-contact-link" href="mailto:levantu170605@gmail.com">Email <Arrow /></a></div></div> },
+      { id: "contact", t: "Still need help?", body: <div className="help-contact"><div><small>PotKit builder</small><h3>Ask the builder directly</h3><p>Questions, bugs or feedback about PotKit? Message the builder on Telegram or email and get a direct reply.</p></div><div className="help-contact-actions"><a className="help-contact-link" href="https://t.me/itsjusttu" target="_blank" rel="noreferrer"><IcoTelegram /> Telegram</a><a className="help-contact-link" href="mailto:levantu170605@gmail.com"><svg viewBox="0 0 24 24" aria-hidden><path d="M3 5h18v14H3zM3 6l9 7 9-7" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" /></svg> Gmail</a></div></div> },
     ],
   },
   "/how-it-works": {
