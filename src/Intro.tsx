@@ -6,13 +6,20 @@ const KEY = INTRO_KEY, TICKS = 48, MS = 3000;
 let forcedIntro: boolean | null = null;
 function consumeIntroParam() {
   if (forcedIntro !== null) return forcedIntro;
-  const url = new URL(location.href);
-  forcedIntro = url.searchParams.get("intro") === "1";
-  if (forcedIntro) {
-    url.searchParams.delete("intro");
-    history.replaceState(history.state, "", `${url.pathname}${url.search}${url.hash}`);
-  }
-  return forcedIntro;
+  try {
+    const url = new URL(location.href);
+    const introParam = url.searchParams.get("intro") === "1";
+    if (introParam) {
+      url.searchParams.delete("intro");
+      history.replaceState(history.state, "", `${url.pathname}${url.search}${url.hash}`);
+    }
+    forcedIntro = introParam || (
+      document.referrer !== "" &&
+      new URL(document.referrer).hostname === location.hostname.replace(/^app\./, "") &&
+      (performance.getEntriesByType("navigation")[0] as PerformanceNavigationTiming | undefined)?.type === "navigate"
+    );
+    return forcedIntro;
+  } catch { return forcedIntro = false; }
 }
 const rnd = (() => { let s = 7; return () => ((s = (s * 16807) % 2147483647) - 1) / 2147483646; })();
 /** Dotted "land" globe: Fibonacci sphere, continents faked with a smooth trig field so no map asset is needed. */
