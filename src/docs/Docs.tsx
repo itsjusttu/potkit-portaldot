@@ -144,7 +144,7 @@ const DOCS: Record<string, Doc> = {
     next: ["/how-it-works", "How PotKit works"],
     secs: [
       { id: "answers", t: "Find an answer", body: <HelpBrowse /> },
-      { id: "contact", t: "Still need help?", body: <div className="help-contact"><div><small>PotKit community</small><h3>Talk to the community</h3><p>Prepare a support request in the app, then share it in the Portaldot Discord support channel. Your details are only shared when you choose to post them.</p></div><a className="help-contact-link" href="https://discord.gg/G33tVtCsNW" target="_blank" rel="noreferrer">Open Discord <Arrow /></a></div> },
+      { id: "contact", t: "Still need help?", body: <div className="help-contact"><div><small>PotKit builder</small><h3>Ask the builder directly</h3><p>Questions, bugs or feedback about PotKit? Message the builder on Telegram or email and get a direct reply.</p></div><div style={{display:"flex",gap:".6rem",flexWrap:"wrap"}}><a className="help-contact-link" href="https://t.me/itsjusttu" target="_blank" rel="noreferrer">Telegram <Arrow /></a><a className="help-contact-link" href="mailto:levantu170605@gmail.com">Email <Arrow /></a></div></div> },
     ],
   },
   "/how-it-works": {
