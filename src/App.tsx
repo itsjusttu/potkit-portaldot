@@ -253,6 +253,7 @@ export function App() {
   const needsWallet = tab !== "dashboard" && tab !== "issue" && tab !== "trade" && tab !== "explore" && tab !== "verify" && !publicProfile;
   return (
     <div className="shell" data-phase={phase} data-wallet={wallet.status}>
+      {mobileNavOpen && <button type="button" className="mobile-nav-backdrop" aria-label="Close sections" onClick={() => setMobileNavOpen(false)} />}
       <aside className={`side ${mobileNavOpen ? "mobile-open" : ""}`}>
         <div className="side-mobile-head"><span>All sections</span><button type="button" onClick={() => setMobileNavOpen(false)} aria-label="Close navigation"><Ico n="x" /></button></div>
         <a className="side-brand" href={homeUrl()} aria-label="PotKit home" data-tip="Home">

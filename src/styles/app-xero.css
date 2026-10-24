@@ -8,7 +8,7 @@ html[data-route="app"] .grad { background: none; -webkit-text-fill-color: curren
 html[data-route="app"] ::selection { background: #fff; color: #000; }
 
 /* ---------- shell ---------- */
-html[data-route="app"] .side { background: #000; border-right: 1px solid var(--line); }
+html[data-route="app"] .side { background: #000; border-right: 1px solid var(--line); overflow-x: hidden; }
 html[data-route="app"] .side-brand b { font-weight: 600; letter-spacing: -.01em; }
 html[data-route="app"] .side-brand small { color: var(--grey-2); text-transform: uppercase; letter-spacing: .08em; font-size: .75rem; }
 html[data-route="app"] .side-new { background: #fff; color: #000; border: 0; border-radius: var(--pill); font-weight: 600; box-shadow: none; }
@@ -29,6 +29,11 @@ html[data-route="app"] .btn.primary:hover:not(:disabled) { background: #dcdcdc; 
 html[data-route="app"] .btn.primary:disabled { background: var(--ink-3); border-color: var(--ink-3); color: var(--grey-2); }
 html[data-route="app"] .btn.danger, html[data-route="app"] .btn.bad { color: var(--down); border-color: rgba(239,68,68,.4); }
 html[data-route="app"] :is(input, select, textarea) { background: #1a1a1a; border: 1px solid transparent; border-radius: 10px; color: #fff; }
+html[data-route="app"] .tb-search input { min-width: 0; }
+html[data-route="app"] .tb-search { min-width: 0; }
+html[data-route="app"] .v-search { min-width: 0; }
+html[data-route="app"] .v-search .tb-search { min-width: 0; flex: 1 1 16rem; }
+html[data-route="app"] .v-search .tb-search input { min-width: 0; }
 html[data-route="app"] :is(input, select, textarea)::placeholder { color: var(--grey-2); }
 html[data-route="app"] :is(input, select, textarea):hover { border-color: var(--line-strong); }
 html[data-route="app"] :is(input, select, textarea):focus { outline: none; border-color: #fff; box-shadow: none; }
@@ -85,18 +90,6 @@ html[data-route="app"] .dash-wallet-icon { background: #fff; color: #000; border
 html[data-route="app"] .toast, html[data-route="app"] .wmenu-pop, html[data-route="app"] .wd-menu { background: var(--ink-2); border: 1px solid var(--line-strong); border-radius: 14px; }
 html[data-route="app"] .shell::before { background: #fff; }
 
-/* ---------- mobile: bottom bar with floating "+" (new invoice) ---------- */
-@media (max-width: 52rem) {
-  html[data-route="app"] .side { background: rgba(0,0,0,.92); border-top: 1px solid var(--line-strong); border-radius: 22px 22px 0 0; overflow: visible; }
-  html[data-route="app"] .side-new { display: grid; place-items: center; position: absolute; left: 50%; top: -3.2rem; transform: translateX(-50%); width: 3.2rem; height: 3.2rem; min-height: 0; padding: 0; border-radius: 50%; background: #fff; color: #000; box-shadow: 0 0 0 6px #000; z-index: 2; }
-  html[data-route="app"] .side-new:hover { transform: translateX(-50%); }
-  html[data-route="app"] .side-new span { display: none; }
-  html[data-route="app"] .side-new svg { width: 1.4rem; height: 1.4rem; }
-  html[data-route="app"] .side-item { color: var(--grey-2); border-radius: 12px; }
-  html[data-route="app"] .side-item.on { background: transparent; color: #fff; box-shadow: inset 0 2px 0 #fff; border-color: transparent; }
-  html[data-route="app"] .shell main { padding-bottom: calc(var(--tabbar-h) + 2rem + env(safe-area-inset-bottom)); }
-  html[data-route="app"] .dash-overview { border-radius: 22px; }
-}
 
 /* Keep neutral XERO-inspired surfaces with white primary actions and focus. */
 html[data-route="app"] .side-new,
@@ -218,45 +211,6 @@ html[data-route="app"] .trade-market-heading, html[data-route="app"] .trade-boar
   html[data-route="app"] .timeline .tl-row { flex-wrap: wrap; }
 }
 
-@media (max-width: 52rem) {
-  html[data-route="app"] .mobile-nav-toggle { display: inline-flex; align-items: center; gap: .45rem; margin-left: .35rem; padding: .35rem .6rem; border: 1px solid var(--line); border-radius: var(--pill); background: var(--ink-1); color: var(--grey-1); font: inherit; font-size: .75rem; }
-  html[data-route="app"] .mobile-nav-toggle span { color: #fff; font-size: 1rem; line-height: .7; }
-  html[data-route="app"] .side { height: 0; padding: 0; border: 0; background: transparent; backdrop-filter: none; pointer-events: none; }
-  html[data-route="app"] .side.mobile-open { height: auto; padding: .3rem .2rem calc(.3rem + env(safe-area-inset-bottom)); border-top: 1px solid var(--line-strong); background: #090909; pointer-events: auto; }
-  html[data-route="app"] .side.mobile-open .side-mobile-head { display: flex; align-items: center; justify-content: space-between; padding: .55rem .75rem .7rem; color: var(--grey-1); font-size: .75rem; letter-spacing: .1em; text-transform: uppercase; border-bottom: 1px solid var(--line); }
-  html[data-route="app"] .side-mobile-head button { display: grid; place-items: center; width: 2rem; height: 2rem; border: 1px solid var(--line); border-radius: 50%; background: transparent; color: #fff; }
-  html[data-route="app"] .side.mobile-open .side-nav { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .3rem; padding: .5rem; }
-  html[data-route="app"] .side.mobile-open .side-group { display: contents; }
-  html[data-route="app"] .side.mobile-open .side-item { display: flex; flex-direction: row; justify-content: flex-start; gap: .65rem; min-height: 2.9rem; padding: 0 .75rem; font-size: .75rem; }
-  html[data-route="app"] .side.mobile-open .side-item.on { background: var(--ink-3); box-shadow: inset 2px 0 #fff; }
-  html[data-route="app"] .side.mobile-open .side-item.on::after { display: none; }
-  html[data-route="app"] .side.mobile-open .side-support { display: grid; grid-column: 1 / -1; margin: 0; padding: .5rem; border-top: 1px solid var(--line); }
-  html[data-route="app"] .side:not(.mobile-open) .side-nav { display: none; }
-  html[data-route="app"] .side:not(.mobile-open) .side-mobile-head { display: none; }
-  html[data-route="app"] .side:not(.mobile-open) .side-support { display: none; }
-  html[data-route="app"] .side:not(.mobile-open) .side-new { display: grid; }
-  html[data-route="app"] .side-new { left: auto; right: .9rem; top: -3.25rem; transform: none; pointer-events: auto; }
-  html[data-route="app"] .side.mobile-open .side-new { display: none; }
-  html[data-route="app"] .side-new:hover { transform: none; }
-  html[data-route="app"] .crumb { min-width: 0; flex-wrap: wrap; }
-  html[data-route="app"] .crumb b { max-width: 8rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  html[data-route="app"] .rtable tr { border-radius: var(--r-card); overflow: hidden; background: var(--ink-1); }
-  html[data-route="app"] .rtable td:first-child { display: block; }
-  html[data-route="app"] .rtable td.acts { display: block; }
-  html[data-route="app"] .trade-bar { padding: .85rem; }
-  html[data-route="app"] .trade-grid, html[data-route="app"] .wizard, html[data-route="app"] .ex-grid, html[data-route="app"] .pf-top { grid-template-columns: minmax(0, 1fr); }
-  html[data-route="app"] .trade-row { grid-template-columns: minmax(0, 1fr) auto auto; }
-  html[data-route="app"] .trade-row-invoice { grid-column: 1 / -1; }
-  html[data-route="app"] .trade-row-price { display: block; grid-column: 1; font-size: .78rem; }
-  html[data-route="app"] .trade-row-discount, html[data-route="app"] .trade-row-units { display: none; }
-  html[data-route="app"] .trade-row-apr { grid-column: 1; }
-  html[data-route="app"] .trade-row-due { grid-column: 2; }
-  html[data-route="app"] .trade-row .trade-buy { grid-column: 3; grid-row: auto; }
-  html[data-route="app"] .lcards { grid-template-columns: minmax(0, 1fr); }
-  html[data-route="app"] .wiz-steps { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  html[data-route="app"] .cert .vchecks li { grid-template-columns: 2rem minmax(0, 1fr); }
-  html[data-route="app"] .toasts { top: calc(4rem + env(safe-area-inset-top)); bottom: auto; }
-}
 
 /* ---------- final colour contract ----------
    White is the action/focus/selection colour. Green is reserved for
@@ -384,3 +338,146 @@ html[data-route="app"] .toast.ok .t-ico,
 html[data-route="app"] .toast.ok { border-left-color: var(--up); }
 html[data-route="app"] .check li.done .box,
 html[data-route="app"] .pass .vc-i { background: var(--up); border-color: var(--up); color: #000; }
+
+/* Final monochrome and mobile navigation layer. */
+html[data-route="app"] body { background: #000; color: #fff; }
+html[data-route="app"] body::before,
+html[data-route="app"] .shell::after { display: none !important; }
+html[data-route="app"] .side,
+html[data-route="app"] header.top,
+html[data-route="app"] .card,
+html[data-route="app"] .kpi,
+html[data-route="app"] .lcard,
+html[data-route="app"] .empty,
+html[data-route="app"] .trade-bar,
+html[data-route="app"] .cert,
+html[data-route="app"] .claim-banner,
+html[data-route="app"] .sell-panel,
+html[data-route="app"] .trade-market-card,
+html[data-route="app"] .quick-buy-panel,
+html[data-route="app"] .trade-charts { background: #0a0a0a; background-image: none; }
+html[data-route="app"] .dash-overview,
+html[data-route="app"] .issue-receipt,
+html[data-route="app"] .verify-result .cert { background: #000; background-image: none; }
+html[data-route="app"] .btn.primary,
+html[data-route="app"] .side-new,
+html[data-route="app"] .chip.on { background: #fff; border-color: #fff; color: #000; }
+html[data-route="app"] .btn.primary:hover:not(:disabled),
+html[data-route="app"] .side-new:hover { background: #e6e6e6; border-color: #e6e6e6; color: #000; }
+html[data-route="app"] .grad,
+html[data-route="app"] .dash-overview h1 span { background: none; color: #fff; -webkit-text-fill-color: currentColor; }
+html[data-route="app"] .claim-banner { border-left-width: 1px; border-left-color: var(--line); color: #fff; }
+html[data-route="app"] .claim-banner > svg,
+html[data-route="app"] .claim-banner > .ico { color: #fff; }
+html[data-route="app"] .side-item.on { background: rgba(255,255,255,.1); border-color: rgba(255,255,255,.18); box-shadow: inset 2px 0 #fff; }
+html[data-route="app"] .mobile-nav-backdrop { display: none; }
+html[data-route="app"] .side-brand b { color: #fff; text-shadow: none; }
+html[data-route="app"] .side-brand .logo { background: #fff; box-shadow: none; }
+html[data-route="app"] .trade-row .trade-buy:hover:not(:disabled) { background: #fff; color: #000; }
+html[data-route="app"] .trade-bar .chip.on { background: #fff; color: #000; border-color: #fff; }
+html[data-route="app"] .kpi > b,
+html[data-route="app"] .metric b { text-shadow: none; }
+/* Status is communicated by labels/icons and contrast, never hue. */
+html[data-route="app"] .pos,
+html[data-route="app"] .yield-text,
+html[data-route="app"] .trade-row-discount,
+html[data-route="app"] .trade-row-apr,
+html[data-route="app"] .lc-disc b.pos,
+html[data-route="app"] .lc-kpis dd.pos,
+html[data-route="app"] .kpi.pos b,
+html[data-route="app"] .dash-hero-metric.tone-green b,
+html[data-route="app"] .profile-trust-stats b.good,
+html[data-route="app"] .prc-pos { color: #fff; }
+html[data-route="app"] .neg,
+html[data-route="app"] .negative-text,
+html[data-route="app"] .history-amount.negative,
+html[data-route="app"] .kpi.neg b { color: #c6c6c6; }
+html[data-route="app"] :is(.tag.warn, .tag.bad, .tag.paid, .tag.lock),
+html[data-route="app"] .trade-status-tag.overdue,
+html[data-route="app"] .trade-status-tag.due-soon { color: #fff; border-color: var(--line-strong); background: var(--surface-2); text-shadow: none; }
+html[data-route="app"] .tag.bad { animation: none; }
+html[data-route="app"] .prc-paid .prc-stamp,
+html[data-route="app"] .prc-late .prc-stamp { color: #222; border-color: #555; }
+html[data-route="app"] .toast.ok,
+html[data-route="app"] .toast.err,
+html[data-route="app"] .toast.pending { border-left-color: #888; }
+html[data-route="app"] .toast.ok .t-ico,
+html[data-route="app"] .toast.err .t-ico { color: #fff; }
+html[data-route="app"] .check li.done .box,
+html[data-route="app"] .pass .vc-i { background: #fff; border-color: #fff; color: #000; }
+html[data-route="app"] .fail .vc-i { color: #fff; border-color: #888; }
+html[data-route="app"] :is(input,select,textarea)[aria-invalid="true"] { border-color: #fff; }
+html[data-route="app"] .netbar,
+html[data-route="app"] .warn-banner { color: #fff; border-color: var(--line-strong); background: var(--surface-2); }
+html[data-route="app"] .pwr.wrong .pwr-dot,
+html[data-route="app"] .cw-btn.wrong .cw-dot,
+html[data-route="app"] .profile-network-dot:not(.ok) { background: #aaa; box-shadow: none; }
+html[data-route="app"] .profile-rate,
+html[data-route="app"] .prc-sold i { background: #777; }
+@media (max-width: 52rem) {
+  html[data-route="app"] .mobile-nav-backdrop { display: block; position: fixed; inset: 0; z-index: 29; width: 100%; height: 100%; padding: 0; border: 0; background: rgba(0,0,0,.72); }
+
+  html[data-route="app"] .side:not(.mobile-open) { visibility: hidden; pointer-events: none; }
+  html[data-route="app"] .side.mobile-open { position: fixed; inset: auto 0 0; z-index: 30; display: block; visibility: visible; width: 100%; height: auto; max-height: min(80dvh, 42rem); overflow-y: auto; padding: .5rem .6rem calc(.75rem + env(safe-area-inset-bottom)); pointer-events: auto; border: 1px solid var(--line-strong); border-bottom: 0; border-radius: 16px 16px 0 0; background: #0a0a0a; backdrop-filter: none; }
+  html[data-route="app"] .side.mobile-open .side-mobile-head { display: flex !important; padding: .45rem .5rem .75rem; }
+  html[data-route="app"] .side.mobile-open .side-mobile-head button { min-width: 44px; min-height: 44px; }
+  html[data-route="app"] .side.mobile-open .side-nav { display: grid; grid-auto-flow: row; grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: .4rem; width: 100%; overflow: visible; padding: .5rem 0; }
+  html[data-route="app"] .side.mobile-open .side-group { display: contents; }
+  html[data-route="app"] .side.mobile-open .side-item { display: flex; flex-direction: row !important; justify-content: flex-start; gap: .55rem; min-width: 0; min-height: 48px; height: auto; padding: .6rem .75rem; border: 1px solid var(--line); border-radius: 8px; font-size: .77rem; letter-spacing: 0; }
+  html[data-route="app"] .side.mobile-open .side-item .ico { width: 1.1rem; height: 1.1rem; flex: none; }
+  html[data-route="app"] .side.mobile-open .side-item span { overflow: visible; white-space: normal; }
+  html[data-route="app"] .side.mobile-open .side-item.on { box-shadow: inset 2px 0 #fff; }
+  html[data-route="app"] .side-new { display: none !important; }
+  html[data-route="app"] .v-search { display: grid; grid-template-columns: minmax(0, 1fr); }
+  html[data-route="app"] .v-search .tb-search { width: 100%; max-width: none; }
+  html[data-route="app"] .v-search .btn { width: 100%; min-height: 44px; }
+  html[data-route="app"] .wizard { grid-template-columns: minmax(0, 1fr); }
+  html[data-route="app"] .wiz-preview { position: static; max-width: 100%; }
+  html[data-route="app"] .trade-grid, html[data-route="app"] .ex-grid, html[data-route="app"] .pf-top { grid-template-columns: minmax(0, 1fr); }
+  html[data-route="app"] .trade-row { grid-template-columns: minmax(0, 1fr) auto; }
+  html[data-route="app"] .trade-row-invoice { grid-column: 1 / -1; }
+  html[data-route="app"] .trade-row-price, html[data-route="app"] .trade-row-apr, html[data-route="app"] .trade-row-units { grid-column: 1; }
+  html[data-route="app"] .trade-row-discount, html[data-route="app"] .trade-row-due { grid-column: 2; overflow-wrap: anywhere; white-space: normal; }
+  html[data-route="app"] .trade-row-discount, html[data-route="app"] .trade-row-units { display: block; }
+  html[data-route="app"] .trade-row .trade-buy { grid-column: 2; min-width: 5rem; min-height: 44px; }
+  html[data-route="app"] .trade-row-discount::before { content: "Discount "; color: var(--grey-2); font-size: .62rem; }
+  html[data-route="app"] .trade-row-units::before { content: "Shares "; color: var(--grey-2); font-size: .62rem; }
+  html[data-route="app"] .trade-bar { grid-template-columns: minmax(0, 1fr); }
+  html[data-route="app"] .trade-bar > * { min-width: 0; grid-column: 1; grid-row: auto; }
+  html[data-route="app"] .tb-sort { justify-self: stretch; }
+  html[data-route="app"] .tb-sort select { min-width: 0; flex: 1; }
+  html[data-route="app"] .explore-card-grid { grid-template-columns: minmax(0, 1fr); }
+  html[data-route="app"] .mobile-nav-toggle { display: inline-flex; min-height: 44px; align-items: center; gap: .5rem; margin-left: .35rem; padding: .4rem .7rem; border: 1px solid var(--line-strong); border-radius: var(--pill); background: var(--ink-1); color: #fff; font: inherit; font-size: .75rem; }
+  html[data-route="app"] .mobile-nav-toggle span { font-size: 1rem; }
+  html[data-route="app"] .crumb { min-width: 0; flex-wrap: wrap; }
+  html[data-route="app"] .crumb b { max-width: 8rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  html[data-route="app"] .rtable tr { border-radius: var(--r-card); overflow: hidden; background: var(--ink-1); }
+  html[data-route="app"] .rtable td:first-child, html[data-route="app"] .rtable td.acts { display: block; }
+  html[data-route="app"] .lcards { grid-template-columns: minmax(0, 1fr); }
+  html[data-route="app"] .wiz-steps { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  html[data-route="app"] .cert .vchecks li { grid-template-columns: 2rem minmax(0, 1fr); }
+  html[data-route="app"] .toasts { top: calc(4rem + env(safe-area-inset-top)); bottom: auto; }
+  html[data-route="app"] .side:not(.mobile-open) .side-nav { display: none; }
+  html[data-route="app"] .side.mobile-open .side-new { display: none; }
+  html[data-route="app"] .side-support { display: none !important; }
+  html[data-route="app"] .shell main { padding-bottom: calc(1rem + env(safe-area-inset-bottom)); }
+}
+
+/* Final desktop shell and issue setup refinements. Keep the navigation column
+   clipped to its track and make the one-time deployment prompt compact. */
+@media (min-width: 52.01rem) {
+  html[data-route="app"] .side { min-width: 0; overflow-x: hidden; overflow-y: auto; }
+  html[data-route="app"] .side-nav,
+  html[data-route="app"] .side-group,
+  html[data-route="app"] .side-item { min-width: 0; max-width: 100%; }
+  html[data-route="app"] .side-nav { overflow-x: hidden; overflow-y: auto; }
+  html[data-route="app"] .side-item { overflow: hidden; }
+  html[data-route="app"] .side-item span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+}
+
+html[data-route="app"] .setup-card { padding: 1.15rem 1.25rem; }
+html[data-route="app"] .setup-card h2 { margin: 0; font-size: 1.05rem; }
+html[data-route="app"] .setup-card > p { max-width: 58ch; margin: .55rem 0 .7rem; line-height: 1.45; }
+html[data-route="app"] .setup-card .setup-steps { margin: 0; }
+html[data-route="app"] .setup-card .setup-steps li { min-height: 3rem; padding: .45rem .7rem; gap: .55rem; }
+html[data-route="app"] .setup-card .setup-steps .box { width: 1.35rem; height: 1.35rem; }

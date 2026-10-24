@@ -1,0 +1,118 @@
+/* Scoped structural redesign for Portfolio and Verify only. Strict monochrome by project brief. */
+.portfolio,
+.verify {
+  --rv-black: #000;
+  --rv-white: #fff;
+  --rv-gray-1: #d7d7d7;
+  --rv-gray-2: #999;
+  --rv-gray-3: #666;
+  --rv-line: #2b2b2b;
+  color: var(--rv-white);
+}
+
+.portfolio { display: grid; gap: 1.25rem; }
+.portfolio > * { min-width: 0; }
+.portfolio .card,
+.portfolio .claim-banner,
+.portfolio .pf-hero,
+.portfolio .pf-tabs,
+.portfolio .pf-receipts-view,
+.portfolio .pf-receipt-group,
+.verify .verify-intro,
+.verify .verify-scope,
+.verify .v-search,
+.verify .verify-result > *,
+.verify .verify-empty,
+.verify > .banner { border: 1px solid var(--rv-line); border-radius: 0; background: var(--rv-black); }
+
+.portfolio .pf-hero { display: grid; grid-template-columns: minmax(15rem, .8fr) minmax(24rem, 1.2fr); gap: 1rem; padding: 1.25rem; align-items: end; }
+.portfolio .pf-hero h2 { margin: .2rem 0 0; color: var(--rv-white); font-size: clamp(2.3rem, 6vw, 4.8rem); line-height: .95; letter-spacing: -.07em; }
+.portfolio .pf-hero h2 small { color: var(--rv-gray-2); font-size: .9rem; letter-spacing: 0; }
+.portfolio .pf-value-note { display: flex; gap: .4rem; align-items: center; margin: .65rem 0 0; color: var(--rv-gray-2); font-size: .72rem; }
+.portfolio .pf-hero-metrics { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0; border-left: 1px solid var(--rv-line); }
+.portfolio .pf-hero-metrics > div { display: grid; gap: .45rem; min-width: 0; padding: .85rem 1rem; border-right: 1px solid var(--rv-line); }
+.portfolio .pf-hero-metrics > div > span { color: var(--rv-gray-2); font: .62rem "IBM Plex Mono", monospace; letter-spacing: .1em; text-transform: uppercase; }
+.portfolio .pf-hero-metrics > div > b { color: var(--rv-white); font-size: 1.15rem; }
+.portfolio .pf-hero-metrics > div.claim { background: var(--rv-white); color: var(--rv-black); }
+.portfolio .pf-hero-metrics > div.claim > span,
+.portfolio .pf-hero-metrics > div.claim > b,
+.portfolio .pf-hero-metrics > div.claim > b small { color: var(--rv-black); }
+
+.portfolio .pf-tabs { display: flex; gap: 0; padding: 0; overflow-x: auto; }
+.portfolio .pf-tabs button { flex: 1 0 8rem; padding: .8rem 1rem; border: 0; border-right: 1px solid var(--rv-line); border-radius: 0; background: transparent; color: var(--rv-gray-2); text-align: left; }
+.portfolio .pf-tabs button.on { background: var(--rv-white); color: var(--rv-black); }
+.portfolio .pf-tabs button span { margin-left: .5rem; color: inherit; font: .7rem "IBM Plex Mono", monospace; }
+.portfolio .pf-tabs button.has-claim { text-decoration: underline; text-underline-offset: .25rem; }
+
+.portfolio .pf-receipts-view { padding: 1rem; }
+.portfolio .pf-receipts-view > .pf-receipt-filter { display: flex; gap: 0; margin: 0 0 1rem; border-bottom: 1px solid var(--rv-line); }
+.portfolio .pf-receipt-filter button { padding: .55rem .8rem; border: 0; border-right: 1px solid var(--rv-line); border-radius: 0; background: transparent; color: var(--rv-gray-2); }
+.portfolio .pf-receipt-filter button.on { background: var(--rv-white); color: var(--rv-black); }
+.portfolio .pf-receipt-group + .pf-receipt-group { margin-top: 1.25rem; padding-top: 1rem; border-top: 1px solid var(--rv-line); }
+.portfolio .pf-receipt-group-heading { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; margin: 0 0 .65rem; }
+.portfolio .pf-receipt-group-heading h3 { margin: 0; font-size: .82rem; letter-spacing: .08em; text-transform: uppercase; }
+.portfolio .pf-receipt-group-heading span { color: var(--rv-gray-2); font: .68rem "IBM Plex Mono", monospace; }
+.portfolio .pf-receipt-group .prc-grid { margin: 0; }
+.portfolio .prc-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 19rem), 1fr)); gap: .75rem; }
+.portfolio .prc-complete { opacity: .74; }
+.portfolio .claim-banner { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: .9rem; align-items: center; padding: 1rem; }
+.portfolio .claim-banner .row { justify-content: flex-end; }
+
+.verify { display: grid; gap: 1rem; }
+.verify .verify-intro { display: flex; justify-content: space-between; gap: 1rem; padding: 1.25rem; }
+.verify .verify-intro h2 { margin: .2rem 0 .4rem; color: var(--rv-white); }
+.verify .verify-intro > div > p:last-child { max-width: 38rem; margin: 0; color: var(--rv-gray-2); }
+.verify .verify-network { align-self: flex-start; padding: .35rem .5rem; border: 1px solid var(--rv-line); color: var(--rv-gray-2); font: .62rem "IBM Plex Mono", monospace; white-space: nowrap; }
+.verify .verify-network i { display: inline-block; width: .4rem; height: .4rem; margin-right: .4rem; border: 1px solid var(--rv-gray-2); border-radius: 50%; }
+.verify .verify-scope { padding: .7rem 1rem; color: var(--rv-gray-2); }
+.verify .verify-scope p { margin: 0; font-size: .72rem; }
+.verify .verify-scope b { color: var(--rv-white); }
+.verify .v-search { display: flex; gap: .65rem; padding: .65rem; }
+.verify .tb-search { display: flex; flex: 1; align-items: center; gap: .6rem; min-width: 0; border-bottom: 1px solid var(--rv-line); }
+.verify .tb-search input { width: 100%; min-width: 0; border: 0; background: transparent; color: var(--rv-white); }
+.verify .v-search .btn { min-height: 2.5rem; border-radius: 0; }
+.verify .verify-result { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(18rem, .85fr); gap: 1rem; }
+.verify .verify-result > * { min-width: 0; }
+.verify .verify-result .cert { margin: 0; padding: 1.25rem; border-color: var(--rv-white); background: var(--rv-black); }
+.verify .cert-head { min-height: 0; padding-bottom: 1rem; border-bottom: 1px solid var(--rv-line); }
+.verify .cert-status { display: flex; flex-wrap: wrap; gap: .4rem; margin-top: .65rem; color: var(--rv-white); font: .68rem "IBM Plex Mono", monospace; letter-spacing: .08em; }
+.verify .cert-status .is-paid,
+.verify .cert-status .is-redeemed { color: var(--rv-white); }
+.verify .seal { border-color: var(--rv-white); color: var(--rv-white); }
+.verify .seal svg { stroke: var(--rv-white); }
+.verify .cert-facts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0; margin: 1rem 0; border-top: 1px solid var(--rv-line); border-left: 1px solid var(--rv-line); }
+.verify .cert-facts > div { min-width: 0; padding: .75rem; border-right: 1px solid var(--rv-line); border-bottom: 1px solid var(--rv-line); }
+.verify .cert-facts dt { color: var(--rv-gray-2); font: .58rem "IBM Plex Mono", monospace; letter-spacing: .08em; }
+.verify .cert-facts dd { margin: .35rem 0 0; color: var(--rv-white); font-size: .8rem; overflow-wrap: anywhere; }
+.verify .cert-summary { border-color: var(--rv-white); background: var(--rv-white); color: var(--rv-black); }
+.verify .cert-foot { border-top: 1px solid var(--rv-line); }
+.verify .cert-disclaimer { color: var(--rv-gray-3); }
+.verify .proof-trail { padding: 1.25rem; }
+.verify .proof-trail > header { border-bottom: 1px solid var(--rv-line); }
+.verify .proof-trail > header h3 { color: var(--rv-white); }
+.verify .proof-trail > header > span { color: var(--rv-white); }
+.verify .proof-events { margin-top: .75rem; }
+.verify .proof-events li { border-bottom: 1px solid var(--rv-line); }
+.verify .proof-event-icon { border-color: var(--rv-gray-2); background: transparent; color: var(--rv-white); }
+.verify .proof-events .pending .proof-event-icon { color: var(--rv-gray-3); }
+.verify .proof-event-body b { color: var(--rv-white); }
+.verify .proof-event-body small,
+.verify .proof-tx { color: var(--rv-gray-2); }
+.verify .proof-checks { border-top: 1px solid var(--rv-line); }
+.verify .vchecks li { border-bottom-color: var(--rv-line); }
+.verify .vchecks .pass .vc-i { color: var(--rv-white); }
+.verify .vchecks .fail .vc-i { color: var(--rv-white); }
+
+@media (max-width: 68rem) {
+  .portfolio .pf-hero { grid-template-columns: 1fr; }
+  .verify .verify-result { grid-template-columns: 1fr; }
+}
+@media (max-width: 38rem) {
+  .portfolio .pf-hero-metrics { grid-template-columns: 1fr; border-left: 0; border-top: 1px solid var(--rv-line); }
+  .portfolio .pf-hero-metrics > div { border-right: 0; border-bottom: 1px solid var(--rv-line); }
+  .portfolio .claim-banner,
+  .verify .verify-intro,
+  .verify .v-search { grid-template-columns: 1fr; flex-direction: column; align-items: stretch; }
+  .portfolio .claim-banner .row { justify-content: flex-start; flex-wrap: wrap; }
+  .verify .cert-facts { grid-template-columns: 1fr; }
+}

@@ -30,6 +30,7 @@ export function Trade({ c }: { c: Ctx }) {
   const [sort, setSort] = useState<keyof typeof SORTS>("yield");
   const [q, setQ] = useState("");
   const [open, setOpen] = useState<number | null>(null);
+  const [detailsOpen, setDetailsOpen] = useState(false);
   const [amt, setAmt] = useState("");
   const [sellId, setSellId] = useState(c.param("sell") || "");
   const [sellAmt, setSellAmt] = useState("40");
@@ -121,7 +122,8 @@ export function Trade({ c }: { c: Ctx }) {
     values.push(Number(e.value) / Number(e.amount)); tradesByReceipt.set(e.id, values);
   }
   const recentTrades = marketEvents.filter((e) => e.kind === "buy").slice(0, 3);
-  const openListing = (item?: Card) => { if (item) { setOpen(item.l.lid); setAmt(""); setPending(null); } };
+  const selectListing = (item?: Card) => { if (item) { setOpen(item.l.lid); setDetailsOpen(true); setAmt(""); setPending(null); } };
+  const openBuy = (item?: Card) => { if (item) { setOpen(item.l.lid); setDetailsOpen(false); setAmt(""); setPending(null); } };
 
   return (
     <div className="trade">
@@ -148,8 +150,7 @@ export function Trade({ c }: { c: Ctx }) {
 
       <div className="trade-grid">
         <section aria-label="Listings">
-          {!c.market ? <Empty icon="⇄" title="No contract yet" body="Deploy PotKit from Issue → Set up the contract (the market is built in)." />
-            : c.loading ? <SkelCards />
+          {!c.market ? <div className="trade-unconfigured empty"><span className="e-ico" aria-hidden>⇄</span><h3>Market not configured</h3><p className="muted">Deploy PotKit from Issue to activate listings and share trading.</p><div className="row" style={{ justifyContent: "center" }}><button className="btn sm primary" onClick={() => c.setTab("issue")}>Open Issue <Ico n="arrow" /></button></div></div> : c.loading ? <SkelCards />
             : !cards.length ? <>
               <Empty icon="⇄" title="No open listings" body="Nobody is selling shares right now. List yours from the panel to get cash today." />
               {!cards.length && recentTrades.length > 0 && <section className="card trade-recent" aria-label="Recent trades">
@@ -166,14 +167,14 @@ export function Trade({ c }: { c: Ctx }) {
                   {shown.map((x) => {
                     const tradable = x.state !== "Settled" && x.state !== "Overdue";
                     const due = x.state === "Settled" ? "Settled" : x.state === "Overdue" ? "Overdue" : x.r.dueDate ? `${Math.ceil(x.days)}d` : "No due";
-                    return <div className={`trade-row ${!tradable ? "trade-row-closed" : ""}`} role="row" key={x.l.lid}>
-                      <button type="button" className="trade-row-invoice" onClick={() => openListing(x)} aria-label={`View ${x.r.note}, invoice ${x.r.id}`}><span className="trade-row-icon"><Ico n="terms" /></span><span><b>{x.r.note}</b><small>KIT#{x.r.id} · {KINDS[x.r.kind]}{x.l.seller === c.account ? " · YOUR LISTING" : ""}{x === bestVisibleYield && <i className="trade-best-badge">Best yield</i>}<i className={`trade-status-tag ${x.state.toLowerCase().replace(" ", "-")}`}>{x.state}</i></small></span></button>
+                    return <div className={`trade-row ${open === x.l.lid ? "trade-row-selected" : ""} ${!tradable ? "trade-row-closed" : ""}`} role="row" key={x.l.lid}>
+                      <button type="button" className="trade-row-invoice" onClick={() => selectListing(x)} aria-label={`View ${x.r.note}, invoice ${x.r.id}`} aria-pressed={open === x.l.lid}><span className="trade-row-icon"><Ico n="terms" /></span><span><b>{x.r.note}</b><small>KIT#{x.r.id} · {KINDS[x.r.kind]}{x.l.seller === c.account ? " · YOUR LISTING" : ""}{x === bestVisibleYield && <i className="trade-best-badge">Best yield</i>}<i className={`trade-status-tag ${x.state.toLowerCase().replace(" ", "-")}`}>{x.state}</i></small></span></button>
                       <span className="trade-row-price">{num(x.price)} <small>tPOT</small></span>
                       <span className="trade-row-discount">{x.face ? pct(x.discount) : "—"}</span>
                       <span className="trade-row-apr">{x.apr !== null ? pct(x.apr) : "—"}</span>
                       <span className="trade-row-due">{due}</span>
                       <span className="trade-row-units">{units(x.l.remaining)}</span>
-                      <button type="button" className="btn sm trade-buy" disabled={!tradable || x.l.seller === c.account} title={!tradable ? `${x.state} invoice — buying is closed.` : x.l.seller === c.account ? "This is your listing." : "Open purchase quote"} onClick={() => openListing(x)}>{x.l.seller === c.account ? "Yours" : tradable ? "Buy" : "Closed"}</button>
+                      <button type="button" className="btn sm trade-buy" disabled={!tradable || x.l.seller === c.account} title={!tradable ? `${x.state} invoice — buying is closed.` : x.l.seller === c.account ? "This is your listing." : "Open purchase quote"} onClick={() => openBuy(x)}>{x.l.seller === c.account ? "Yours" : tradable ? "Buy" : "Closed"}</button>
                     </div>;
                   })}
                 </div> : <div className="trade-my-listings">
@@ -191,7 +192,14 @@ export function Trade({ c }: { c: Ctx }) {
         </section>
 
         <aside className="trade-side-column">
-        <section className="card quick-buy-panel" aria-label="Quick buy">
+        {sel && detailsOpen && <section className="card trade-selection-panel" aria-label="Selected listing details">
+          <header><div><p className="kicker">Selected listing</p><h3>#{sel.r.id} · {sel.r.note}</h3></div><button type="button" className="btn sm" onClick={() => { setDetailsOpen(false); setOpen(null); }}>Close</button></header>
+          <div className="tags"><SettleBadge r={sel.r} /></div>
+          <dl className="facts compact"><div><dt>Price / share</dt><dd className="num">{num(sel.price)} tPOT</dd></div><div><dt>Face / share</dt><dd className="num">{sel.face ? `${num(sel.face)} tPOT` : "no terms"}</dd></div><div><dt>Discount</dt><dd className="num">{sel.face ? pct(sel.discount) : "—"}</dd></div><div><dt>Est. APR</dt><dd className="num">{sel.apr !== null ? pct(sel.apr) : "—"}</dd></div><div><dt>Due</dt><dd>{sel.r.dueDate ? day(sel.r.dueDate) : "—"}</dd></div><div><dt>Available</dt><dd className="num">{units(sel.l.remaining)}</dd></div></dl>
+          <p className="market-risk" role="note"><b>Issuer-provided information.</b> PotKit records custody and terms on-chain but does not independently verify the underlying invoice.</p>
+          {sel.l.seller === c.account ? <button className="btn block" onClick={() => openBuy(sel)}>Manage listing</button> : sel.state === "Settled" || sel.state === "Overdue" ? <p className="muted">{sel.state} — closed for trading.</p> : <button className="btn primary block" onClick={() => openBuy(sel)}>Buy shares</button>}
+        </section>}
+        {c.market && <section className="card quick-buy-panel" aria-label="Quick buy">
           <header><div><p className="kicker">Quote across live listings</p><h3>Quick buy</h3></div><small>Lowest price first</small></header>
           <label htmlFor="quick-budget">Spend</label>
           <div className="trade-budget-input"><input id="quick-budget" inputMode="decimal" value={quickBudget} aria-label="Spend amount in tPOT" aria-invalid={Boolean(budgetError)} aria-describedby={budgetError ? "quick-budget-error" : undefined} onChange={(e) => setQuickBudget(e.target.value)} /><span>tPOT</span></div>
@@ -222,8 +230,8 @@ export function Trade({ c }: { c: Ctx }) {
               toast({ kind: "ok", title: "Quick buy complete", detail: `${units(quoteShares)} shares bought for ${fmt(quoteCost, 18)} tPOT across ${filled} listing${filled === 1 ? "" : "s"}.` });
             });
           }}>{!c.market ? "Market not configured" : !c.account ? "Connect wallet" : c.gated ? "Switch network" : c.busy === "quick-buy" ? "Confirm in wallet…" : !quote.length ? "No affordable listings" : `Buy ${units(quoteShares)} shares`}</button>
-        </section>
-        <section className="card sell-panel" id="sell" aria-label="Sell shares">
+        </section>}
+        {c.market && <section className="card sell-panel" id="sell" aria-label="Sell shares">
           <h2><Ico n="tag" /> Sell shares</h2>
           <p className="muted">Get tPOT today. Shares are held in escrow by PotKit until sold or cancelled; buyers pay you directly in the same transaction.</p>
           {!sellable.length ? <div className="trade-sell-empty"><p className="muted">You hold no unsettled shares. Issue an invoice first.</p><button className="btn sm primary" onClick={() => c.account ? c.setTab("issue") : c.connect()}>{c.account ? "Issue invoice" : "Connect wallet"} <Ico n="arrow" /></button></div> : (
@@ -261,7 +269,7 @@ export function Trade({ c }: { c: Ctx }) {
               }}>{c.busy === "list" ? "Listing…" : "List shares"}</button>
             </>
           )}
-        </section>
+        </section>}
         </aside>
       </div>
 
@@ -291,7 +299,7 @@ export function Trade({ c }: { c: Ctx }) {
         })()}
       </Drawer>
 
-      <Drawer open={Boolean(sel)} onClose={() => { setOpen(null); setPending(null); }} kicker={sel ? `// LISTING ${sel.l.lid} //` : ""} title={sel ? `#${sel.r.id} · ${sel.r.note}` : ""}>
+      <Drawer open={Boolean(sel) && !detailsOpen} onClose={() => { setOpen(null); setPending(null); }} kicker={sel ? `// LISTING ${sel.l.lid} //` : ""} title={sel ? `#${sel.r.id} · ${sel.r.note}` : ""}>
         {sel && (
           <>
             <div className="tags"><SettleBadge r={sel.r} /></div>

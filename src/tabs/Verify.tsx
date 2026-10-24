@@ -52,7 +52,9 @@ export function Verify({ c }: { c: Ctx }) {
   const termsEv = receiptHistory?.terms;
   const lockEv = receiptHistory?.lock;
   const redeemed = Boolean(receiptHistory?.redeemed);
+  const currentSettle = Boolean(r?.settle.settled || receiptHistory?.settled);
   const redeemedPaid = Boolean(r && redeemed && receiptHistory?.settled);
+  const currentLock = Boolean(r && r.fraction && vaultHeld);
   const faceValue = r && r.settle.faceValue > 0n ? r.settle.faceValue : termsEv?.value ?? 0n;
   const dueDate = r?.dueDate || termsEv?.dueDate || 0;
   const sharesIssued = r?.supply && r.supply > 0n ? units(r.supply) : lockEv?.amount?.toString() ?? "";
@@ -83,7 +85,8 @@ export function Verify({ c }: { c: Ctx }) {
     { ok: r.settle.settled ? r.settle.amount >= r.settle.faceValue : null, k: "Paid at least face value", v: r.settle.settled ? (r.settle.amount >= r.settle.faceValue ? "Yes" : "Short-paid") : "—" },
   ] : [];
   const fails = checks.filter((x) => x.ok === false).length;
-  const verdict = !r ? "" : fails ? "ISSUES FOUND" : redeemedPaid ? "PAID · REDEEMED" : r.fraction && vaultHeld ? "VERIFIED" : "UNBACKED";
+  const shortPaid = Boolean(r && r.settle.settled && r.settle.faceValue > 0n && r.settle.amount < r.settle.faceValue);
+  const verdict = !r ? "" : shortPaid ? "SHORT-PAID" : fails ? "CHECKS FAILED" : redeemedPaid ? "PAID · REDEEMED" : r.status === "Overdue" && !currentSettle ? "OVERDUE · UNPAID" : currentSettle ? "SETTLED" : currentLock ? "LOCKED · UNPAID" : r.fraction ? "UNBACKED" : "RECEIPT ONLY";
   const link = r && c.addrs ? `${location.origin}${location.pathname}?kit=${c.addrs.vault}&tab=verify&id=${r.id}` : "";
 
   return (
@@ -100,14 +103,14 @@ export function Verify({ c }: { c: Ctx }) {
       {!res && !loading && !msg && <p className="muted verify-empty">Enter a receipt id to inspect its current on-chain state. Share-token address lookup covers loaded receipts only.</p>}
       {res && r && (
         <div className="verify-result" aria-live="polite">
-          <article className={`cert ${fails ? "bad" : verdict === "VERIFIED" || redeemedPaid ? "good" : "warn"}`}>
+          <article className={`cert ${fails ? "bad" : currentSettle || currentLock ? "good" : "warn"}`}>
             <i className="c-c tl" /><i className="c-c tr" /><i className="c-c bl" /><i className="c-c br" />
             <header className="cert-head">
               <div>
                 <p className="kicker">PotKit receipt · Invoice #{r.id}</p>
                 <h2 className="cert-title">{r.note || KINDS[r.kind]}</h2>
                 <p className="cert-note">{KINDS[r.kind]} · ERC-721</p>
-              <div className="cert-status">{(r.settle.settled || redeemedPaid) && <span className="is-paid">● PAID</span>}{!r.settle.settled && !redeemedPaid && !redeemed && <span>● UNPAID</span>}{redeemed && <span className="is-redeemed">● REDEEMED</span>}{!redeemed && <span>{vaultHeld ? "● LOCKED IN POTKIT" : "● NOT LOCKED"}</span>}</div>
+              <div className="cert-status">{currentSettle && <span className="is-paid">● SETTLED</span>}{!currentSettle && !redeemed && <span>● UNPAID</span>}{redeemed && <span className="is-redeemed">● REDEEMED</span>}{!redeemed && <span>{currentLock ? "● LOCKED IN POTKIT" : "● NOT LOCKED"}</span>}</div>
               </div>
               <div className="seal" aria-label={`Verdict: ${verdict}`}>
                 <svg viewBox="0 0 120 120" aria-hidden><circle cx="60" cy="60" r="54" /><circle cx="60" cy="60" r="44" /><path d={fails ? "M44 44l32 32M76 44 44 76" : "M40 61l14 14 27-30"} /></svg>
@@ -128,7 +131,7 @@ export function Verify({ c }: { c: Ctx }) {
             <p className="cert-disclaimer">Read {res.at.toLocaleString()} from chain 420420777. This proves on-chain state, not the authenticity of off-chain invoice documents.</p>
           </article>
           <aside className="proof-trail">
-            <header><div><p className="kicker">Transaction history</p><h3>On-chain proof trail</h3></div><span>{hist.length}<small>events loaded</small></span></header>
+            <header><div><h3>On-chain proof trail</h3><p className="muted">Earlier cycles may share this receipt ID and token address. Current status is shown above; events below span the readable history.</p></div><span>{hist.length}<small>events loaded</small></span></header>
             {!c.eventsOk && <p className="proof-scan-note">The RPC event scan is incomplete. Missing steps below may exist outside the range that could be read.</p>}
             <ol className="proof-events">{proofSteps.map((step) => (
               <li key={step.key} className={step.done ? "done" : "pending"}>

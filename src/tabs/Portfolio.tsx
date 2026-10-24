@@ -10,9 +10,9 @@ import { readReceiptHistory } from "./receipt-history";
 export function Portfolio({ c }: { c: Ctx }) {
   const [more, setMore] = useState<number | null>(null);
   const [pfTab, setPfTab] = useState<"receipts" | "shares" | "claimable">("receipts");
-  const [receiptScope, setReceiptScope] = useState<"all" | "active" | "history">("all");
-  const [view, setView] = useState<"cards" | "table">(() => (localStorage.getItem("potkit.pfview") as "cards" | "table") || "cards");
-  const pickView = (v: "cards" | "table") => { setView(v); localStorage.setItem("potkit.pfview", v); };
+  const [receiptScope, setReceiptScope] = useState<"all" | "active" | "history">("active");
+  const [view, setView] = useState<"cards" | "table">(() => { try { return localStorage.getItem("potkit.pfview") === "table" ? "table" : "cards"; } catch { return "cards"; } });
+  const pickView = (v: "cards" | "table") => { setView(v); try { localStorage.setItem("potkit.pfview", v); } catch { /* Private browsing may block storage. */ } };
   const [to, setTo] = useState(""); const [amt, setAmt] = useState("100");
   const dis = Boolean(c.busy) || c.gated;
   const holdings = c.rows.filter((r) => r.fraction && (c.held.get(r.id) ?? 0n) > 0n);
@@ -22,12 +22,12 @@ export function Portfolio({ c }: { c: Ctx }) {
   const claimable = c.rows.filter((r) => r.settle.settled && (c.claims.get(r.id) ?? 0n) > 0n);
   const dec = 18; // native tPOT
   // settled, every share claimed, still locked: the depositor takes the receipt NFT back
-  const valueAt = (id: number, bal: bigint) => { const r = c.rows.find((x) => x.id === id)!; return (faceShare(r) * bal) / 10n ** 18n; };
+  const valueAt = (id: number, bal: bigint) => { const r = c.rows.find((x) => x.id === id); return r ? (faceShare(r) * bal) / 10n ** 18n : 0n; };
   // cost basis from on-chain Bought events where you were the buyer
   const buys = new Map<number, { shares: bigint; cost: bigint }>();
   for (const e of c.events) if (e.kind === "buy" && e.actors[0]?.toLowerCase() === c.account?.toLowerCase()) { const b = buys.get(e.id) ?? { shares: 0n, cost: 0n }; buys.set(e.id, { shares: b.shares + (e.amount ?? 0n), cost: b.cost + (e.value ?? 0n) }); }
   const listedOf = (id: number) => myListings.filter((l) => l.receiptId === id).reduce((s, l) => s + l.remaining, 0n);
-  const totalValue = holdings.reduce((s, r) => s + valueAt(r.id, c.held.get(r.id) ?? 0n), 0n) + myListings.reduce((s, l) => s + (faceShare(c.rows.find((r) => r.id === l.receiptId)!) * l.remaining) / 10n ** 18n, 0n);
+  const totalValue = holdings.reduce((s, r) => s + valueAt(r.id, c.held.get(r.id) ?? 0n), 0n) + myListings.reduce((s, l) => { const r = c.rows.find((x) => x.id === l.receiptId); return r ? s + (faceShare(r) * l.remaining) / 10n ** 18n : s; }, 0n);
   const claimTotal = claimable.reduce((s, r) => s + (c.claims.get(r.id) ?? 0n), 0n);
   const cost = [...buys.values()].reduce((s, b) => s + b.cost, 0n);
   const boughtValue = [...buys.entries()].reduce((s, [id, b]) => { const r = c.rows.find((x) => x.id === id); return r ? s + (faceShare(r) * b.shares) / 10n ** 18n : s; }, 0n);

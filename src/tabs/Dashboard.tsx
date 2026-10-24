@@ -1,97 +1,41 @@
-import type { ReactNode } from "react";
+import { useState } from "react";
 import { fmt, KINDS, units } from "../lib/chain";
 import { Empty, Ico } from "../AppUi";
 import type { Ctx } from "./ctx";
-import { N, SettleBadge } from "./shared";
+import { SettleBadge } from "./shared";
 
 export function Dashboard({ c }: { c: Ctx }) {
+  const [selectedId, setSelectedId] = useState<number | null>(null);
   const open = c.listings.filter((l) => l.remaining > 0n);
-  const settleEvents = c.events.filter((e) => e.kind === "settle");
-  const settled = settleEvents.reduce((sum, e) => sum + (e.value ?? 0n), 0n);
-  // Redeem can clear the live settlement terms; the lock event is the durable source
-  // for the original face value and must keep redeemed receipts in the dashboard.
+  const redeemed = new Set(c.events.filter((e) => e.kind === "redeem").map((e) => e.id));
   const eventFaceValues = new Map<number, bigint>();
   for (const e of c.events) if (e.kind === "terms" && (e.value ?? 0n) > 0n && !eventFaceValues.has(e.id)) eventFaceValues.set(e.id, e.value!);
   const faceValueOf = (r: (typeof c.rows)[number]) => r.settle.faceValue > 0n ? r.settle.faceValue : eventFaceValues.get(r.id) ?? 0n;
-  const faceRows = c.rows.filter((r) => faceValueOf(r) > 0n);
-  const faceValue = faceRows.reduce((sum, r) => sum + faceValueOf(r), 0n);
-  const redeemed = new Set(c.events.filter((e) => e.kind === "redeem").map((e) => e.id));
-  const claimedEvents = c.events.filter((e) => e.kind === "claim");
-  const claimed = claimedEvents.reduce((sum, e) => sum + (e.value ?? 0n), 0n);
-  const invoiceWord = (count: number) => `${count} invoice${count === 1 ? "" : "s"}`;
-  const relativeTime = (timestamp: number) => {
-    if (!timestamp) return "";
-    const seconds = Math.max(0, Math.floor(Date.now() / 1000 - timestamp));
-    if (seconds < 60) return "Just now";
-    if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`;
-    if (seconds < 86400) return `${Math.floor(seconds / 3600)}h ago`;
-    if (seconds < 604800) return `${Math.floor(seconds / 86400)}d ago`;
-    return new Date(timestamp * 1000).toLocaleDateString(undefined, { month: "short", day: "numeric" });
-  };
-  const roundedBalance = c.native === null ? c.usdBal || "Reading balance…" : `${fmt(((c.native + 5_000_000_000_000_000n) / 10_000_000_000_000_000n) * 10_000_000_000_000_000n, 18)} tPOTv3`;
   const mine = c.account ? c.rows.filter((r) => r.depositor.toLowerCase() === c.account.toLowerCase() || r.owner.toLowerCase() === c.account.toLowerCase()) : c.rows;
-  const stages = [
-    { key: "issue", title: "Issue", note: "Receipt minted", color: "neutral", rows: mine.filter((r) => !r.fraction && !redeemed.has(r.id)) },
-    { key: "lock", title: "Lock & shares", note: "Terms set on-chain", color: "blue", rows: mine.filter((r) => r.fraction && !r.settle.settled && !open.some((l) => l.receiptId === r.id)) },
-    { key: "trade", title: "Trade", note: "Shares on market", color: "cyan", rows: mine.filter((r) => open.some((l) => l.receiptId === r.id)) },
-    { key: "settle", title: "Settle", note: "Payment received", color: "green", rows: mine.filter((r) => r.settle.settled && !redeemed.has(r.id)) },
-    { key: "redeem", title: "Redeem", note: "Receipt returned", color: "gold", rows: mine.filter((r) => redeemed.has(r.id)) },
-  ];
-  const dataReady = Boolean(c.addrs) && !c.loading && !c.eventsLoading && c.eventsOk;
-  const metric = (label: string, value: ReactNode, hint: string, tone: string) => (
-    <article className={`dash-hero-metric tone-${tone}`}><span>{label}</span><b>{value}</b><small>{hint}</small></article>
-  );
-
-  return (
-    <div className="dashboard-page">
-      <section className="dash-overview">
-        <div className="dash-overview-copy"><p className="kicker">Overview · {c.addrs ? `${invoiceWord(c.total)} on PotKit` : "Portaldot V3 testnet"}</p><h1>Your invoice book,<br /><span>from issue to redeem.</span></h1><p>Follow every receipt from issuance through settlement, with activity read directly from the chain.</p>
-          
-          {c.account && c.chainOk === false && <span className="dash-wrong-network">Wrong network · switch from the wallet menu</span>}
-        </div>
-        <div className="dash-hero-metrics" aria-label="Protocol overview">
-          {metric("Face value", <><N l={c.loading && Boolean(c.addrs)}>{c.addrs && !c.loading ? fmt(faceValue, 18) : "—"}</N>{c.addrs && !c.loading && <i> tPOT</i>}</>, c.loading ? "Reading receipts…" : `Across ${invoiceWord(faceRows.length)}`, "neutral")}
-          {metric("Settled", <><N l={(c.loading || c.eventsLoading) && Boolean(c.addrs)}>{dataReady ? fmt(settled, 18) : "—"}</N>{dataReady && <i> tPOT</i>}</>, !c.eventsOk ? "Event history unavailable" : c.eventsLoading ? "Reading events…" : `Across ${invoiceWord(new Set(settleEvents.map((e) => e.id)).size)}`, "green")}
-          {metric("Claimed", <><N l={(c.loading || c.eventsLoading) && Boolean(c.addrs)}>{dataReady ? fmt(claimed, 18) : "—"}</N>{dataReady && <i> tPOT</i>}</>, !c.eventsOk ? "Event history unavailable" : claimedEvents.length ? "By share holders" : "No payouts claimed yet", "blue")}
-        </div>
+  const active = mine.filter((r) => !redeemed.has(r.id));
+  const selected = active.find((r) => r.id === selectedId) ?? active[0];
+  const nextFor = (r: (typeof c.rows)[number]) => {
+    if (!r.fraction) return { label: "Add terms", tab: "issue" as const, params: { id: String(r.id) } };
+    if (r.settle.settled) return { label: "Review claims", tab: "portfolio" as const, params: { id: String(r.id) } };
+    if (open.some((l) => l.receiptId === r.id)) return { label: "Open listing", tab: "trade" as const, params: { id: String(r.id) } };
+    return { label: "List shares", tab: "trade" as const, params: { sell: String(r.id) } };
+  };
+  const statusFor = (r: (typeof c.rows)[number]) => !r.fraction ? "Needs terms" : r.settle.settled ? "Settled" : open.some((l) => l.receiptId === r.id) ? "On market" : "Active";
+  const faceTotal = c.rows.reduce((sum, r) => sum + faceValueOf(r), 0n);
+  const settled = c.events.filter((e) => e.kind === "settle").reduce((sum, e) => sum + (e.value ?? 0n), 0n);
+  const pending = active.filter((r) => !r.fraction || r.settle.settled).length;
+  return <div className="receivable-dashboard">
+    <header className="rd-heading"><div><h1>{c.account ? "Your receivables" : "Receivables"}</h1><p>Follow each receipt from issue through payment and redemption.</p></div><button className="btn primary" onClick={() => c.setTab("issue")}>Issue receipt <Ico n="arrow" /></button></header>
+    <div className="rd-layout">
+      <section className="rd-workspace" aria-label="Receivables workspace">
+        <div className="rd-summary" aria-label="Receivables summary"><div><span>Active receipts</span><strong>{active.length}</strong></div><div><span>Face value</span><strong>{c.loading ? "—" : `${fmt(faceTotal, 18)} tPOT`}</strong></div><div><span>Settled on-chain</span><strong>{c.eventsLoading || !c.eventsOk ? "—" : `${fmt(settled, 18)} tPOT`}</strong></div></div>
+        <div className="rd-section-head"><div><h2>Active book</h2><span>{c.account ? "Receipts associated with your wallet" : "Loaded deployment receipts"}</span></div><button className="btn sm" onClick={() => c.setTab("explore")}>View all receipts <Ico n="arrow" /></button></div>
+        {!c.addrs ? <Empty icon="⇄" title="PotKit is not configured" body="Open a deployment link or set up the contract from Issue."><button className="btn primary" onClick={() => c.setTab("issue")}>Set up PotKit</button></Empty> : c.loading ? <p className="muted" role="status">Reading receipts from the chain…</p> : !active.length ? <Empty icon="▤" title="No active receipts in the loaded range" body="Issue a receipt or explore the deployment."><button className="btn primary" onClick={() => c.setTab("issue")}>Create receipt</button></Empty> : <div className="rd-list">{active.map((r) => <button type="button" key={r.id} className={`rd-row ${selected?.id === r.id ? "selected" : ""}`} aria-pressed={selected?.id === r.id} onClick={() => setSelectedId(r.id)}><span className="rd-row-id">#{r.id}</span><span className="rd-row-title"><b>{r.note || KINDS[r.kind]}</b><small>{KINDS[r.kind]} · {r.fraction ? `${units(r.supply)} shares` : "Not fractionalized"}</small></span><span className="rd-row-value">{faceValueOf(r) ? `${fmt(faceValueOf(r), r.settle.decimals)} ${r.settle.symbol}` : "—"}</span><span className="rd-row-state">{statusFor(r)}</span><Ico n="arrow" size={14} /></button>)}</div>}
+        <section className="rd-activity"><div className="rd-section-head"><div><h2>Recent activity</h2><span>{c.eventsOk ? "Read from Portaldot V3" : "Event history unavailable"}</span></div><button className="btn sm" onClick={() => c.setTab("history")}>Full history</button></div>{c.events.length ? <ol>{c.events.slice(0, 5).map((e) => <li key={`${e.hash}-${e.logIndex}`}><span>{e.text}</span><small>Block {e.block.toString()}</small></li>)}</ol> : <p className="muted">{c.eventsLoading ? "Reading on-chain activity…" : "No activity in the scanned range."}</p>}</section>
       </section>
-
-      <section className="dash-lifecycle" aria-label="Invoice lifecycle">
-        <header className="dash-lifecycle-head"><div><p className="kicker">Your workspace</p><h2>Invoice lifecycle</h2></div><span className="dash-live"><i /> Portaldot V3 · on-chain</span></header>
-        {!c.addrs ? <Empty icon="⇄" title="PotKit is not configured" body="Open a judge link to inspect a deployment, or set up the contract from Issue."><button className="btn sm primary" onClick={() => c.setTab("issue")}>Set up PotKit</button></Empty>
-          : c.loading ? <p className="muted" role="status">Reading invoices from the chain…</p>
-          : !mine.length ? <Empty icon="▤" title={c.account ? "No invoices for this wallet in the loaded receipts" : "No receipts in the loaded range"} body="Mint a receipt or explore invoices already on this deployment."><button className="btn sm primary" onClick={() => c.setTab("issue")}>Create invoice</button><button className="btn sm" onClick={() => c.setTab("explore")}>Explore invoices</button></Empty>
-          : <div className="dash-stage-grid">{stages.map((stage, i) => (
-            <section className={`dash-stage tone-${stage.color}`} key={stage.key}>
-              <header><span className="dash-stage-index">0{i + 1}</span><div><b>{stage.title}</b><small>{stage.note}</small></div><strong>{stage.rows.length}</strong></header>
-              <div className="dash-stage-items">{stage.rows.slice(0, 4).map((r) => {
-                const listing = open.find((l) => l.receiptId === r.id);
-                const next = stage.key === "issue" ? "issue" : stage.key === "lock" || stage.key === "trade" ? "trade" : stage.key === "settle" ? "portfolio" : "verify";
-                const action = stage.key === "issue" ? "Add terms" : stage.key === "lock" ? "List shares" : stage.key === "trade" ? "Open market" : stage.key === "settle" ? "Open claims" : "View receipt";
-                return <button className="dash-invoice-mini" key={r.id} onClick={() => c.setTab(next, stage.key === "lock" ? { sell: String(r.id) } : { id: String(r.id) })}>
-                  <span className="dash-invoice-no">INVOICE #{r.id}</span><b>{r.note || KINDS[r.kind]}</b>
-                  <span className="dash-invoice-detail"><span>Face</span><strong>{faceValueOf(r) ? `${fmt(faceValueOf(r), r.settle.decimals)} ${r.settle.symbol}` : "—"}</strong></span>
-                  <span className="dash-invoice-state">{stage.key === "redeem" ? <span className="tag dash-redeemed">REDEEMED</span> : <SettleBadge r={r} terms={false} />}{listing && <small>{units(listing.remaining)} shares listed</small>}<small className="dash-next-action">{action} <Ico n="arrow" size={12} /></small></span>
-                </button>;
-              })}{!stage.rows.length && <p className="dash-stage-empty">Nothing here yet</p>}</div>
-              {stage.rows.length > 4 && <button className="dash-more" onClick={() => c.setTab(stage.key === "trade" ? "trade" : "portfolio")}>View {stage.rows.length - 4} more →</button>}
-            </section>
-          ))}</div>}
-      </section>
-
-      <section className="dash-bottom-grid">
-        <article className="dash-wallet">
-          <div className="dash-wallet-head"><span className="dash-wallet-icon"><Ico n="wallet" size={20} /></span><div className="dash-wallet-copy"><small>Wallet</small><b>{c.account ? `${c.account.slice(0, 6)}…${c.account.slice(-4)}` : "Not connected"}</b></div><span className={`dash-wallet-status ${c.account ? "connected" : ""}`}><i />{c.account ? "Connected" : "Read only"}</span></div>
-          {c.account ? <div className="dash-wallet-balance"><small>Available balance</small><b>{roundedBalance}</b></div> : <button className="btn primary" onClick={c.connect}>Connect wallet</button>}
-          <div className="dash-network"><span><i className={c.chainOk ? "ok" : ""} />Portaldot V3 Testnet</span><small>Chain 420420777</small></div>
-          {c.account && <div className="dash-wallet-actions"><button className="btn primary sm" onClick={() => c.setTab("issue")}>＋ Issue invoice</button><button className="btn sm dash-claim-action" onClick={() => c.setTab("portfolio")}>Claim</button></div>}
-        </article>
-        <section className="card dash-activity"><header className="dash-section-head"><div><p className="kicker">On-chain feed</p><h2>Recent activity</h2></div><button className="btn sm" onClick={() => c.setTab("history")}>Full history <Ico n="arrow" /></button></header>
-          {!c.events.length ? <p className="muted" role={c.eventsLoading ? "status" : undefined}>{c.eventsLoading ? "Reading recent events…" : c.eventsOk ? "No recent activity in the scanned range." : "Event history is unavailable from this RPC."}</p>
-            : <ol className="dash-events">{c.events.slice(0, 5).map((e) => <li key={`${e.hash}-${e.logIndex}`}><span className={`de-${e.kind}`}><Ico n={e.kind === "settle" ? "settle" : e.kind === "buy" ? "cart" : e.kind === "mint" ? "mint" : e.kind === "claim" ? "claim" : "activity"} size={15} /></span><div><b>{e.text}</b><small>Block {e.block.toString()}</small></div><time dateTime={e.time ? new Date(e.time * 1000).toISOString() : undefined} title={e.time ? new Date(e.time * 1000).toLocaleString() : undefined}>{relativeTime(e.time)}</time></li>)}</ol>}
-        </section>
-      </section>
-      <p className="dash-footnote">All figures are read live from the selected PotKit deployment. tPOT is the Portaldot V3 testnet token.</p>
+      <aside className="rd-context" aria-label="Receipt context"><div className="rd-context-head"><span>Context</span><span>Portaldot V3 · on-chain</span></div>{selected ? <><span className="rd-context-id">RECEIPT #{selected.id}</span><h2>{selected.note || KINDS[selected.kind]}</h2><div className="rd-current"><span>Current state</span><SettleBadge r={selected} terms={false} /><strong>{statusFor(selected)}</strong></div><dl><div><dt>Face value</dt><dd>{faceValueOf(selected) ? `${fmt(faceValueOf(selected), selected.settle.decimals)} ${selected.settle.symbol}` : "Not set"}</dd></div><div><dt>Available shares</dt><dd>{selected.fraction ? units(selected.supply) : "—"}</dd></div><div><dt>Market</dt><dd>{open.some((l) => l.receiptId === selected.id) ? "Listed" : "No open listing"}</dd></div></dl><p className="rd-next-label">Next action</p><button className="btn primary block" onClick={() => { const next = nextFor(selected); c.setTab(next.tab, next.tab === "trade" && "sell" in next.params ? { sell: String(selected.id) } : { id: String(selected.id) }); }}>{nextFor(selected).label} <Ico n="arrow" /></button><button className="btn block" onClick={() => c.setTab("verify", { id: String(selected.id) })}>Verify receipt</button></> : <><h2>Start with a receipt</h2><p className="muted">Select an active receipt to see its current state and the next action.</p><button className="btn primary block" onClick={() => c.setTab("issue")}>Issue receipt</button></>}
+        <div className="rd-context-footer"><span>{pending} {pending === 1 ? "receipt needs" : "receipts need"} review</span><button onClick={() => c.setTab("portfolio")}>Open portfolio <Ico n="arrow" /></button></div>
+      </aside>
     </div>
-  );
+  </div>;
 }

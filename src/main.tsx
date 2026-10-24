@@ -6,6 +6,11 @@ import "./styles/tokens.css";
 import "./styles/app.css";
 import "./styles/app-shell.css";
 import "./styles/app-xero.css";
+import "./styles/receivable-workspace.css";
+import "./styles/receivable-trade-issue.css";
+import "./styles/receivable-portfolio-verify.css";
+import "./styles/usability-pass.css";
+import "./styles/workspace-composition.css";
 import { Intro } from "./Intro";
 
 migrateHashRoute();

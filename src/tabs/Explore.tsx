@@ -15,9 +15,9 @@ const ago = (t: number) => { if (!t) return ""; const s = Date.now() / 1000 - t;
 
 export function Explore({ c }: { c: Ctx }) {
   const [q, setQ] = useState(c.param("addr"));
-  const [view, setView] = useState<"cards" | "table">(() => (localStorage.getItem("potkit.exview") as "cards" | "table") || "cards");
+  const [view, setView] = useState<"cards" | "table">(() => { try { return localStorage.getItem("potkit.exview") === "table" ? "table" : "cards"; } catch { return "cards"; } });
   const [stageFilter, setStageFilter] = useState<"all" | "trading" | "settled" | "redeemed">("all");
-  const pickView = (v: "cards" | "table") => { setView(v); localStorage.setItem("potkit.exview", v); };
+  const pickView = (v: "cards" | "table") => { setView(v); try { localStorage.setItem("potkit.exview", v); } catch { /* Private browsing may block storage. */ } };
   const [col, setCol] = useState<Col>("id");
   const [asc, setAsc] = useState(false);
   const R = c.rows;
@@ -108,7 +108,7 @@ export function Explore({ c }: { c: Ctx }) {
                     <td data-label="Best ask" className="num">{(() => { const p = ask.get(r.id); if (p === undefined) return "—"; const f = supplyOf(r) > 0n ? faceValueOf(r) * 10n ** 18n / supplyOf(r) : faceShare(r); return <>{fmt(p, 18)}{f > 0n && <span className="pos small ba-disc">{pct(1 - Number(p) / Number(f))} off</span>}</>; })()}</td>
                     <td className="acts"><div className="row">
                       <button className="btn sm" aria-label={`Verify receipt ${r.id}`} title="Verify" onClick={() => c.setTab("verify", { id: String(r.id) })}><Ico n="shield" /><span className="act-l">Verify</span></button>
-                      {r.fraction && !r.settle.settled && <button className="btn sm" onClick={() => c.openPay(r.id)}>Pay</button>}
+                      {!isRedeemed(r) && r.fraction && !r.settle.settled && (ask.has(r.id) ? <button className="btn sm" onClick={() => c.setTab("trade")}>View market</button> : <button className="btn sm" onClick={() => c.openPay(r.id)}>Pay</button>)}
                     </div></td>
                   </tr>
                 ))}
