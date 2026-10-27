@@ -143,6 +143,7 @@ export function App() {
   const [eventsLoading, setEventsLoading] = useState(false);
   const [payFor, setPayFor] = useState<number | null>(null);
   const [payAmt, setPayAmt] = useState("");
+  const [payAck, setPayAck] = useState<bigint | null>(null); // the overpayment the user confirmed; changing the amount invalidates it
   const [log, setLog] = useState<Log[]>(() => { try { return JSON.parse(localStorage.getItem(`${STORE}.log`) ?? "[]"); } catch { return []; } });
 
   const setAddrs = (a: Addrs | null) => { setAddrsState(a); setShared(false); if (a) localStorage.setItem(STORE, JSON.stringify(a)); else localStorage.removeItem(STORE); };
@@ -239,7 +240,7 @@ export function App() {
   const judgeLink = addrs ? appShareUrl(`?kit=${addrs.vault}`) : "";
   const usdRaw = native ?? 0n;
   const usdBal = native === null ? "" : `${fmt(native, 18)} ${PAY_SYMBOL}`;
-  const openPay = (id: number) => { const r = rows.find((x) => x.id === id); setPayAmt(r && r.settle.faceValue > 0n ? fmt(r.settle.faceValue, r.settle.decimals).replace(/,/g, "") : ""); setPayFor(id); };
+  const openPay = (id: number) => { const r = rows.find((x) => x.id === id); setPayAmt(r && r.settle.faceValue > 0n ? fmt(r.settle.faceValue, r.settle.decimals).replace(/,/g, "") : ""); setPayAck(null); setPayFor(id); };
 
   const c: Ctx = {
     account, chainOk, gated, busy, phase, addrs, setAddrs, shared, usd, market, rows, held, claims, listings, events, eventsLoading, loading, eventsOk, total, loadOlder, saveStep, resetDeployment,
@@ -259,6 +260,7 @@ export function App() {
     if (raw < face) return { error: `Amount must be at least ${fmt(face, payRow.settle.decimals)} ${PAY_SYMBOL} (the face value).`, extra: 0n };
     return { error: "", extra: raw - face };
   })();
+  const payNeedsAck = !payCheck.error && payCheck.extra > 0n && payAck !== payCheck.extra;
 
   const publicProfile = tab === "profile" && /^0x[0-9a-fA-F]{40}$/.test(params.profile ?? "");
   const needsWallet = tab !== "dashboard" && tab !== "issue" && tab !== "trade" && tab !== "explore" && tab !== "verify" && !publicProfile;
@@ -379,8 +381,15 @@ export function App() {
             <span id="pay-amt-msg" className={payCheck.error ? "field-error" : "muted"} role={payCheck.error ? "alert" : undefined}>
               {payCheck.error || (payCheck.extra > 0n ? `${fmt(payCheck.extra, payRow.settle.decimals)} ${PAY_SYMBOL} above the face value goes to the pool for share holders and is not refunded.` : "")}
             </span>
-            <button className="btn primary block" disabled={Boolean(busy) || gated || !account || Boolean(payCheck.error)} onClick={() => void run("settle", async () => {
+            {!payCheck.error && payCheck.extra > 0n && (
+              <label htmlFor="pay-ack" className="pay-ack">
+                <input id="pay-ack" className="pay-ack-box" type="checkbox" checked={payAck === payCheck.extra} onChange={(e) => setPayAck(e.target.checked ? payCheck.extra : null)} />
+                <span className="pay-ack-text">I understand the extra {fmt(payCheck.extra, payRow.settle.decimals)} {PAY_SYMBOL} goes to the pool for share holders and will not be refunded.</span>
+              </label>
+            )}
+            <button className="btn primary block" disabled={Boolean(busy) || gated || !account || Boolean(payCheck.error) || payNeedsAck} onClick={() => void run("settle", async () => {
               if (payCheck.error) throw new Error(payCheck.error);
+              if (payNeedsAck) throw new Error("Confirm that the extra amount is not refunded.");
               const amt = payAmt.trim();
               const h = await settle(ready(), addrs!.vault, payRow.id, amt);
               note("Invoice settled", `#${payRow.id} · ${amt} ${PAY_SYMBOL} paid`, h); setPayFor(null);

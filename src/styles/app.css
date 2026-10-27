@@ -2415,3 +2415,8 @@ html[data-route="app"] .trade-my-row>div:first-child small,html[data-route="app"
 }
 @media (max-width:25rem) { html[data-route="app"] .trade-kpis strong { font-size:1rem; } }
 @media (prefers-reduced-motion:reduce) { html[data-route="app"] .trade-row,html[data-route="app"] .trade-buy { transition:none; } }
+
+/* settle drawer: overpayment confirmation (beats the global full-width input rules) */
+html[data-route="app"] .pay-ack { display:flex; align-items:flex-start; gap:.6rem; min-width:0; max-width:100%; margin:0; padding:0; font-size:.78rem; line-height:1.5; letter-spacing:0; text-transform:none; cursor:pointer; }
+html[data-route="app"] input.pay-ack-box { flex:0 0 1rem; width:1rem; min-width:1rem; max-width:1rem; height:1rem; min-height:1rem; margin:.15rem 0 0; padding:0; border-radius:2px; accent-color:#fff; cursor:pointer; }
+html[data-route="app"] .pay-ack-text { flex:1 1 0; min-width:0; overflow-wrap:anywhere; }
