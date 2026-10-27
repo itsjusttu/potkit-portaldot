@@ -1,5 +1,5 @@
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import type { Address } from "viem";
+import { parseUnits, type Address } from "viem";
 import { DEFAULTS } from "./config";
 import { appShareUrl, homeUrl, isAppHost } from "./routes";
 import { WalletButton, WalletModal } from "./WalletUi";
@@ -248,6 +248,17 @@ export function App() {
   };
 
   const payRow = rows.find((r) => r.id === payFor);
+  // settle() accepts any amount >= face value; the whole amount goes to the pool
+  const payCheck = (() => {
+    const amt = payAmt.trim();
+    if (!payRow || !/^\d+(\.\d+)?$/.test(amt)) return { error: "Enter a positive amount.", extra: 0n };
+    let raw: bigint;
+    try { raw = parseUnits(amt, payRow.settle.decimals); } catch { return { error: "Enter a positive amount.", extra: 0n }; }
+    if (raw <= 0n) return { error: "Enter a positive amount.", extra: 0n };
+    const face = payRow.settle.faceValue;
+    if (raw < face) return { error: `Amount must be at least ${fmt(face, payRow.settle.decimals)} ${PAY_SYMBOL} (the face value).`, extra: 0n };
+    return { error: "", extra: raw - face };
+  })();
 
   const publicProfile = tab === "profile" && /^0x[0-9a-fA-F]{40}$/.test(params.profile ?? "");
   const needsWallet = tab !== "dashboard" && tab !== "issue" && tab !== "trade" && tab !== "explore" && tab !== "verify" && !publicProfile;
@@ -356,7 +367,7 @@ export function App() {
         {payRow && (
           <>
             <div className="tags"><SettleBadge r={payRow} /></div>
-            <p className="muted">The debtor pays PotKit in tPOT; the receipt is marked settled and every share becomes a pro-rata payout ticket. Payment is final.</p>
+            <p className="muted">Anyone can pay. The minimum is the face value; the receipt is then marked settled and every share becomes a pro-rata payout ticket. Any extra goes to the pool for share holders and is not refunded. Payment is final.</p>
             <dl className="facts">
               <div><dt>Kind</dt><dd>{KINDS[payRow.kind]}</dd></div>
               <div><dt>Face value</dt><dd className="num">{`${fmt(payRow.settle.faceValue, payRow.settle.decimals)} ${payRow.settle.symbol}`}</dd></div>
@@ -364,9 +375,13 @@ export function App() {
               <div><dt>Paid in</dt><dd>{PAY_SYMBOL} (native)</dd></div>
             </dl>
             <label htmlFor="pay-amt">Amount ({PAY_SYMBOL})</label>
-            <input id="pay-amt" inputMode="decimal" value={payAmt} onChange={(e) => setPayAmt(e.target.value)} />
-            <button className="btn primary block" disabled={Boolean(busy) || gated || !account} onClick={() => void run("settle", async () => {
-              const amt = payAmt.trim(); if (!/^\d+(\.\d+)?$/.test(amt) || Number(amt) <= 0) throw new Error("Enter a positive amount.");
+            <input id="pay-amt" inputMode="decimal" value={payAmt} onChange={(e) => setPayAmt(e.target.value)} aria-invalid={Boolean(payCheck.error)} aria-describedby="pay-amt-msg" />
+            <span id="pay-amt-msg" className={payCheck.error ? "field-error" : "muted"} role={payCheck.error ? "alert" : undefined}>
+              {payCheck.error || (payCheck.extra > 0n ? `${fmt(payCheck.extra, payRow.settle.decimals)} ${PAY_SYMBOL} above the face value goes to the pool for share holders and is not refunded.` : "")}
+            </span>
+            <button className="btn primary block" disabled={Boolean(busy) || gated || !account || Boolean(payCheck.error)} onClick={() => void run("settle", async () => {
+              if (payCheck.error) throw new Error(payCheck.error);
+              const amt = payAmt.trim();
               const h = await settle(ready(), addrs!.vault, payRow.id, amt);
               note("Invoice settled", `#${payRow.id} · ${amt} ${PAY_SYMBOL} paid`, h); setPayFor(null);
             })}>{!account ? "Connect wallet to pay" : busy === "settle" ? "Confirm in wallet…" : `Pay ${payAmt || "…"} ${PAY_SYMBOL} & settle`}</button>
