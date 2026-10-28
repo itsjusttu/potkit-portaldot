@@ -243,6 +243,28 @@ html[data-route="app"] .prc-hd i, html[data-route="app"] .prc-kind, html[data-ro
 @media (max-width: 52rem) { html[data-route="app"] .shell .side.mobile-open .side-mobile-head { justify-content: space-between; align-items: center; gap: .75rem; } html[data-route="app"] .shell .side.mobile-open .side-mobile-head > span { min-width: 0; flex: 1; } }
 html[data-route="app"] .bar, html[data-route="app"] .bar b, html[data-route="app"] .bars .bar b, html[data-route="app"] .verify .verify-scope, html[data-route="app"] .verify .verify-scope p, html[data-route="app"] .verify .verify-scope b { font-size: .75rem; }
 
+/* ---------- Trade · Sell shares panel ----------
+   Cause of the cramped layout: app.css forced .facts.compact into two columns inside a ~330px panel
+   (value text wrapped, third row dropped under the first), and .fields used align-items:end so the
+   Price input sat level with the preset buttons instead of with the Shares input. */
+html[data-route="app"] .sell-panel { background: var(--surface); background-image: none; border-radius: 0; gap: .9rem; }
+html[data-route="app"] .sell-panel .row.fields { display: grid; grid-template-columns: minmax(0, 1fr); align-items: start; gap: .9rem; margin: .9rem 0 0; }
+html[data-route="app"] .sell-panel .row.fields > div { min-width: 0; flex: none; }
+html[data-route="app"] .sell-panel .row.fields label { display: flex; flex-wrap: wrap; justify-content: space-between; gap: .1rem .75rem; margin: 0 0 .4rem; }
+html[data-route="app"] .sell-panel .trade-amount-presets { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .5rem; margin-top: .5rem; }
+html[data-route="app"] .sell-panel .trade-amount-presets button { min-width: 0; width: 100%; min-height: 2.5rem; padding: 0 .5rem; border-radius: 2px; background: transparent; border: 1px solid var(--line-strong); color: #fff; }
+html[data-route="app"] .sell-panel .trade-amount-presets button:hover { background: #fff; color: #000; border-color: #fff; }
+html[data-route="app"] .sell-panel .facts.compact { grid-template-columns: minmax(0, 1fr); margin: .9rem 0 0; border-top: 1px solid var(--line); }
+html[data-route="app"] .sell-panel .facts.compact > div { display: grid; grid-template-columns: minmax(0, auto) minmax(0, 1fr); align-items: baseline; gap: .25rem 1rem; padding: .7rem 0; border-bottom: 1px solid var(--line); }
+html[data-route="app"] .sell-panel .facts.compact dt { color: var(--grey-1); white-space: nowrap; }
+html[data-route="app"] .sell-panel .facts.compact dd { margin: 0; min-width: 0; text-align: right; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+html[data-route="app"] .sell-panel .trade-sell-yield { margin: 0; }
+html[data-route="app"] .sell-panel .trade-target-prices { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .5rem; }
+html[data-route="app"] .sell-panel .trade-target-prices button { min-width: 0; }
+@media (max-width: 52rem) {
+  html[data-route="app"] .sell-panel .trade-amount-presets button, html[data-route="app"] .sell-panel .trade-target-prices button { min-height: 44px; }
+}
+
 /* ---------- 12px floor (generated from rules below .75rem) ---------- */
 html[data-route="app"] .metric span,
 html[data-route="app"] label,
