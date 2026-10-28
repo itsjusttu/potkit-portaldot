@@ -10,7 +10,7 @@
 * { box-sizing: border-box; }
 html, body { margin: 0; min-height: 100%; background: var(--bg); color: var(--fg);
   font-family: "IBM Plex Mono", system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
-body::before { content: ""; position: fixed; inset: -20vmax; z-index: -1; pointer-events: none;
+body::before { content: ""; position: fixed; inset: 0; z-index: -1; pointer-events: none;
   background:
     radial-gradient(40vmax 40vmax at 15% 10%, rgba(160,160,160,.28), transparent 60%),
     radial-gradient(35vmax 35vmax at 90% 20%, rgba(255,255,255,.18), transparent 60%),
@@ -20,6 +20,7 @@ body::before { content: ""; position: fixed; inset: -20vmax; z-index: -1; pointe
 @keyframes rise { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
 /* reduced motion: soften (slower), never disable — see Landing.tsx */
 @media (prefers-reduced-motion: reduce) { body::before { animation-duration: 60s; } }
+@media (max-width: 52rem) { body::before { animation: none; } }
 
 h1, h2, h3 { font-family: "IBM Plex Mono", sans-serif; font-weight: 600; margin: 0; letter-spacing: -0.02em; }
 h2 { font-size: 1.15rem; margin-bottom: .6rem; }
@@ -1374,7 +1375,24 @@ html[data-route="app"] .avatar { border:2px solid rgba(255,255,255,.28); box-sha
   html[data-route="app"] *,html[data-route="app"] *::before,html[data-route="app"] *::after { animation-duration:.01ms!important; transition-duration:.01ms!important; scroll-behavior:auto!important; }
 }
 
-/* v3: PotKit Home's monochrome night palette and restrained orbital motion. */
+/* v25: current app hierarchy — flat surfaces, clear task rails, monochrome product chrome */
+html[data-route="app"] .page-head { display:flex; justify-content:space-between; align-items:flex-end; gap:1.5rem; }
+html[data-route="app"] .page-head-main { min-width:0; }
+html[data-route="app"] .page-head-status { display:flex; flex-wrap:wrap; justify-content:flex-end; gap:.45rem; color:var(--muted); font-size:.68rem; }
+html[data-route="app"] .page-head-status span { display:inline-flex; align-items:center; gap:.4rem; padding:.42rem .6rem; border:1px solid var(--line); border-radius:999px; white-space:nowrap; }
+html[data-route="app"] .status-dot { width:.42rem; height:.42rem; border-radius:50%; background:var(--muted); }
+html[data-route="app"] .status-dot.ready { background:var(--ok); }
+html[data-route="app"] .issue-rail { display:grid; align-content:start; gap:1rem; padding:1.1rem; border:1px solid var(--line); border-radius:var(--r-md); background:var(--surface); }
+html[data-route="app"] .issue-rail h3 { margin:0; font-size:1rem; }
+html[data-route="app"] .issue-rail ol { display:grid; gap:.6rem; margin:0; padding:0; list-style:none; }
+html[data-route="app"] .issue-rail li { display:grid; gap:.12rem; padding:.6rem .7rem; border-left:2px solid var(--line); color:var(--muted); }
+html[data-route="app"] .issue-rail li.active { border-left-color:var(--brand); background:var(--surface-2); color:var(--fg); }
+html[data-route="app"] .issue-rail li b { font-size:.78rem; }
+html[data-route="app"] .issue-rail li span { font-size:.68rem; }
+html[data-route="app"] .wizard { grid-template-columns:minmax(11rem,.48fr) minmax(0,1.15fr) minmax(18rem,.78fr); }
+@media (max-width: 75rem) { html[data-route="app"] .wizard { grid-template-columns:minmax(10rem,.38fr) minmax(0,1fr); } html[data-route="app"] .issue-rail { grid-column:1/-1; grid-row:1; } }
+@media (max-width: 52rem) { html[data-route="app"] .page-head { align-items:flex-start; flex-direction:column; } html[data-route="app"] .page-head-status { justify-content:flex-start; } html[data-route="app"] .rd-next-actions { align-items:flex-start; flex-direction:column; } html[data-route="app"] .rd-next-actions-links { justify-content:flex-start; } html[data-route="app"] .wizard { grid-template-columns:1fr; } html[data-route="app"] .issue-rail { grid-column:auto; grid-row:auto; } }
+
 html[data-route="app"] body {
   background:radial-gradient(ellipse 55rem 32rem at 92% -8%,rgba(255,255,255,.20),transparent 72%),radial-gradient(ellipse 40rem 25rem at 48% 42%,rgba(255,255,255,.055),transparent 72%),#07070d;
   color:var(--neo-text);

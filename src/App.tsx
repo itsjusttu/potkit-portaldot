@@ -1,5 +1,6 @@
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { parseUnits, type Address } from "viem";
+import type { Address } from "viem";
+import { checkPayment, needsAck } from "./lib/settlecheck";
 import { DEFAULTS } from "./config";
 import { appShareUrl, homeUrl, isAppHost } from "./routes";
 import { WalletButton, WalletModal } from "./WalletUi";
@@ -250,17 +251,13 @@ export function App() {
 
   const payRow = rows.find((r) => r.id === payFor);
   // settle() accepts any amount >= face value; the whole amount goes to the pool
-  const payCheck = (() => {
-    const amt = payAmt.trim();
-    if (!payRow || !/^\d+(\.\d+)?$/.test(amt)) return { error: "Enter a positive amount.", extra: 0n };
-    let raw: bigint;
-    try { raw = parseUnits(amt, payRow.settle.decimals); } catch { return { error: "Enter a positive amount.", extra: 0n }; }
-    if (raw <= 0n) return { error: "Enter a positive amount.", extra: 0n };
-    const face = payRow.settle.faceValue;
-    if (raw < face) return { error: `Amount must be at least ${fmt(face, payRow.settle.decimals)} ${PAY_SYMBOL} (the face value).`, extra: 0n };
-    return { error: "", extra: raw - face };
-  })();
-  const payNeedsAck = !payCheck.error && payCheck.extra > 0n && payAck !== payCheck.extra;
+  const payResult = payRow ? checkPayment(payAmt, payRow.settle.faceValue, payRow.settle.decimals) : ({ status: "invalid", extra: 0n } as const);
+  const payCheck = {
+    extra: payResult.extra,
+    error: payResult.status === "invalid" ? "Enter a positive amount."
+      : payResult.status === "under" && payRow ? `Amount must be at least ${fmt(payRow.settle.faceValue, payRow.settle.decimals)} ${PAY_SYMBOL} (the face value).` : "",
+  };
+  const payNeedsAck = needsAck(payResult, payAck);
 
   const publicProfile = tab === "profile" && /^0x[0-9a-fA-F]{40}$/.test(params.profile ?? "");
   const needsWallet = tab !== "dashboard" && tab !== "issue" && tab !== "trade" && tab !== "explore" && tab !== "verify" && !publicProfile;
@@ -273,7 +270,7 @@ export function App() {
           <img src="/potkit-p-circle-black.svg" alt="" width={34} height={34} aria-hidden />
           <span><b>Pot<span className="grad">Kit</span></b><small>Invoice protocol</small></span>
         </a>
-        <button className="side-new" onClick={() => setTab("issue")}><TabIco t="issue" /><span>New invoice</span></button>
+        <button className="side-new" title="New invoice" onClick={() => setTab("issue")}><TabIco t="issue" /><span>New invoice</span></button>
         <nav id="app-sections" className="side-nav" aria-label="Sections">
           {([
             ["Overview", ["dashboard"]],
@@ -284,7 +281,7 @@ export function App() {
           ] as [string, Tab[]][]).map(([group, tabs]) => <div className="side-group" key={group}>
             <p className="side-group-title">{group}</p>
             {tabs.map((t) => (
-              <button key={t} className={`side-item ${tab === t ? "on" : ""}`} aria-current={tab === t ? "page" : undefined} onClick={() => setTab(t)}>
+              <button key={t} className={`side-item ${tab === t ? "on" : ""}`} title={TITLES[t][0]} aria-current={tab === t ? "page" : undefined} onClick={() => setTab(t)}>
                 <TabIco t={t} /><span>{TITLES[t][0]}</span>
               </button>
             ))}
@@ -292,8 +289,8 @@ export function App() {
         </nav>
         <div className="side-group side-support">
           <p className="side-group-title">Support</p>
-          <button type="button" className="side-item" onClick={() => setSupportOpen(true)}><Ico n="mail" /><span>Contact Support</span></button>
-          <a className="side-item" href={protocolPage("/help")}><Ico n="life" /><span>Help Center</span><Ico n="ext" /></a>
+          <button type="button" className="side-item" title="Contact Support" onClick={() => setSupportOpen(true)}><Ico n="mail" /><span>Contact Support</span></button>
+          <a className="side-item" title="Help Center" href={protocolPage("/help")}><Ico n="life" /><span>Help Center</span><Ico n="ext" /></a>
         </div>
       </aside>
       <main>
@@ -323,9 +320,15 @@ export function App() {
         )}
 
         <div className={`page-head ph-${tab}`}>
-          <p className="kicker">PotKit · {TITLES[tab][0]}</p>
-          <h1 key={tab}>{TITLES[tab][0]}</h1>
-          <p className="muted">{TITLES[tab][1]}</p>
+          <div className="page-head-main">
+            <p className="kicker">PotKit · {TITLES[tab][0]}</p>
+            <h1 key={tab}>{TITLES[tab][0]}</h1>
+            <p className="muted">{TITLES[tab][1]}</p>
+          </div>
+          <div className="page-head-status" aria-label="Workspace status">
+            <span><i className={addrs ? "status-dot ready" : "status-dot"} />{addrs ? "Deployment loaded" : "No deployment"}</span>
+            <span>{account ? "Wallet connected" : "Read-only mode"}</span>
+          </div>
           {tab === "explore" && addrs && <button className="btn sm ph-act" onClick={() => void navigator.clipboard?.writeText(judgeLink).then(() => toast({ kind: "ok", title: "Deployment link copied", detail: "Opens this contract." })).catch(() => toast({ kind: "err", title: "Copy failed", detail: "Your browser could not access the clipboard." }))}><Ico n="link" /> Copy deployment link</button>}
           {tab === "issue" && <div className="quick-route"><span><i>01</i> Connect wallet</span><b>→</b><span><i>02</i> Check Portaldot &amp; gas</span><b>→</b><span><i>03</i> Create a receipt</span>{!account ? <button onClick={connectWallet}>Connect wallet <Ico n="arrow" /></button> : <a href="#wizard">Start issuing <Ico n="arrow" /></a>}</div>}
         </div>

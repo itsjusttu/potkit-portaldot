@@ -1,0 +1,431 @@
+/* PotKit Ledger — app layer, loaded last.
+   Monochrome tokens only (tokens.css / theme-tokens.css); green/red appear solely on status.
+   Structure comes from borders and spacing: 1px hairlines, tabular right-aligned numbers, no gradients. */
+
+/* ---------- shell: full sidebar >= 1400px, 56px icon rail below ---------- */
+html[data-route="app"] .shell { grid-template-columns: 13rem minmax(0, 1fr); }
+html[data-route="app"] .shell .side-support .side-item { letter-spacing: 0; text-transform: none; font-size: .8125rem; }
+html[data-route="app"] .shell .side-support .side-item span { letter-spacing: 0; text-transform: none; }
+html[data-route="app"] .shell .side-item.on::after { display: none; }
+
+@media (min-width: 52.01rem) and (max-width: 87.5rem) {
+  html[data-route="app"] .shell { grid-template-columns: 56px minmax(0, 1fr); }
+  html[data-route="app"] .shell .side { align-items: center; gap: .5rem; padding: .75rem 0; overflow-x: hidden; }
+  html[data-route="app"] .shell .side-brand { justify-content: center; padding: 0; }
+  html[data-route="app"] .shell .side-brand img { width: 28px; height: 28px; }
+  html[data-route="app"] .shell .side-brand > span,
+  html[data-route="app"] .shell .side-new > span,
+  html[data-route="app"] .shell .side-item > span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+  html[data-route="app"] .shell .side-new { width: 40px; min-width: 40px; height: 40px; min-height: 40px; padding: 0; justify-content: center; border-radius: 999px; }
+  html[data-route="app"] .shell .side-nav { align-items: center; gap: .25rem; width: 100%; }
+  html[data-route="app"] .shell .side-group { justify-items: center; gap: .25rem; width: 100%; margin: 0; padding: .25rem 0 0; border-top: 1px solid var(--line); }
+  html[data-route="app"] .shell .side-group:first-child { border-top: 0; padding-top: 0; }
+  html[data-route="app"] .shell .side-group-title { display: none; }
+  html[data-route="app"] .shell .side-item { position: relative; width: 40px; min-width: 40px; height: 40px; min-height: 40px; padding: 0; justify-content: center; border: 1px solid transparent; border-radius: 2px; }
+  html[data-route="app"] .shell .side-item.on { border-color: var(--line-strong); background: var(--surface-2); box-shadow: none; }
+  html[data-route="app"] .shell .side-item .ico-svg:last-child:not(:first-child) { display: none; }
+  html[data-route="app"] .shell .side-support { width: 100%; justify-items: center; padding-top: .5rem; margin-top: auto; }
+}
+
+/* mobile: the Sections sheet also carries Contact Support and Help Center */
+@media (max-width: 52rem) {
+  html[data-route="app"] .shell .side.mobile-open .side-support { display: grid !important; gap: .4rem; margin-top: .6rem; padding-top: .6rem; border-top: 1px solid var(--line); }
+  html[data-route="app"] .shell .side.mobile-open .side-support .side-group-title { display: block; }
+  html[data-route="app"] .shell .side.mobile-open .side-support .side-item { min-height: 48px; }
+}
+
+/* ---------- shared ledger primitives ---------- */
+html[data-route="app"] .num { text-align: right; font-variant-numeric: tabular-nums; }
+html[data-route="app"] .rtable { border-collapse: collapse; width: 100%; }
+html[data-route="app"] .rtable thead th { padding: .65rem .7rem; border-bottom: 1px solid var(--line-strong); color: var(--muted); font-size: .75rem; font-weight: 500; letter-spacing: .04em; text-transform: uppercase; white-space: nowrap; text-align: left; background: transparent; }
+html[data-route="app"] .rtable thead th.num { text-align: right; }
+html[data-route="app"] .rtable tbody td { padding: .8rem .7rem; border-bottom: 1px solid var(--line); vertical-align: middle; }
+html[data-route="app"] .rtable tbody td.num { text-align: right; white-space: nowrap; }
+html[data-route="app"] .rtable tbody tr:last-child td { border-bottom: 0; }
+html[data-route="app"] .rtable tbody tr:hover { background: var(--surface-2); }
+html[data-route="app"] .rtable tbody tr.sel { background: var(--surface-2); box-shadow: inset 2px 0 0 #fff; }
+html[data-route="app"] .rtable td.acts .row { flex-wrap: nowrap; justify-content: flex-end; gap: .4rem; }
+html[data-route="app"] .tscroll { overflow-x: auto; max-width: 100%; }
+
+/* ---------- Dashboard ---------- */
+html[data-route="app"] .rd-layout { grid-template-columns: minmax(0, 1fr) 20rem; }
+html[data-route="app"] .rd-summary { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0; margin: 0 0 1.5rem; padding: 0; border: 1px solid var(--line); background: var(--surface); }
+html[data-route="app"] .rd-summary > div { gap: .3rem; padding: .9rem 1.1rem; min-width: 0; border-left: 1px solid var(--line); }
+html[data-route="app"] .rd-summary > div:first-child { padding-left: 1.1rem; border-left: 0; }
+html[data-route="app"] .rd-summary span { font-size: .75rem; letter-spacing: .04em; text-transform: uppercase; }
+html[data-route="app"] .rd-summary strong { font-size: 1.25rem; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+html[data-route="app"] .rd-next-actions { border-radius: 2px; }
+html[data-route="app"] .rd-table .rd-pick { display: grid; gap: .2rem; min-width: 12rem; padding: 0; border: 0; background: none; color: inherit; font: inherit; text-align: left; cursor: pointer; }
+html[data-route="app"] .rd-table .rd-pick b { overflow-wrap: anywhere; }
+html[data-route="app"] .rd-table .rd-pick small { color: var(--muted); font-size: .75rem; }
+html[data-route="app"] .rd-table tbody tr { cursor: pointer; }
+html[data-route="app"] .rd-table td small.muted { display: block; margin-top: .25rem; font-size: .75rem; }
+html[data-route="app"] .rd-table td.acts { text-align: right; white-space: nowrap; }
+html[data-route="app"] .rd-context { border-radius: 0; }
+
+/* ---------- Explore ---------- */
+html[data-route="app"] .t-explore .ex-stats { grid-template-columns: repeat(auto-fit, minmax(11.5rem, 1fr)); border-radius: 2px; background: var(--surface); }
+html[data-route="app"] .t-explore .ex-stats .kpi { border-right: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+html[data-route="app"] .t-explore .ex-stats .kpi:nth-child(3n) { border-right: 1px solid var(--line); }
+html[data-route="app"] .t-explore .ex-stats .kpi span { font-size: .75rem; letter-spacing: .04em; text-transform: uppercase; }
+html[data-route="app"] .t-explore .ex-stats .kpi b { font-variant-numeric: tabular-nums; text-align: left; }
+html[data-route="app"] .rd-table tbody tr { border-radius: 0; }
+html[data-route="app"] .t-explore .ex-grid { grid-template-columns: minmax(0, 1fr) 19rem; }
+html[data-route="app"] .t-explore .ex-table { border-radius: 2px; }
+html[data-route="app"] .t-explore .ex-head { grid-template-columns: minmax(0, 1fr) auto; row-gap: .75rem; }
+html[data-route="app"] .t-explore .ex-view-controls { display: contents; }
+html[data-route="app"] .t-explore .ex-view-controls .view-toggle { grid-column: 2; grid-row: 1; justify-self: end; }
+html[data-route="app"] .t-explore .ex-head .tb-search { grid-column: 1 / -1; grid-row: 2; }
+html[data-route="app"] .t-explore .ex-view-controls .ex-stage-filters { grid-column: 1 / -1; grid-row: 3; flex-wrap: wrap; }
+html[data-route="app"] .t-explore .ex-head .tb-search input { min-width: 0; }
+html[data-route="app"] .t-explore .chip.on { background: #fff; color: #000; border-color: #fff; }
+html[data-route="app"] .t-explore .chip { min-height: 32px; }
+html[data-route="app"] .explore-card, html[data-route="app"] .explore-card[class*="ex-"] { background: var(--surface); border: 1px solid var(--line); border-radius: 2px; box-shadow: none; transform: none; --ex: #fff; }
+html[data-route="app"] .explore-card::before, html[data-route="app"] .explore-card::after { display: none; }
+html[data-route="app"] .explore-card:hover { transform: none; border-color: var(--line-strong); box-shadow: none; }
+html[data-route="app"] .explore-meter i, html[data-route="app"] .ex-redeemed .explore-meter i { background: #fff; box-shadow: none; }
+html[data-route="app"] .explore-meter { border-radius: 0; background: var(--ink-3, #1d1d1d); }
+html[data-route="app"] .explore-icon { border-radius: 2px; background: transparent; color: #fff; border: 1px solid var(--line-strong); }
+html[data-route="app"] .explore-card .ex-id, html[data-route="app"] .explore-meter-label b, html[data-route="app"] .explore-card-foot > b { color: #fff; }
+@media (max-width: 87.5rem) { html[data-route="app"] .t-explore .ex-grid { grid-template-columns: minmax(0, 1fr); } html[data-route="app"] .t-explore .ex-side { grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; } }
+@media (max-width: 52rem) { html[data-route="app"] .t-explore .ex-side { grid-template-columns: minmax(0, 1fr); } html[data-route="app"] .t-explore .ex-view-controls .view-toggle { grid-column: 1 / -1; grid-row: 2; justify-self: start; } html[data-route="app"] .t-explore .ex-head .tb-search { grid-row: 3; } html[data-route="app"] .t-explore .ex-view-controls .ex-stage-filters { grid-row: 4; } }
+
+/* ---------- tables become stacked records on small screens ---------- */
+@media (max-width: 52rem) {
+  html[data-route="app"] .shell .rtable tbody tr { margin-bottom: .75rem; border: 1px solid var(--line); border-radius: 2px; background: var(--surface); overflow: hidden; }
+  html[data-route="app"] .shell .rtable tbody tr.sel { box-shadow: inset 2px 0 0 #fff; }
+  html[data-route="app"] .shell .rtable tbody td { padding: .55rem .8rem; border-bottom: 0; }
+  html[data-route="app"] .shell .rtable td[data-label]:not(:first-child) { display: flex; justify-content: space-between; align-items: center; gap: .75rem; text-align: right; }
+  html[data-route="app"] .shell .rtable td[data-label]:not(:first-child)::before { display: block; flex: none; margin: 0; text-align: left; font-size: .75rem; letter-spacing: .04em; }
+  html[data-route="app"] .shell .rtable td.num { text-align: right; }
+  html[data-route="app"] .shell .rtable td.acts { display: flex; flex-wrap: wrap; justify-content: flex-start; gap: .5rem; }
+  html[data-route="app"] .shell .rtable td.acts[data-label]::before { display: none; }
+  html[data-route="app"] .shell .rtable td.acts .btn, html[data-route="app"] .shell .rtable td.acts .row .btn { min-height: 44px; }
+  html[data-route="app"] .t-explore .ex-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  html[data-route="app"] .rd-summary { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  html[data-route="app"] .rd-summary > div:nth-child(3) { grid-column: 1 / -1; border-left: 0; border-top: 1px solid var(--line); }
+}
+
+/* ---------- Trade ---------- */
+html[data-route="app"] .t-trade .trade-kpis { gap: 0; border: 1px solid var(--line); background: var(--surface); }
+html[data-route="app"] .t-trade .trade-kpis article { border: 0; border-left: 1px solid var(--line); border-radius: 0; background: transparent; }
+html[data-route="app"] .t-trade .trade-kpis article:first-child { border-left: 0; }
+html[data-route="app"] .t-trade .trade-market-card { border-radius: 2px; }
+html[data-route="app"] .t-trade .trade-market-list { gap: 0; }
+html[data-route="app"] .t-trade .trade-row { grid-template-columns: minmax(10rem, 1.7fr) minmax(4.5rem, .8fr) minmax(4.25rem, .75fr) minmax(4.25rem, .75fr) minmax(4.5rem, .8fr) minmax(6rem, .9fr) 5.25rem; gap: .5rem; padding: .7rem .8rem; border: 0; border-bottom: 1px solid var(--line); border-radius: 0; background: transparent; }
+html[data-route="app"] .t-trade .trade-row:not(.trade-row-head):hover { background: var(--surface-2); border-color: var(--line); }
+html[data-route="app"] .t-trade .trade-row-selected { background: var(--surface-2); box-shadow: inset 2px 0 0 #fff; }
+html[data-route="app"] .t-trade .trade-row-head { border-bottom: 1px solid var(--line-strong); color: var(--muted); letter-spacing: .02em; line-height: 1.25; align-items: end; }
+html[data-route="app"] .t-trade .trade-row-head > span { white-space: normal !important; overflow-wrap: anywhere; }
+html[data-route="app"] .t-trade .trade-bar { border-radius: 2px; background: var(--surface); }
+html[data-route="app"] .t-trade .trade-row-closed { opacity: .72; }
+html[data-route="app"] .t-trade .trade-row > span:nth-child(n+2):nth-child(-n+6) { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+html[data-route="app"] .t-trade .trade-row .trade-buy { border-radius: 999px; background: transparent; border: 1px solid var(--line-strong); color: #fff; }
+html[data-route="app"] .t-trade .trade-row .trade-buy:hover:not(:disabled) { background: #fff; color: #000; }
+html[data-route="app"] .t-trade .trade-side-column { gap: 0; }
+html[data-route="app"] .t-trade .trade-side-column .trade-selection-panel { margin-bottom: 1rem; }
+html[data-route="app"] .trade-panel-tabs { display: flex; border: 1px solid var(--line); border-bottom: 0; background: var(--surface); }
+html[data-route="app"] .trade-panel-tabs button { flex: 1; min-height: 44px; padding: 0 1rem; border: 0; border-bottom: 2px solid transparent; background: none; color: var(--grey-1); font: inherit; font-size: .8125rem; cursor: pointer; }
+html[data-route="app"] .trade-panel-tabs button:hover { color: #fff; }
+html[data-route="app"] .trade-panel-tabs button.on { color: #fff; border-bottom-color: #fff; background: var(--surface-2); }
+html[data-route="app"] .t-trade .trade-panel-tabs + .card { border-radius: 0; border-top: 1px solid var(--line); }
+@media (max-width: 52rem) {
+  html[data-route="app"] .t-trade .trade-row-head { display: none; }
+  html[data-route="app"] .t-trade .trade-row { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .4rem .9rem; padding: .85rem 1rem; }
+  html[data-route="app"] .t-trade .trade-row .trade-row-invoice { grid-column: 1 / -1; }
+  html[data-route="app"] .t-trade .trade-row > span:nth-child(n+2):nth-child(-n+6) { grid-column: auto; display: flex; justify-content: space-between; align-items: baseline; gap: .5rem; text-align: right; white-space: normal; }
+  html[data-route="app"] .t-trade .trade-row > span:nth-child(n+2):nth-child(-n+6)::before { color: var(--muted); font-size: .75rem; text-align: left; }
+  html[data-route="app"] .t-trade .trade-row-price::before { content: "Price"; }
+  html[data-route="app"] .t-trade .trade-row-discount::before { content: "Discount"; }
+  html[data-route="app"] .t-trade .trade-row-apr::before { content: "Est. APR"; }
+  html[data-route="app"] .t-trade .trade-row-due::before { content: "Due in"; }
+  html[data-route="app"] .t-trade .trade-row-units::before { content: "Available"; }
+  html[data-route="app"] .t-trade .trade-row .trade-buy { grid-column: 1 / -1; grid-row: auto; width: 100%; min-height: 44px; }
+  html[data-route="app"] .t-issue .row.fields { display: grid; grid-template-columns: minmax(0, 1fr); }
+  html[data-route="app"] .t-trade .trade-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  html[data-route="app"] .t-trade .trade-kpis article:nth-child(odd) { border-left: 0; }
+  html[data-route="app"] .t-trade .trade-kpis article:nth-child(n+3) { border-top: 1px solid var(--line); }
+}
+
+/* ---------- Issue ---------- */
+html[data-route="app"] .t-issue .issue-rail, html[data-route="app"] .t-issue .wiz-main, html[data-route="app"] .t-issue .wiz-preview { border-radius: 2px; background: var(--surface); background-image: none; box-shadow: none; }
+html[data-route="app"] .t-issue .issue-receipt { background: var(--bg); background-image: none; border-radius: 2px; box-shadow: none; }
+html[data-route="app"] .t-issue .issue-rail ol li { border-left: 2px solid transparent; }
+html[data-route="app"] .t-issue .issue-rail ol li.active { border-left-color: #fff; }
+html[data-route="app"] .t-issue .issue-rail ol li.done b::after { content: "  ✓"; color: var(--ok); }
+html[data-route="app"] .t-issue .wiz-pane h2 { text-transform: none; letter-spacing: 0; }
+html[data-route="app"] .t-issue .wiz-nav { justify-content: space-between; gap: .75rem; flex-wrap: wrap; }
+html[data-route="app"] .t-issue .issue-summary { border-top: 1px solid var(--line); }
+@media (max-width: 52rem) { html[data-route="app"] .t-issue .wiz-nav .btn { min-height: 44px; } }
+
+/* ---------- page intros: one calm title per page ---------- */
+html[data-route="app"] .shell :is(.explore-intro, .trade-intro, .issue-intro, .verify-intro, .history-intro) h1 { margin: 0; color: #fff; font-size: clamp(1.5rem, 1.1rem + 1.2vw, 2rem); line-height: 1.15; letter-spacing: -.01em; text-transform: none; font-weight: 600; }
+html[data-route="app"] .shell :is(.explore-intro, .trade-intro, .issue-intro, .verify-intro, .history-intro) { padding-bottom: 1rem; border-bottom: 1px solid var(--line); }
+html[data-route="app"] .verify .verify-intro { border: 0; border-bottom: 1px solid var(--line); border-radius: 0; background: none; padding: 0 0 1rem; }
+html[data-route="app"] .verify .verify-scope, html[data-route="app"] .verify .v-search, html[data-route="app"] .verify .verify-lookup, html[data-route="app"] .verify .verify-empty { border-radius: 2px; }
+html[data-route="app"] .pf-title { margin: 0 0 .25rem; font-size: .75rem; font-weight: 500; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+
+/* ---------- Portfolio ---------- */
+html[data-route="app"] .portfolio .pf-hero, html[data-route="app"] .portfolio .pf-task-strip, html[data-route="app"] .portfolio .pf-tabs, html[data-route="app"] .portfolio .pf-receipts-view, html[data-route="app"] .portfolio .card { border-radius: 2px; background: var(--surface); background-image: none; box-shadow: none; }
+html[data-route="app"] .portfolio .pf-hero-metrics > div { border: 0; border-left: 1px solid var(--line); border-radius: 0; background: transparent; box-shadow: none; }
+html[data-route="app"] .portfolio .pf-hero-metrics > div.claim { background: transparent; box-shadow: inset 0 2px 0 #fff; }
+html[data-route="app"] .portfolio .pf-hero-metrics > div.claim > span, html[data-route="app"] .portfolio .pf-hero-metrics > div.claim > b, html[data-route="app"] .portfolio .pf-hero-metrics > div.claim > b small { color: #fff; }
+html[data-route="app"] .portfolio .pf-hero-metrics b { font-variant-numeric: tabular-nums; }
+html[data-route="app"] .portfolio .pf-value-note, html[data-route="app"] .portfolio .pf-value-note * { color: var(--grey-1); }
+html[data-route="app"] .portfolio .pf-hero-metrics > div > span { font-size: .75rem; }
+html[data-route="app"] .portfolio .pf-tabs button.on, html[data-route="app"] .portfolio .pf-receipt-filter button.on { background: #fff; color: #000; box-shadow: none; }
+html[data-route="app"] .prc { color: #fff; filter: none; transform: none !important; }
+html[data-route="app"] .prc-paper { background: var(--bg); background-image: none; -webkit-mask: none; mask: none; border: 1px solid var(--line); border-radius: 2px; padding: 1rem; }
+html[data-route="app"] .prc-foil, html[data-route="app"] .prc-bar, html[data-route="app"] .prc-stamp { display: none; }
+html[data-route="app"] .prc-hd b, html[data-route="app"] .prc-big { color: #fff; }
+html[data-route="app"] .prc-hd i { border-color: var(--line-strong); color: #fff; }
+html[data-route="app"] .prc-kind, html[data-route="app"] .prc dt { color: var(--grey-1); }
+html[data-route="app"] .prc dd { color: #fff; }
+html[data-route="app"] .prc hr { border-top: 1px solid var(--line); }
+html[data-route="app"] .prc-pos, html[data-route="app"] .prc-neg { color: #fff; }
+html[data-route="app"] .prc-sold { background: var(--ink-3, #1d1d1d); } html[data-route="app"] .prc-sold i { background: #fff; }
+
+/* ---------- Verify ---------- */
+html[data-route="app"] .verify .verify-result .cert { border-radius: 2px; border-color: var(--line); background: var(--surface); }
+html[data-route="app"] .verify .proof-trail { border-radius: 2px; background: var(--surface); }
+html[data-route="app"] .verify .cert-facts dd { font-variant-numeric: tabular-nums; }
+
+/* ---------- History ---------- */
+html[data-route="app"] .t-history .history-tools { border-radius: 2px; background: var(--surface); }
+html[data-route="app"] .history-table { border-radius: 2px; background: var(--surface); }
+html[data-route="app"] .history-row { min-height: 3.5rem; grid-template-columns: 6.5rem 7rem minmax(12rem, 1fr) 8rem 6rem 10.5rem; }
+html[data-route="app"] .history-row-head { background: transparent; border-bottom: 1px solid var(--line-strong); font-size: .75rem; letter-spacing: .04em; text-transform: uppercase; }
+html[data-route="app"] .history-row:not(.history-row-head):hover { background: var(--surface-2); }
+html[data-route="app"] .history-amount, html[data-route="app"] .history-amount.positive, html[data-route="app"] .history-amount.negative { color: #fff; text-align: right; font-variant-numeric: tabular-nums; }
+html[data-route="app"] .history-type, html[data-route="app"] .history-type[class*="tone-"] { color: #fff; }
+html[data-route="app"] .history-row-head > span:nth-child(4) { text-align: right; }
+@media (max-width: 52rem) { html[data-route="app"] .history-row:not(.history-row-head) { padding: .9rem 1rem; } }
+
+/* ---------- Profile ---------- */
+html[data-route="app"] .profile-identity, html[data-route="app"] .profile-overview, html[data-route="app"] .profile-reputation, html[data-route="app"] .profile-activity, html[data-route="app"] .profile-right-rail > section, html[data-route="app"] .profile-editor { border-radius: 2px; background: var(--surface); background-image: none; box-shadow: none; }
+html[data-route="app"] .profile-overview b { font-variant-numeric: tabular-nums; }
+
+/* ---------- neutral tags; green/red stay for paid / overdue only ---------- */
+html[data-route="app"] .shell .tag { background: transparent; border-color: var(--line-strong); color: #fff; box-shadow: none; }
+html[data-route="app"] .shell .tag.paid { color: var(--ok); border-color: var(--ok); }
+html[data-route="app"] .shell .tag.bad { color: var(--bad); border-color: var(--bad); animation: none; }
+html[data-route="app"] .portfolio .pf-hero-metrics > div b, html[data-route="app"] .portfolio .pf-hero-metrics > div b small { color: #fff !important; }
+html[data-route="app"] .portfolio .pf-value-note, html[data-route="app"] .portfolio .pf-value-note * { color: var(--grey-1) !important; }
+html[data-route="app"] .prc .btn, html[data-route="app"] .prc-acts .btn { background: transparent; color: #fff; border: 1px solid var(--line-strong); }
+html[data-route="app"] .prc .btn:hover { background: #fff; color: #000; }
+html[data-route="app"] .history-row { grid-template-columns: 6.5rem 6.5rem minmax(12rem, 1fr) 7.5rem 5.5rem minmax(12rem, 13.5rem); }
+html[data-route="app"] .history-tx { display: flex; align-items: center; gap: .4rem; min-width: 0; flex-wrap: wrap; }
+
+@media (max-width: 52rem) {
+  html[data-route="app"] .portfolio .pf-hero { grid-template-columns: minmax(0, 1fr); padding: 1rem; }
+  html[data-route="app"] .portfolio .pf-hero h2 { font-size: 2.25rem; }
+  html[data-route="app"] .portfolio .pf-hero-metrics { grid-template-columns: repeat(3, minmax(0, 1fr)); border-left: 0; border-top: 1px solid var(--line); }
+  html[data-route="app"] .portfolio .pf-hero-metrics > div { padding: .7rem .6rem; border-bottom: 0; }
+  html[data-route="app"] .portfolio .pf-task-strip { flex-direction: column; align-items: stretch; }
+  html[data-route="app"] .portfolio .pf-tabs button { flex: 1 1 0; min-width: 0; min-height: 44px; }
+}
+
+html[data-route="app"] .history-date { white-space: nowrap; }
+html[data-route="app"] .history-date small { display: inline; margin-left: .35rem; }
+
+html[data-route="app"] .tscroll, html[data-route="app"] .rtable, html[data-route="app"] .rd-table tbody tr { border-radius: 0; }
+
+/* ---------- touch targets: 44px on small screens ---------- */
+@media (max-width: 52rem) {
+  html[data-route="app"] .shell :is(.btn, .chip, .fchip, .icon-btn, .addr-c, .wp-copy, .trade-panel-tabs button, .tip summary, .rd-pick, .th-sort) { min-height: 44px; }
+  html[data-route="app"] .shell :is(.btn, .icon-btn, .addr-c, .wp-copy) { min-width: 44px; }
+  html[data-route="app"] .shell .tip a { display: inline-flex; align-items: center; min-height: 44px; }
+  html[data-route="app"] .shell main :is(select, input:not([type="checkbox"])) { min-height: 44px; }
+  html[data-route="app"] .shell .t-explore .chip { min-height: 44px; }
+}
+@media (max-width: 52rem) { html[data-route="app"] .shell :is(.addr-c, .trade-board-views button, .pf-tabs button, .pf-receipt-filter button) { min-height: 44px !important; min-width: 44px; height: auto !important; } }
+html[data-route="app"] .prc-hd i, html[data-route="app"] .prc-kind, html[data-route="app"] .prc dl { font-size: .75rem; }
+@media (max-width: 52rem) { html[data-route="app"] .shell .side.mobile-open .side-mobile-head { justify-content: space-between; align-items: center; gap: .75rem; } html[data-route="app"] .shell .side.mobile-open .side-mobile-head > span { min-width: 0; flex: 1; } }
+html[data-route="app"] .bar, html[data-route="app"] .bar b, html[data-route="app"] .bars .bar b, html[data-route="app"] .verify .verify-scope, html[data-route="app"] .verify .verify-scope p, html[data-route="app"] .verify .verify-scope b { font-size: .75rem; }
+
+/* ---------- 12px floor (generated from rules below .75rem) ---------- */
+html[data-route="app"] .metric span,
+html[data-route="app"] label,
+html[data-route="app"] .btn,
+html[data-route="app"] .tag,
+html[data-route="app"] .side-item,
+html[data-route="app"] .kicker,
+html[data-route="app"] .bar .b-l,
+html[data-route="app"] .kpis div span,
+html[data-route="app"] .t-copy,
+html[data-route="app"] .rtable th,
+html[data-route="app"] .quick-route span i,
+html[data-route="app"] .dash-wallet-copy small,
+html[data-route="app"] .dash-wallet-balance small,
+html[data-route="app"] .dash-kpi small,
+html[data-route="app"] .dash-listing-main small,
+html[data-route="app"] .dash-listing-price small,
+html[data-route="app"] .dash-action > small,
+html[data-route="app"] .dash-network small,
+html[data-route="app"] .dash-wrong-network,
+html[data-route="app"] .dash-events li small,
+html[data-route="app"] .dash-footnote,
+html[data-route="app"] .side-brand small,
+html[data-route="app"] .page-head .kicker,
+html[data-route="app"] .ex-stats .kpi small,
+html[data-route="app"] .pf-kpis .kpi small,
+html[data-route="app"] .page-head-status,
+html[data-route="app"] .issue-rail li span,
+html[data-route="app"] .issue-summary dt,
+html[data-route="app"] .history-row-head,
+html[data-route="app"] .history-date small,
+html[data-route="app"] .history-activity small,
+html[data-route="app"] .history-tx,
+html[data-route="app"] .history-status .tag,
+html[data-route="app"] .issue-summary dd,
+html[data-route="app"] .dash-overview-copy .kicker,
+html[data-route="app"] .dash-hero-metric>span,
+html[data-route="app"] .dash-hero-metric>b i,
+html[data-route="app"] .dash-hero-metric>small,
+html[data-route="app"] .dash-live,
+html[data-route="app"] .dash-stage-index,
+html[data-route="app"] .dash-stage>header small,
+html[data-route="app"] .dash-invoice-no,
+html[data-route="app"] .dash-invoice-detail,
+html[data-route="app"] .dash-invoice-detail strong,
+html[data-route="app"] .dash-invoice-state .tag,
+html[data-route="app"] .dash-invoice-state>small,
+html[data-route="app"] .dash-stage-empty,
+html[data-route="app"] .dash-more,
+html[data-route="app"] .dash-wallet-status,
+html[data-route="app"] .dash-network,
+html[data-route="app"] .dash-events li>div>b,
+html[data-route="app"] .dash-events li>div>small,
+html[data-route="app"] .dash-events li>time,
+html[data-route="app"] .wiz-preview-head .kicker,
+html[data-route="app"] .wiz-preview-state,
+html[data-route="app"] .wiz-minted-note,
+html[data-route="app"] .trade-intro-stats,
+html[data-route="app"] .trade-hl-top>i,
+html[data-route="app"] .trade-hl-bottom small,
+html[data-route="app"] .trade-row-head,
+html[data-route="app"] .trade-row-invoice small,
+html[data-route="app"] .trade-row-price,
+html[data-route="app"] .trade-row-price small,
+html[data-route="app"] .trade-row-discount,
+html[data-route="app"] .pf-hero>div:first-child>p:last-child,
+html[data-route="app"] .pf-hero-metrics>div>b small,
+html[data-route="app"] .pf-tabs button,
+html[data-route="app"] .pf-tabs button span,
+html[data-route="app"] .pf-receipt-filter button,
+html[data-route="app"] .pf-receipt-filter button span,
+html[data-route="app"] .ex-stats .kpi>span,
+html[data-route="app"] .ex-stats .kpi>small,
+html[data-route="app"] .explore-card .ex-id,
+html[data-route="app"] .explore-issuer,
+html[data-route="app"] .explore-card-facts small,
+html[data-route="app"] .explore-card-facts b,
+html[data-route="app"] .explore-meter-label b,
+html[data-route="app"] .explore-card-foot,
+html[data-route="app"] .explore-card-foot>b,
+html[data-route="app"] .explore-card-foot small,
+html[data-route="app"] .tl-meta time,
+html[data-route="app"] .tl-money,
+html[data-route="app"] .side-group-title,
+html[data-route="app"] .issue-chain-pill,
+html[data-route="app"] .verify-network,
+html[data-route="app"] .ir-meta,
+html[data-route="app"] .ir-foot,
+html[data-route="app"] .ir-sub,
+html[data-route="app"] .ir-face strong i,
+html[data-route="app"] .ir-face small,
+html[data-route="app"] .ir-facts dt,
+html[data-route="app"] .issue-ready-mint,
+html[data-route="app"] .cert-status span,
+html[data-route="app"] .cert-facts dt,
+html[data-route="app"] .cert-facts dd,
+html[data-route="app"] .cert-summary,
+html[data-route="app"] .cert-disclaimer,
+html[data-route="app"] .proof-trail>header>span,
+html[data-route="app"] .proof-trail>header>span small,
+html[data-route="app"] .proof-trail .vc-k,
+html[data-route="app"] .proof-trail .vc-k small,
+html[data-route="app"] .proof-event-body>b,
+html[data-route="app"] .proof-event-body>small,
+html[data-route="app"] .proof-tx code,
+html[data-route="app"] .proof-tx span,
+html[data-route="app"] .proof-checks>summary,
+html[data-route="app"] .profile-role,
+html[data-route="app"] .profile-addresses,
+html[data-route="app"] .profile-addresses .addr,
+html[data-route="app"] .profile-copy,
+html[data-route="app"] .profile-note,
+html[data-route="app"] .profile-bio,
+html[data-route="app"] .profile-editor-heading>span,
+html[data-route="app"] .profile-editor-grid>label,
+html[data-route="app"] .profile-editor-grid input:not([type="file"]),
+html[data-route="app"] .profile-editor-grid textarea,
+html[data-route="app"] .profile-upload small,
+html[data-route="app"] .profile-bio-input>small,
+html[data-route="app"] .profile-chain-tag,
+html[data-route="app"] .profile-rate>small,
+html[data-route="app"] .profile-rate-empty>b,
+html[data-route="app"] .profile-trust-stats span,
+html[data-route="app"] .profile-trust-stats b small,
+html[data-route="app"] .profile-data-note,
+html[data-route="app"] .profile-badges>header>span,
+html[data-route="app"] .profile-badge>span,
+html[data-route="app"] .profile-gas-balance>span,
+html[data-route="app"] .profile-network-row b,
+html[data-route="app"] .profile-network-row small,
+html[data-route="app"] .profile-faucet,
+html[data-route="app"] .profile-faucet-account>code,
+html[data-route="app"] .profile-record-tabs button,
+html[data-route="app"] .profile-role-section h4 small,
+html[data-route="app"] .profile-record-title>b,
+html[data-route="app"] .profile-record-title>small,
+html[data-route="app"] .profile-record-status,
+html[data-route="app"] .profile-empty,
+html[data-route="app"] .profile-scan-warning,
+html[data-route="app"] .trade-recent .kicker,
+html[data-route="app"] .trade-recent-live,
+html[data-route="app"] .trade-recent li>b,
+html[data-route="app"] .trade-recent li>small,
+html[data-route="app"] .trade-amount-presets button,
+html[data-route="app"] .ex-stage-filters .chip,
+html[data-route="app"] .trade-kpis small,
+html[data-route="app"] .trade-kpis article>span,
+html[data-route="app"] .quick-buy-panel header>small,
+html[data-route="app"] .trade-charts header>small,
+html[data-route="app"] .quick-buy-panel .kicker,
+html[data-route="app"] .trade-charts .kicker,
+html[data-route="app"] .trade-market-heading .kicker,
+html[data-route="app"] .trade-budget-input span,
+html[data-route="app"] .trade-quote-note,
+html[data-route="app"] .trade-market-heading h3 span,
+html[data-route="app"] .trade-board-views button,
+html[data-route="app"] .trade-row-invoice b,
+html[data-route="app"] .trade-row-apr,
+html[data-route="app"] .trade-best-badge,
+html[data-route="app"] .trade-chart-grid article>div,
+html[data-route="app"] .trade-spark-empty,
+html[data-route="app"] .trade-my-row>div:first-child b,
+html[data-route="app"] .trade-my-row>span,
+html[data-route="app"] .trade-my-row>small,
+html[data-route="app"] .trade-my-row>div:first-child small,
+html[data-route="app"] .trade-sell-yield>div:first-child,
+html[data-route="app"] .trade-sell-yield p,
+html[data-route="app"] .trade-target-prices button span,
+html[data-route="app"] .trade-target-prices button b,
+html[data-route="app"] .trade-status-tag,
+html[data-route="app"] .trade-demo-banner,
+html[data-route="app"] .trade-demo-banner b,
+html[data-route="app"] .trade-quote-facts dt,
+html[data-route="app"] .trade-intro .kicker,
+html[data-route="app"] .trade-bar .chip,
+html[data-route="app"] .tb-sort>span,
+html[data-route="app"] .tb-sort select,
+html[data-route="app"] .trade-row-units,
+html[data-route="app"] .trade-row-due,
+html[data-route="app"] .trade-row .trade-buy,
+html[data-route="app"] .quick-buy-panel>label,
+html[data-route="app"] .sell-panel>label,
+html[data-route="app"] .sell-panel .fields label,
+html[data-route="app"] .trade-row-discount::before,
+html[data-route="app"] .trade-row-units::before,
+html[data-route="app"] .profile-overview span { font-size: max(.75rem, 12px); }

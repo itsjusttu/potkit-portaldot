@@ -91,13 +91,16 @@ export function Verify({ c }: { c: Ctx }) {
 
   return (
     <div className="verify">
-      <section className="verify-intro"><div><p className="kicker">Public verification · Portaldot V3</p><h2>Verify an invoice</h2><p>Read the receipt, custody and settlement state directly from the selected PotKit contract.</p></div><span className="verify-network"><i /> Chain 420420777</span></section>
+      <section className="verify-intro"><div><p className="kicker">Public verification · Portaldot V3</p><h1>Verify an invoice</h1><p>Read the receipt, custody and settlement state directly from the selected PotKit contract.</p></div><span className="verify-network"><i /> Chain 420420777</span></section>
       <div className="verify-scope"><Ico n="info" /><p><b>What this proof checks:</b> receipt and share-token state, custody, terms and settlement events read from Portaldot. It does not independently confirm that the off-chain invoice or claim is genuine.</p></div>
-      <form className="v-search" onSubmit={(e) => { e.preventDefault(); void check(input); }}>
-        <label htmlFor="v-in" className="sr-only">Receipt id or share-token address</label>
-        <div className="tb-search"><Ico n="search" /><input id="v-in" placeholder="Receipt id (e.g. 4) or KIT share-token address" value={input} onChange={(e) => setInput(e.target.value)} /></div>
-        <button className="btn primary" type="submit" disabled={loading}>{loading ? "Reading…" : "Verify on-chain"}</button>
-      </form>
+      <div className="verify-lookup">
+        <div className="verify-lookup-copy"><h3>Look up a receipt</h3><p>Enter a receipt ID to read current contract state. A share-token address can find a receipt in the loaded range.</p></div>
+        <form className="v-search" onSubmit={(e) => { e.preventDefault(); void check(input); }}>
+          <label htmlFor="v-in" className="sr-only">Receipt id or share-token address</label>
+          <div className="tb-search"><Ico n="search" /><input id="v-in" placeholder="Receipt id (e.g. 4) or KIT share-token address" value={input} onChange={(e) => setInput(e.target.value)} /></div>
+          <button className="btn primary" type="submit" disabled={loading}>{loading ? "Reading…" : "Verify on-chain"}</button>
+        </form>
+      </div>
       {msg && <p className="banner err" role="alert">{msg}</p>}
       {loading && !res && <p className="muted" role="status">Reading Portaldot…</p>}
       {!res && !loading && !msg && <p className="muted verify-empty">Enter a receipt id to inspect its current on-chain state. Share-token address lookup covers loaded receipts only.</p>}

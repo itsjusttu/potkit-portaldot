@@ -117,6 +117,8 @@ export function Profile({ c }: { c: Ctx }) {
         <div className="profile-head-actions">{isOwner && <button className="btn" onClick={() => { setDraft(profile); setEditing(!editing); }}><Ico n="user" /> {editing ? "Close editor" : "Edit profile"}</button>}<button className="btn primary" onClick={() => void share()}><Ico n="link" /> {copied === "share" ? "Copied" : "Share profile"}</button></div>
       </section>
 
+      <div className="profile-overview"><div><span>Receipts issued</span><b>{issuerIds.size}</b></div><div><span>Share purchases · scanned</span><b>{buys.length}</b></div><div><span>Settled receipts</span><b>{settledCount}</b></div><button className="btn sm" onClick={() => c.setTab(publicView ? "verify" : "history")}>{publicView ? "Verify a receipt" : "View wallet history"} <Ico n="arrow" /></button></div>
+
       {editing && isOwner && <section className="profile-editor card">
         <div className="profile-editor-heading"><div><p className="kicker">Local profile</p><h3>Personalize your identity</h3></div><span>Only stored on this device</span></div>
         <div className="profile-editor-grid"><label className="profile-upload"><span className="profile-avatar small" style={avatarStyle(target, draft.avatar)} /><span>Change avatar<small>Image up to 1 MB</small></span><input type="file" accept="image/*" onChange={(e) => pickAvatar(e.target.files?.[0])} /></label>

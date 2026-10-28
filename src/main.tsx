@@ -11,6 +11,7 @@ import "./styles/receivable-trade-issue.css";
 import "./styles/receivable-portfolio-verify.css";
 import "./styles/usability-pass.css";
 import "./styles/workspace-composition.css";
+import "./styles/ledger.css";
 import { Intro } from "./Intro";
 
 migrateHashRoute();

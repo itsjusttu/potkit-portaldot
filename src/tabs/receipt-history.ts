@@ -32,3 +32,9 @@ export function readReceiptHistory(events: ChainEvent[]) {
   }
   return history;
 }
+
+/** Rows whose current lock cycle has not been redeemed (a re-lock after redeem makes the receipt active again). */
+export function withoutRedeemed<T extends { id: number }>(rows: T[], events: ChainEvent[]): T[] {
+  const history = readReceiptHistory(events);
+  return rows.filter((r) => !(history.get(r.id)?.redeemed ?? false));
+}

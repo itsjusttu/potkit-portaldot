@@ -5,6 +5,7 @@ import { FaucetButton } from "../Faucet";
 import { Addr, Drawer, Empty, Ico, toast } from "../AppUi";
 import { daysTo, faceShare, type Ctx } from "./ctx";
 import { isUserRejected } from "../lib/txerrors";
+import { exceedsDecimals } from "../lib/settlecheck";
 import { day, N, pct, SettleBadge } from "./shared";
 
 type Card = { l: Listing; r: Row; price: number; face: number; discount: number; ret: number; apr: number | null; days: number; progress: number | null; state: "Open" | "Due soon" | "Overdue" | "Settled" };
@@ -40,6 +41,8 @@ export function Trade({ c }: { c: Ctx }) {
   const [filtersOpen, setFiltersOpen] = useState(false);
   const dis = Boolean(c.busy) || c.gated;
   const [pending, setPending] = useState<Pending | null>(null);
+  const [panel, setPanel] = useState<"quick" | "sell">(c.param("sell") ? "sell" : "quick");
+  const openPanel = (next: "quick" | "sell", id: string) => (e: { preventDefault: () => void }) => { e.preventDefault(); setPanel(next); window.setTimeout(() => document.getElementById(id)?.scrollIntoView({ block: "start" }), 0); };
   /** issue time = mint (or lock) event timestamp; falls back to a 30-day term before the due date */
   const marketEvents = c.events;
   const issuedAt = (id: number) => (marketEvents.find((e) => e.id === id && e.kind === "mint" && e.time) ?? marketEvents.find((e) => e.id === id && e.kind === "lock" && e.time))?.time ?? 0;
@@ -70,7 +73,7 @@ export function Trade({ c }: { c: Ctx }) {
   const buyAmount = amt.replace(/,/g, "").trim();
   let buyRaw = 0n;
   let buyPrecisionError = false;
-  if (/^\d+(\.\d+)?$/.test(buyAmount)) { try { buyRaw = parseUnits(buyAmount, 18); } catch { buyPrecisionError = true; } }
+  if (/^\d+(\.\d+)?$/.test(buyAmount)) { if (exceedsDecimals(buyAmount, 18)) buyPrecisionError = true; else buyRaw = parseUnits(buyAmount, 18); }
   const buyValid = Boolean(sel) && buyRaw > 0n && buyRaw <= (sel?.l.remaining ?? 0n);
   let buyCost = 0n;
   if (sel && buyValid) buyCost = listingCost(sel.l.price, buyRaw);
@@ -82,8 +85,8 @@ export function Trade({ c }: { c: Ctx }) {
   const sellHeld = sellRow ? c.held.get(sellRow.id) ?? 0n : 0n;
   const sellFace = sellRow ? n6(faceShare(sellRow), sellRow.settle.decimals || 18) : 0;
   const sellAmtOk = /^\d+(\.\d+)?$/.test(sellAmt.trim()) && Number(sellAmt) > 0;
-  const sellPriceOk = (() => { try { return /^\d+(\.\d+)?$/.test(sellPrice.trim()) && parseUnits(sellPrice.trim(), 18) > 0n; } catch { return false; } })();
-  const sellAmountError = !sellAmt ? "" : !sellAmtOk ? "Enter a positive share amount." : !sellRow ? "" : (() => { try { return parseUnits(sellAmt.trim(), 18) > sellHeld ? `You hold only ${units(sellHeld)} shares.` : ""; } catch { return "Use up to 18 decimal places."; } })();
+  const sellPriceOk = /^\d+(\.\d+)?$/.test(sellPrice.trim()) && !exceedsDecimals(sellPrice, 18) && parseUnits(sellPrice.trim(), 18) > 0n;
+  const sellAmountError = !sellAmt ? "" : !sellAmtOk ? "Enter a positive share amount." : !sellRow ? "" : exceedsDecimals(sellAmt, 18) ? "Use up to 18 decimal places." : parseUnits(sellAmt.trim(), 18) > sellHeld ? `You hold only ${units(sellHeld)} shares.` : "";
   const sellValid = Boolean(sellRow) && sellAmtOk && !sellAmountError && sellPriceOk;
   const sellPriceError = !sellPriceOk ? "Enter a positive price in tPOT, with at most 18 decimal places." : "";
   const sellApr = sellFace > 0 && sellRow?.dueDate && daysTo(sellRow.dueDate) > 0 ? (1 - Number(sellPrice) / sellFace) * 365 / daysTo(sellRow.dueDate) : null;
@@ -96,7 +99,7 @@ export function Trade({ c }: { c: Ctx }) {
   const volume24hRaw = buys24h.reduce((s, e) => s + (e.value ?? 0n), 0n);
   let budgetRaw = 0n;
   let budgetPrecisionError = false;
-  if (/^\d+(\.\d+)?$/.test(quickBudget.trim())) { try { budgetRaw = parseUnits(quickBudget.trim(), 18); } catch { budgetPrecisionError = true; } }
+  if (/^\d+(\.\d+)?$/.test(quickBudget.trim())) { if (exceedsDecimals(quickBudget, 18)) budgetPrecisionError = true; else budgetRaw = parseUnits(quickBudget.trim(), 18); }
   const budgetError = budgetPrecisionError ? "Use up to 18 decimal places." : budgetRaw <= 0n ? "Enter a positive tPOT amount." : "";
   const quote: Allocation[] = [];
   let budgetLeft = budgetRaw;
@@ -127,7 +130,8 @@ export function Trade({ c }: { c: Ctx }) {
 
   return (
     <div className="trade">
-      <section className="trade-intro"><div><p className="kicker">Markets · Portaldot V3</p><h2>Trade</h2><p>Buy invoice shares below face value. Yield is an estimate assuming full repayment at maturity.</p></div><div className="trade-intro-stats"><span><b>{eligible.length}</b> open listings</span><span><b>{num(eligible.reduce((s, x) => s + x.price * Number(x.l.remaining) / 1e18, 0))}</b> tPOT listed</span></div></section>
+      <section className="trade-intro"><div><p className="kicker">Markets · Portaldot V3</p><h1>Trade</h1><p>Compare open listings by price, discount and due date. Payout estimates assume full repayment and are not guaranteed.</p></div><div className="trade-intro-stats"><span><b>{eligible.length}</b> open listings</span><span><b>{num(eligible.reduce((s, x) => s + x.price * Number(x.l.remaining) / 1e18, 0))}</b> tPOT listed</span></div></section>
+      <nav className="trade-route-nav" aria-label="Market tasks"><a href="#market-board">Browse listings <Ico n="arrow" /></a><a href="#quick-buy" onClick={openPanel("quick", "quick-buy")}>Quote a purchase <Ico n="arrow" /></a><a href="#sell" onClick={openPanel("sell", "sell")}>List your shares <Ico n="arrow" /></a></nav>
       <section className="trade-kpis" aria-label="Market overview">
         <article><small>Best APR</small><strong className="yield-text">{bestYield ? pct(bestYield.apr!) : "—"}</strong><span>{bestYield ? `KIT#${bestYield.r.id} · due in ${Math.ceil(bestYield.days)}d` : "No eligible listings"}</span></article>
         <article><small>Average discount</small><strong>{openAvgDiscount === null ? "—" : pct(openAvgDiscount)}</strong><span>Across eligible listings</span></article>
@@ -160,7 +164,7 @@ export function Trade({ c }: { c: Ctx }) {
             </>
             : (
               <>
-              <div className="trade-market-card card">
+              <div className="trade-market-card card" id="market-board">
                 <div className="trade-market-heading"><div><p className="kicker">Live board</p><h3>{marketView === "market" ? "Listings" : "My listings"} <span>{boardItems.length}</span></h3></div><div className="trade-board-views" role="group" aria-label="Listing view">{([ ["market", "All listings"], ["mine", `My listings · ${myListings.length}`] ] as const).map(([key, label]) => <button key={key} type="button" className={marketView === key ? "on" : ""} onClick={() => setMarketView(key)}>{label}</button>)}</div></div>
                 {marketView === "market" ? <div className="trade-market-list" role="table" aria-label="Open invoice share markets">
                   <div className="trade-row trade-row-head" role="row"><span role="columnheader">Invoice</span><span role="columnheader">Price / share</span><span role="columnheader">Discount</span><span role="columnheader">Est. APR</span><span role="columnheader">Due in</span><span role="columnheader">Shares available</span><span role="columnheader">Action</span></div>
@@ -197,9 +201,10 @@ export function Trade({ c }: { c: Ctx }) {
           <div className="tags"><SettleBadge r={sel.r} /></div>
           <dl className="facts compact"><div><dt>Price / share</dt><dd className="num">{num(sel.price)} tPOT</dd></div><div><dt>Face / share</dt><dd className="num">{sel.face ? `${num(sel.face)} tPOT` : "no terms"}</dd></div><div><dt>Discount</dt><dd className="num">{sel.face ? pct(sel.discount) : "—"}</dd></div><div><dt>Est. APR</dt><dd className="num">{sel.apr !== null ? pct(sel.apr) : "—"}</dd></div><div><dt>Due</dt><dd>{sel.r.dueDate ? day(sel.r.dueDate) : "—"}</dd></div><div><dt>Available</dt><dd className="num">{units(sel.l.remaining)}</dd></div></dl>
           <p className="market-risk" role="note"><b>Issuer-provided information.</b> PotKit records custody and terms on-chain but does not independently verify the underlying invoice.</p>
-          {sel.l.seller === c.account ? <button className="btn block" onClick={() => openBuy(sel)}>Manage listing</button> : sel.state === "Settled" || sel.state === "Overdue" ? <p className="muted">{sel.state} — closed for trading.</p> : <button className="btn primary block" onClick={() => openBuy(sel)}>Buy shares</button>}
+          {sel.l.seller === c.account ? <button className="btn block" onClick={() => openBuy(sel)}>Manage listing</button> : sel.state === "Settled" || sel.state === "Overdue" ? <p className="muted">{sel.state} — closed for trading.</p> : <button className="btn block" onClick={() => openBuy(sel)}>Buy shares</button>}
         </section>}
-        {c.market && <section className="card quick-buy-panel" aria-label="Quick buy">
+        {c.market && <div className="trade-panel-tabs" role="tablist" aria-label="Trade actions">{([["quick", "Quick buy"], ["sell", "Sell"]] as const).map(([k, label]) => <button key={k} type="button" role="tab" id={`tab-${k}`} aria-selected={panel === k} aria-controls={k === "quick" ? "quick-buy" : "sell"} className={panel === k ? "on" : ""} onClick={() => setPanel(k)}>{label}</button>)}</div>}
+        {c.market && panel === "quick" && <section className="card quick-buy-panel" id="quick-buy" role="tabpanel" aria-labelledby="tab-quick" aria-label="Quick buy">
           <header><div><p className="kicker">Quote across live listings</p><h3>Quick buy</h3></div><small>Lowest price first</small></header>
           <label htmlFor="quick-budget">Spend</label>
           <div className="trade-budget-input"><input id="quick-budget" inputMode="decimal" value={quickBudget} aria-label="Spend amount in tPOT" aria-invalid={Boolean(budgetError)} aria-describedby={budgetError ? "quick-budget-error" : undefined} onChange={(e) => setQuickBudget(e.target.value)} /><span>tPOT</span></div>
@@ -231,7 +236,7 @@ export function Trade({ c }: { c: Ctx }) {
             });
           }}>{!c.market ? "Market not configured" : !c.account ? "Connect wallet" : c.gated ? "Switch network" : c.busy === "quick-buy" ? "Confirm in wallet…" : !quote.length ? "No affordable listings" : `Buy ${units(quoteShares)} shares`}</button>
         </section>}
-        {c.market && <section className="card sell-panel" id="sell" aria-label="Sell shares">
+        {c.market && panel === "sell" && <section className="card sell-panel" id="sell" role="tabpanel" aria-labelledby="tab-sell" aria-label="Sell shares">
           <h2><Ico n="tag" /> Sell shares</h2>
           <p className="muted">Get tPOT today. Shares are held in escrow by PotKit until sold or cancelled; buyers pay you directly in the same transaction.</p>
           {!sellable.length ? <div className="trade-sell-empty"><p className="muted">You hold no unsettled shares. Issue an invoice first.</p><button className="btn sm primary" onClick={() => c.account ? c.setTab("issue") : c.connect()}>{c.account ? "Issue invoice" : "Connect wallet"} <Ico n="arrow" /></button></div> : (

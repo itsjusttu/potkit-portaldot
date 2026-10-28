@@ -60,9 +60,10 @@ export function Portfolio({ c }: { c: Ctx }) {
       )}
 
       <section className="pf-hero">
-        <div><p className="kicker">Face-value estimate</p><h2><CountUp v={fmt(totalValue, dec)} /><small> tPOT</small></h2><p className="pf-value-note"><span title="Face value is an estimate from invoice terms, not a market quote or guaranteed payout." aria-label="Face-value estimate information"><Ico n="info" size={13} /></span>Face value of open positions · {fmt(claimTotal, dec)} tPOT claimable</p></div>
+        <div><h1 className="kicker pf-title">Portfolio at a glance</h1><h2><CountUp v={fmt(totalValue, dec)} /><small> tPOT</small></h2><p className="pf-value-note"><span title="Face value is an estimate from invoice terms, not a market quote or guaranteed payout." aria-label="Face-value estimate information"><Ico n="info" size={13} /></span>Face value estimate · {fmt(claimTotal, dec)} tPOT claimable</p></div>
         <div className="pf-hero-metrics"><div><span>Receipts</span><b>{receipts.length}</b></div><div><span>Share positions</span><b>{holdings.length}</b></div><div className={claimable.length ? "claim" : ""}><span>Claimable</span><b>{fmt(claimTotal, dec)} <small>tPOT</small></b></div></div>
       </section>
+      <div className="pf-task-strip"><div><b>{claimable.length ? `${claimable.length} payout${claimable.length === 1 ? "" : "s"} ready` : "No payouts ready"}</b><span>{claimable.length ? "Review settled positions and claim when ready." : "Track issued receipts and held shares below."}</span></div><div className="pf-task-actions"><button className="btn sm" onClick={() => setPfTab(claimable.length ? "claimable" : "shares")}>{claimable.length ? "Review claims" : "View holdings"} <Ico n="arrow" /></button><button className="btn sm" onClick={() => c.setTab("history")}>Transaction history</button></div></div>
       <nav className="pf-tabs" aria-label="Portfolio sections">
         {([["receipts", "Receipts", receipts.length], ["shares", "Shares", holdings.length], ["claimable", "Claimable", claimable.length]] as const).map(([key, label, count]) => <button key={key} type="button" className={`${pfTab === key ? "on" : ""} ${key === "claimable" && claimable.length ? "has-claim" : ""}`} aria-current={pfTab === key ? "page" : undefined} onClick={() => setPfTab(key)}>{label}<span>{count}</span></button>)}
       </nav>

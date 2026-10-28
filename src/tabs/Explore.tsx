@@ -2,7 +2,7 @@ import { useState } from "react";
 import { fmt, KINDS, short, units, type ChainEvent, type Row } from "../lib/chain";
 import { Addr, CountUp, Empty, Ico, StatusBars } from "../AppUi";
 import { faceShare, type Ctx } from "./ctx";
-import { pct } from "./shared";
+import { day, pct } from "./shared";
 import { N } from "./shared";
 import { readReceiptHistory } from "./receipt-history";
 export const SkelRows = ({ n = 6, cols = 6 }: { n?: number; cols?: number }) => <div className="skel-rows" aria-busy="true" aria-label="Loading">{Array.from({ length: n }, (_, i) => <div key={i} className="skel-row">{Array.from({ length: cols }, (_, j) => <span key={j} className={`skel ${j === 0 ? "w100" : "w60"}`} />)}</div>)}</div>;
@@ -15,7 +15,7 @@ const ago = (t: number) => { if (!t) return ""; const s = Date.now() / 1000 - t;
 
 export function Explore({ c }: { c: Ctx }) {
   const [q, setQ] = useState(c.param("addr"));
-  const [view, setView] = useState<"cards" | "table">(() => { try { return localStorage.getItem("potkit.exview") === "table" ? "table" : "cards"; } catch { return "cards"; } });
+  const [view, setView] = useState<"cards" | "table">(() => { try { return localStorage.getItem("potkit.exview") === "cards" ? "cards" : "table"; } catch { return "table"; } });
   const [stageFilter, setStageFilter] = useState<"all" | "trading" | "settled" | "redeemed">("all");
   const pickView = (v: "cards" | "table") => { setView(v); try { localStorage.setItem("potkit.exview", v); } catch { /* Private browsing may block storage. */ } };
   const [col, setCol] = useState<Col>("id");
@@ -52,7 +52,7 @@ export function Explore({ c }: { c: Ctx }) {
 
   return (
     <div className="explore">
-      <section className="explore-intro"><div><p className="kicker">Loaded receipts · {R.length} of {c.total}</p><h2>Explore real-world receivables</h2><p>Review issuer-provided invoice details, on-chain terms and shares currently listed.</p></div><span className="explore-live"><i /> Live from Portaldot V3</span></section>
+      <section className="explore-intro"><div><p className="kicker">Loaded receipts · {R.length} of {c.total}</p><h1>Explore real-world receivables</h1><p>Compare status, terms and open asks across issuer-provided receipts. Select a receipt to inspect its proof.</p></div><div className="explore-intro-actions"><span className="explore-live"><i /> Live from Portaldot V3</span><button className="btn sm primary" onClick={() => c.setTab("trade")}>Open share market <Ico n="arrow" /></button></div></section>
       {!c.eventsOk && !c.eventsLoading && <p className="banner ex-scan-warning" role="status">Event scan incomplete. Trade totals and redeemed statuses may omit transactions outside the readable range.</p>}
       <section className="ex-stats" aria-label="Loaded network overview">
         <div className="kpi"><span>Receipts on contract</span><b className="num"><N l={c.loading}><CountUp v={c.total} /></N></b><small><N l={c.loading}>{R.filter((r) => r.fraction).length} locked among loaded receipts</N></small></div>
@@ -66,14 +66,14 @@ export function Explore({ c }: { c: Ctx }) {
       <div className="ex-grid">
         <section className="card ex-table">
           <div className="row ex-head">
-            <h2>All receipts</h2>
+            <div className="ex-head-title"><h2>Receivable board</h2><p className="muted small">{c.loading ? "Reading contract…" : `${rows.length} of ${R.length} loaded receipts shown`}</p></div>
             <div className="ex-view-controls">
-              <div className="chips view-toggle" role="group" aria-label="View">{(["cards", "table"] as const).map((v) => <button key={v} className={`chip ${view === v ? "on" : ""}`} aria-pressed={view === v} onClick={() => pickView(v)}>{v === "cards" ? "Receipts" : "Table"}</button>)}</div>
+              <div className="chips view-toggle" role="group" aria-label="View">{(["table", "cards"] as const).map((v) => <button key={v} className={`chip ${view === v ? "on" : ""}`} aria-pressed={view === v} onClick={() => pickView(v)}>{v === "cards" ? "Cards" : "Table"}</button>)}</div>
               <div className="chips ex-stage-filters" role="group" aria-label="Filter receipts by lifecycle">
                 {([ ["all", "All"], ["trading", "Trading"], ["settled", "Settled"], ["redeemed", "Redeemed"] ] as const).map(([key, label]) => <button key={key} className={`chip ex-filter-${key} ${stageFilter === key ? "on" : ""}`} aria-pressed={stageFilter === key} onClick={() => setStageFilter(key)}>{label}</button>)}
               </div>
             </div>
-            <div className="tb-search"><Ico n="search" /><input aria-label="Search receipts" placeholder="Search id, note, status or address" value={q} onChange={(e) => setQ(e.target.value)} /></div>
+            <div className="tb-search"><Ico n="search" /><input aria-label="Search receipts" placeholder="Search receipts or address" value={q} onChange={(e) => setQ(e.target.value)} /></div>
           </div>
           {c.loading ? <SkelRows /> : !rows.length ? <Empty icon="▤" title={R.length ? "No receipts match" : "No receipts loaded"} body={R.length ? "Change the search or lifecycle filter to see more receipts." : c.total > 0 ? "No receipt details were returned by the RPC. Try refreshing the page." : "No receipts have been issued on this vault yet."} /> : view === "cards" ? (
             <div className="explore-card-grid">
@@ -90,20 +90,21 @@ export function Explore({ c }: { c: Ctx }) {
                     <div className="explore-card-facts"><div><small>Face value</small><b>{face ? `${fmt(face, r.settle.decimals)} ${r.settle.symbol}` : "Terms pending"}</b></div><div><small>Due</small><b>{dueDate ? new Date(dueDate * 1000).toLocaleDateString("en-US", { month: "short", day: "2-digit", year: "numeric" }) : redeemed ? "No due date" : "—"}</b></div></div>
                     <div className="explore-meter-label"><span>{redeemed ? "Shares issued before redemption" : "Currently listed"}</span><b>{redeemed && totalShares > 0n ? units(totalShares) : totalShares > 0n ? `${units(onMkt)} / ${units(totalShares)}` : "Not issued"}</b></div><div className="explore-meter"><i style={{ width: `${redeemed ? 0 : marketPct}%` }} /></div>
                     <div className="explore-card-foot"><span>{redeemed ? "Lifecycle complete" : r.fraction ? `${units(totalShares)} shares` : "Receipt only"}</span><b>{redeemed && receiptHistory.get(r.id)?.settled ? <>Settled · {fmt(receiptHistory.get(r.id)?.settle?.value ?? r.settle.amount, r.settle.decimals)} {r.settle.symbol} paid</> : p === undefined ? (redeemed ? "REDEEMED" : "Not listed") : <>{fmt(p, 18)} <small>tPOT / share</small></>}</b></div>
-                    <footer><button className="btn sm" onClick={() => c.setTab("verify", { id: String(r.id) })}><Ico n="shield" /> Verify</button>{!redeemed && r.fraction && !r.settle.settled && <button className="btn sm primary" onClick={() => p !== undefined ? c.setTab("trade") : c.openPay(r.id)}>{p !== undefined ? "View market" : "Pay invoice"}</button>}</footer>
+                    <footer><button className="btn sm" onClick={() => c.setTab("verify", { id: String(r.id) })}><Ico n="shield" /> Verify</button>{!redeemed && r.fraction && !r.settle.settled && <button className="btn sm" onClick={() => p !== undefined ? c.setTab("trade") : c.openPay(r.id)}>{p !== undefined ? "View market" : "Pay invoice"}</button>}</footer>
                   </article>
                 );
               })}
             </div>
           ) : (
             <div className="tscroll"><table className="rtable">
-              <thead><tr>{th("id", "Receipt")}{th("status", "Status")}{th("face", "Face value", true)}{th("supply", "Shares", true)}<th scope="col" className="num">Best ask</th><th scope="col"><span className="sr-only">Actions</span></th></tr></thead>
+              <thead><tr>{th("id", "Receipt")}{th("status", "Status")}{th("face", "Face value", true)}{th("due", "Due")}{th("supply", "Shares", true)}<th scope="col" className="num">Best ask</th><th scope="col"><span className="sr-only">Actions</span></th></tr></thead>
               <tbody>
                 {rows.map((r) => (
                   <tr key={r.id}>
                     <td data-label="Receipt"><b>#{r.id} · {KINDS[r.kind]}</b><span className="muted r-note">{r.note}</span><span className="r-dep small muted">{r.depositor ? <>by <Addr a={r.depositor} /></> : <>owner <Addr a={r.owner} /></>}</span></td>
                     <td data-label="Status"><div className="tags">{isRedeemed(r) ? <span className="tag explore-redeemed-tag">REDEEMED</span> : <SettleBadge r={r} terms={false} />}</div></td>
                     <td data-label="Face value" className="num">{faceValueOf(r) > 0n ? `${fmt(faceValueOf(r), r.settle.decimals)} ${r.settle.symbol}` : "—"}</td>
+                    <td data-label="Due">{dueDateOf(r) ? day(dueDateOf(r)) : "—"}</td>
                     <td data-label="Shares" className="num">{supplyOf(r) > 0n ? units(supplyOf(r)) : "—"}</td>
                     <td data-label="Best ask" className="num">{(() => { const p = ask.get(r.id); if (p === undefined) return "—"; const f = supplyOf(r) > 0n ? faceValueOf(r) * 10n ** 18n / supplyOf(r) : faceShare(r); return <>{fmt(p, 18)}{f > 0n && <span className="pos small ba-disc">{pct(1 - Number(p) / Number(f))} off</span>}</>; })()}</td>
                     <td className="acts"><div className="row">
