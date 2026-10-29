@@ -8,7 +8,7 @@ html[data-route="app"] .shell .side-support .side-item { letter-spacing: 0; text
 html[data-route="app"] .shell .side-support .side-item span { letter-spacing: 0; text-transform: none; }
 html[data-route="app"] .shell .side-item.on::after { display: none; }
 
-@media (min-width: 52.01rem) and (max-width: 87.5rem) {
+@media (min-width: 52.01rem) and (max-width: 68.75rem) {
   html[data-route="app"] .shell { grid-template-columns: 56px minmax(0, 1fr); }
   html[data-route="app"] .shell .side { align-items: center; gap: .5rem; padding: .75rem 0; overflow-x: hidden; }
   html[data-route="app"] .shell .side-brand { justify-content: center; padding: 0; }

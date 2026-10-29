@@ -1,0 +1,99 @@
+/* PotKit app — Profile page: one identity card, then payment record + activity (left) and gas + achievements (right). */
+html[data-route="app"] .shell:has(.pr) .page-head.ph-profile { display: none !important; }
+html[data-route="app"] .pr { display: grid; gap: 1.25rem; margin-top: .2rem; }
+html[data-route="app"] .shell .pr-card { display: grid; align-content: start; gap: .9rem; min-width: 0; margin: 0; padding: 1.3rem 1.4rem; }
+html[data-route="app"] .pr-card > header { display: flex; align-items: center; justify-content: space-between; gap: .8rem; flex-wrap: wrap; padding: 0; border: 0; }
+html[data-route="app"] .shell .pr-card h2 { margin: 0; font-size: 1.08rem; font-weight: 500; }
+
+/* identity */
+html[data-route="app"] .pr-id { grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 1.1rem; }
+html[data-route="app"] .pr-id .profile-avatar { width: 64px; height: 64px; border-radius: 50%; }
+html[data-route="app"] .pr-id-main { display: grid; gap: .35rem; min-width: 0; }
+html[data-route="app"] .pr-title { display: flex; align-items: center; gap: .6rem; flex-wrap: wrap; }
+html[data-route="app"] .shell .pr-title h1 { font-size: clamp(1.35rem, 1.1rem + .8vw, 1.7rem) !important; font-family: var(--n-mono) !important; font-weight: 500 !important; overflow-wrap: anywhere; }
+html[data-route="app"] .pr-role { display: inline-flex; align-items: center; min-height: 24px; padding: 0 .7rem; border: 1px solid rgba(181,141,255,.45); border-radius: 999px; background: rgba(139,92,246,.16); color: #e7defb; font-size: .74rem; font-weight: 600; letter-spacing: .02em; }
+html[data-route="app"] .pr-addr { display: flex; flex-wrap: wrap; gap: .3rem 1.1rem; color: #a99fd0; font-size: .82rem; }
+html[data-route="app"] .pr-addr > span { display: inline-flex; align-items: center; gap: .4rem; }
+html[data-route="app"] .pr-bio { margin: 0; color: #e7defb; font-size: .92rem; }
+html[data-route="app"] .pr-note { color: #8f86b4; font-size: .76rem; }
+html[data-route="app"] .pr-actions { display: flex; gap: .5rem; flex-wrap: wrap; justify-content: flex-end; }
+
+/* layout */
+html[data-route="app"] .pr-grid { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(18rem, 1fr); gap: 1.25rem; align-items: start; }
+html[data-route="app"] .pr-col { display: grid; gap: 1.25rem; min-width: 0; align-content: start; }
+
+/* payment record */
+html[data-route="app"] .pr-scan { color: #8f86b4; font-size: .76rem; }
+html[data-route="app"] .pr-scan.ok { color: #a99fd0; }
+html[data-route="app"] .pr-rec-body { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: 1.4rem; }
+html[data-route="app"] .pr .profile-rate { position: relative; display: grid; place-content: center; justify-items: center; width: 6.5rem; aspect-ratio: 1; border-radius: 50%; background: conic-gradient(#9b6bff 0 var(--rate, 0%), rgba(196,168,255,.14) var(--rate, 0%) 100%); box-shadow: 0 0 24px -8px rgba(155,107,255,.7); }
+html[data-route="app"] .pr .profile-rate::before { content: ""; position: absolute; inset: .5rem; border-radius: 50%; background: #170d33; }
+html[data-route="app"] .pr .profile-rate > * { position: relative; }
+html[data-route="app"] .pr .profile-rate b { color: #fff; font-family: var(--n-mono); font-size: 1.35rem; font-weight: 500; line-height: 1; }
+html[data-route="app"] .pr .profile-rate small { color: #a99fd0; font-size: .7rem; }
+html[data-route="app"] .pr-rec-empty { display: grid; gap: .4rem; justify-items: start; max-width: 20rem; }
+html[data-route="app"] .pr-rec-empty b { color: #fff; font-weight: 500; }
+html[data-route="app"] .pr-rec-empty small { color: #a99fd0; font-size: .8rem; }
+html[data-route="app"] .pr-stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: .6rem; margin: 0; }
+html[data-route="app"] .pr-stats > div { display: grid; gap: .2rem; padding: .7rem .8rem; border: 1px solid var(--nv-edge); border-radius: 14px; background: rgba(12,6,28,.4); min-width: 0; }
+html[data-route="app"] .pr-stats .wide { grid-column: 1 / -1; grid-template-columns: auto auto; justify-content: space-between; align-items: baseline; }
+html[data-route="app"] .pr-stats dt { color: #a99fd0; font-size: .74rem; }
+html[data-route="app"] .shell .pr-stats dd { margin: 0; color: #fff; font-size: 1.15rem; font-weight: 500; text-align: left; }
+html[data-route="app"] .shell .pr-stats .wide dd { font-size: .95rem; }
+html[data-route="app"] .pr-stats dd.good { color: var(--pk-success); }
+html[data-route="app"] .pr-stats dd.late { color: var(--pk-danger); }
+
+/* activity */
+html[data-route="app"] .shell .pr-link { display: inline-flex; align-items: center; gap: .35rem; min-height: 36px; padding: 0; border: 0; background: none; color: #e7defb; font: 500 .82rem var(--n-sans); text-decoration: none; cursor: pointer; }
+html[data-route="app"] .shell .pr-link:hover { color: #fff; text-decoration: underline; text-underline-offset: 3px; }
+html[data-route="app"] .pr .seg-tabs { margin: 0; }
+html[data-route="app"] .pr-list { display: grid; margin: 0; padding: 0; list-style: none; }
+html[data-route="app"] .pr-list li { border-top: 1px solid var(--line); }
+html[data-route="app"] .pr-list li:first-child { border-top: 0; }
+html[data-route="app"] .shell .pr-list :is(button, li > div) { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: .85rem; width: 100%; min-height: 56px; padding: .6rem 0; border: 0; background: none; color: inherit; font: inherit; text-align: left; cursor: pointer; }
+html[data-route="app"] .shell .pr-list li > div { cursor: default; }
+html[data-route="app"] .shell .pr-list button:hover .pr-li-t b { text-decoration: underline; text-underline-offset: 3px; }
+html[data-route="app"] .pr-ico { display: grid; place-items: center; width: 38px; height: 38px; border: 1px solid var(--nv-edge); border-radius: 12px; background: rgba(12,6,28,.5); color: #c4b0ff; }
+html[data-route="app"] .pr-li-t { display: grid; gap: .15rem; min-width: 0; }
+html[data-route="app"] .pr-li-t b { color: #fff; font-weight: 500; font-size: .92rem; overflow-wrap: anywhere; }
+html[data-route="app"] .pr-li-t small { color: #8f86b4; font-size: .78rem; }
+html[data-route="app"] .pr-st { display: inline-flex; align-items: center; min-height: 26px; padding: 0 .75rem; border: 1px solid var(--line-strong); border-radius: 999px; color: #d8d4ec; font-size: .76rem; font-weight: 600; white-space: nowrap; }
+html[data-route="app"] .pr-st.st-trading, html[data-route="app"] .pr-st.st-locked { color: var(--n-info); border-color: rgba(142,162,255,.45); background: rgba(142,162,255,.1); }
+html[data-route="app"] .pr-st.st-settled { color: var(--pk-success); border-color: rgba(62,207,142,.45); background: rgba(62,207,142,.1); }
+html[data-route="app"] .shell .pr-cost { color: #fff; font-size: .86rem; }
+html[data-route="app"] .pr-empty { margin: 0; padding: 1.1rem; border: 1px dashed var(--line-strong); border-radius: 14px; color: #a99fd0; text-align: center; font-size: .88rem; }
+html[data-route="app"] .pr-warn { margin: 0; color: #f4b545; font-size: .8rem; }
+
+/* gas & network, achievements */
+html[data-route="app"] .pr-net { display: inline-flex; align-items: center; gap: .4rem; color: #cfc6ea; font-size: .78rem; }
+html[data-route="app"] .pr-net i { width: 7px; height: 7px; border-radius: 50%; background: #8f86b4; }
+html[data-route="app"] .pr-net.ok i { background: var(--pk-success); }
+html[data-route="app"] .pr-net.bad { color: var(--pk-danger); }
+html[data-route="app"] .pr-net.bad i { background: var(--pk-danger); }
+html[data-route="app"] .pr-gas-bal { display: grid; gap: .2rem; padding: .85rem 1rem; border: 1px solid var(--nv-edge); border-radius: 14px; background: rgba(12,6,28,.4); }
+html[data-route="app"] .pr-gas-bal span { color: #a99fd0; font-size: .76rem; }
+html[data-route="app"] .shell .pr-gas-bal b { color: #fff; font-size: 1.3rem; font-weight: 500; text-align: left; }
+html[data-route="app"] .pr-gas-net { display: flex; align-items: center; justify-content: space-between; gap: .6rem; flex-wrap: wrap; color: #f4b545; font-size: .8rem; }
+html[data-route="app"] .pr-faucet { display: grid; gap: .6rem; padding-top: .9rem; border-top: 1px solid var(--line); }
+html[data-route="app"] .pr-faucet > small { color: #a99fd0; font-size: .78rem; }
+html[data-route="app"] .pr .profile-faucet-account { display: flex; align-items: center; gap: .6rem; padding: .55rem .7rem; border: 1px solid var(--nv-edge); border-radius: 12px; background: rgba(12,6,28,.5); }
+html[data-route="app"] .pr .profile-faucet-account code { flex: 1; min-width: 0; color: #cfc6ea; font-size: .72rem; overflow-wrap: anywhere; }
+html[data-route="app"] .pr-count { color: #a99fd0; font-size: .8rem; }
+html[data-route="app"] .pr .profile-badge-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(5.2rem, 1fr)); gap: .6rem; }
+html[data-route="app"] .shell .pr .profile-badge { display: grid; justify-items: center; gap: .35rem; padding: .7rem .3rem; border: 1px solid var(--nv-edge); border-radius: 14px; background: rgba(12,6,28,.4); color: #8f86b4; font-size: .72rem; text-align: center; }
+html[data-route="app"] .shell .pr .profile-badge.earned { color: #fff; border-color: rgba(181,141,255,.5); background: rgba(139,92,246,.18); }
+html[data-route="app"] .pr .profile-badge i { display: grid; place-items: center; width: 34px; height: 34px; border-radius: 50%; border: 1px solid var(--line-strong); font-style: normal; }
+
+@media (max-width: 62rem) {
+  html[data-route="app"] .pr-grid { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 40rem) {
+  html[data-route="app"] .pr-id { grid-template-columns: auto minmax(0, 1fr); }
+  html[data-route="app"] .pr-actions { grid-column: 1 / -1; justify-content: flex-start; }
+  html[data-route="app"] .pr-rec-body { grid-template-columns: minmax(0, 1fr); justify-items: center; }
+  html[data-route="app"] .pr-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); width: 100%; }
+  html[data-route="app"] .pr-rec-empty { justify-items: center; text-align: center; }
+  html[data-route="app"] .shell .pr-card { padding: 1.1rem; }
+}
+html[data-route="app"] .shell .pr-card { background: var(--nv-card) !important; border: 1px solid var(--nv-edge) !important; border-radius: 24px !important; box-shadow: inset 0 1px 0 rgba(255,255,255,.04), 0 20px 50px -30px rgba(0,0,0,.8); }
+html[data-route="app"] .shell .pr-id { display: grid; }

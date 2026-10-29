@@ -1,0 +1,128 @@
+/* PotKit app — Dashboard overview (wallet strip, market KPIs, chart cards) and the collapsible sidebar.
+   Loaded after night-features.css. Charts are plain CSS/SVG; every figure is read from the chain. */
+
+/* ---------- sidebar: labels from 1100px, optional collapsed rail ---------- */
+html[data-route="app"] .shell .side-collapse { display: none; }
+@media (min-width: 68.76rem) {
+  html[data-route="app"] .shell .side-collapse { display: inline-grid; place-items: center; align-self: flex-end; width: 32px; height: 32px; margin: -.2rem 0 -.4rem; border: 1px solid var(--line); border-radius: 6px; background: none; color: #a9a4c4; cursor: pointer; }
+  html[data-route="app"] .shell .side-collapse:hover { color: #fff; border-color: var(--line-strong); }
+  html[data-route="app"] .shell.side-collapsed { grid-template-columns: 56px minmax(0, 1fr); }
+  html[data-route="app"] .shell.side-collapsed .side { align-items: center; gap: .5rem; padding: .75rem 0; overflow-x: hidden; }
+  html[data-route="app"] .shell.side-collapsed .side-collapse { align-self: center; margin: 0; }
+  html[data-route="app"] .shell.side-collapsed .side-brand { justify-content: center; padding: 0; }
+  html[data-route="app"] .shell.side-collapsed .side-brand img { width: 28px; height: 28px; }
+  html[data-route="app"] .shell.side-collapsed :is(.side-brand > span, .side-new > span, .side-item > span) { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+  html[data-route="app"] .shell.side-collapsed .side-new { width: 40px; min-width: 40px; height: 40px; min-height: 40px; padding: 0; justify-content: center; border-radius: 999px; }
+  html[data-route="app"] .shell.side-collapsed .side-nav { align-items: center; gap: .25rem; width: 100%; }
+  html[data-route="app"] .shell.side-collapsed .side-group { justify-items: center; gap: .25rem; width: 100%; margin: 0; padding: .25rem 0 0; border-top: 1px solid var(--line); }
+  html[data-route="app"] .shell.side-collapsed .side-group:first-child { border-top: 0; padding-top: 0; }
+  html[data-route="app"] .shell.side-collapsed .side-group-title { display: none; }
+  html[data-route="app"] .shell.side-collapsed .side-item { position: relative; width: 40px; min-width: 40px; height: 40px; min-height: 40px; padding: 0; justify-content: center; }
+  html[data-route="app"] .shell.side-collapsed .side-item .ico-svg:last-child:not(:first-child) { display: none; }
+  html[data-route="app"] .shell.side-collapsed .side-support { width: 100%; justify-items: center; padding-top: .5rem; margin-top: auto; }
+}
+
+/* ---------- header, wallet strip, KPIs ---------- */
+html[data-route="app"] .db-head { display: flex; justify-content: space-between; align-items: flex-end; gap: 1rem 1.5rem; flex-wrap: wrap; margin: .4rem 0 1.25rem; }
+html[data-route="app"] .db-kicker { margin: 0 0 .35rem; color: #8f8ab0; font-size: .72rem; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; }
+html[data-route="app"] .db-head p.muted { margin: .3rem 0 0; }
+html[data-route="app"] .db-head-side { display: flex; align-items: center; gap: .6rem; flex-wrap: wrap; }
+html[data-route="app"] .db-chain { display: inline-flex; align-items: center; gap: .45rem; min-height: 40px; padding: 0 .85rem; border: 1px solid var(--line-strong); border-radius: 999px; color: #a9a4c4; font-size: .82rem; }
+html[data-route="app"] .db-chain b { color: #fff; font-weight: 500; }
+html[data-route="app"] .db-wallet { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)) auto; align-items: center; gap: 1rem; margin: 0 0 1.25rem; padding: 1rem 1.15rem; border: 1px solid var(--line); border-radius: 12px; background: var(--pk-surface); }
+html[data-route="app"] .db-wallet > div { display: grid; gap: .2rem; min-width: 0; }
+html[data-route="app"] .db-wallet span { color: #9d98bb; font-size: .78rem; }
+html[data-route="app"] .db-wallet b { color: #fff; font-size: 1.1rem; font-weight: 500; overflow-wrap: anywhere; }
+html[data-route="app"] .db-wallet .is-claim b { color: var(--pk-success); }
+html[data-route="app"] .db-wallet.empty { grid-template-columns: auto minmax(0, 1fr) auto; border-style: dashed; border-color: var(--line-strong); }
+html[data-route="app"] .db-wallet.empty b { font-size: 1rem; font-weight: 600; }
+html[data-route="app"] .db-wallet.empty p { margin: .15rem 0 0; font-size: .86rem; }
+html[data-route="app"] .db-wallet-ico { display: grid; place-items: center; width: 40px; height: 40px; border: 1px solid var(--line-strong); border-radius: 10px; color: var(--n-violet-l); }
+html[data-route="app"] .db-label { margin: 0 0 .6rem; color: #8f8ab0; font-size: .72rem; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; }
+html[data-route="app"] .db-kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: .75rem; margin: 0 0 1.25rem; }
+html[data-route="app"] .shell .db-kpi { position: relative; display: grid; grid-template-columns: minmax(0, 1fr) auto; align-content: start; gap: .5rem; min-height: 9rem; padding: 1rem 1.1rem; border: 1px solid var(--line); border-radius: 12px; background: var(--pk-surface); color: inherit; font: inherit; text-align: left; cursor: pointer; transition: border-color .15s, background-color .15s; }
+html[data-route="app"] .shell .db-kpi:hover { border-color: rgba(157,134,255,.45); background: #13102a; }
+html[data-route="app"] .db-kpi > span { color: #d8d4ec; font-size: .9rem; font-weight: 500; }
+html[data-route="app"] .db-kpi > svg { color: #8f8ab0; }
+html[data-route="app"] .shell .db-kpi > b { grid-column: 1 / -1; margin-top: .4rem; color: #fff; font-size: 2.2rem; font-weight: 400; line-height: 1; }
+html[data-route="app"] .db-kpi > small { grid-column: 1 / -1; color: #8f8ab0; font-size: .8rem; }
+html[data-route="app"] .shell .db-kpi.bad > b { color: var(--pk-danger); }
+
+/* ---------- chart cards ---------- */
+html[data-route="app"] .db-grid { display: grid; gap: .75rem; margin: 0 0 1.25rem; }
+html[data-route="app"] .db-grid.g1 { grid-template-columns: minmax(0, 1.55fr) minmax(0, 1fr); }
+html[data-route="app"] .db-grid.g2 { grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr) minmax(0, .95fr); }
+html[data-route="app"] .shell .db-card { display: grid; align-content: start; gap: .7rem; min-width: 0; margin: 0; padding: 1.05rem 1.15rem; border: 1px solid var(--line); border-radius: 12px; background: var(--pk-surface); }
+html[data-route="app"] .db-card > header { display: flex; justify-content: space-between; align-items: baseline; gap: .8rem; flex-wrap: wrap; padding: 0; border: 0; }
+html[data-route="app"] .shell .db-card h2 { margin: 0; }
+html[data-route="app"] .db-card > header small { color: #8f8ab0; font-size: .78rem; }
+html[data-route="app"] .db-none { margin: 0; padding: 1.2rem; border: 1px dashed var(--line-strong); border-radius: 8px; color: #a9a4c4; text-align: center; font-size: .88rem; }
+html[data-route="app"] .db-split { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.4rem; }
+html[data-route="app"] .db-split > div { display: grid; align-content: start; gap: .7rem; min-width: 0; }
+html[data-route="app"] .db-bar { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: .3rem .6rem; font-size: .85rem; }
+html[data-route="app"] .db-bar span { color: #d8d4ec; }
+html[data-route="app"] .db-bar b { color: #fff; font-weight: 500; }
+html[data-route="app"] .db-bar b small { color: #8f8ab0; font-size: .78rem; }
+html[data-route="app"] .db-bar i { grid-column: 1 / -1; display: block; height: 6px; border-radius: 6px; background: rgba(178,160,255,.1); overflow: hidden; }
+html[data-route="app"] .db-bar i s { display: block; height: 100%; border-radius: inherit; background: currentColor; }
+html[data-route="app"] .t-open { color: var(--n-info); }
+html[data-route="app"] .t-soon { color: var(--pk-warning); }
+html[data-route="app"] .t-overdue { color: var(--pk-danger); }
+html[data-route="app"] .t-settled { color: var(--pk-success); }
+html[data-route="app"] .t-muted { color: #6f6a90; }
+html[data-route="app"] .db-cols { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: .6rem; align-items: end; min-height: 13rem; }
+html[data-route="app"] .shell .db-col { display: grid; justify-items: center; gap: .35rem; min-width: 0; padding: .3rem 0; border: 0; border-radius: 8px; background: none; color: inherit; font: inherit; cursor: pointer; }
+html[data-route="app"] .shell .db-col:hover { background: rgba(178,160,255,.05); }
+html[data-route="app"] .db-col-v { color: #fff; font-size: .82rem; }
+html[data-route="app"] .db-col-track { position: relative; display: block; width: min(56px, 70%); height: 9rem; border-radius: 999px; background: rgba(178,160,255,.07); overflow: hidden; }
+html[data-route="app"] .db-col-track i { position: absolute; left: 0; right: 0; bottom: 0; border-radius: 999px; background: currentColor; transition: height .4s var(--ease); }
+html[data-route="app"] .db-col-l { color: #d8d4ec; font-size: .82rem; }
+html[data-route="app"] .db-col small { color: #8f8ab0; font-size: .7rem; text-align: center; line-height: 1.3; }
+html[data-route="app"] .db-legend { display: flex; flex-wrap: wrap; gap: .4rem 1rem; color: #a9a4c4; font-size: .78rem; }
+html[data-route="app"] .db-legend span { display: inline-flex; align-items: center; gap: .4rem; }
+html[data-route="app"] .db-legend i { width: 8px; height: 8px; border-radius: 50%; background: currentColor; }
+html[data-route="app"] .db-gauge-card { justify-items: center; text-align: center; }
+html[data-route="app"] .db-gauge-card > header { justify-self: stretch; }
+html[data-route="app"] .db-gauge { width: min(100%, 15rem); height: auto; overflow: visible; }
+html[data-route="app"] .db-gauge path { fill: none; stroke-width: 12; }
+html[data-route="app"] .db-gauge .g-track { stroke: rgba(178,160,255,.1); }
+html[data-route="app"] .db-gauge .g-ok { stroke: var(--pk-success); }
+html[data-route="app"] .db-gauge .g-late { stroke: var(--pk-danger); }
+html[data-route="app"] .db-gauge .g-open { stroke: var(--n-info); }
+html[data-route="app"] .db-gauge .g-num { fill: #fff; font: 500 18px var(--n-mono); text-anchor: middle; }
+html[data-route="app"] .db-gauge .g-sub { fill: #8f8ab0; font: 400 7px var(--n-sans); text-anchor: middle; }
+html[data-route="app"] .db-gauge-card > small { font-size: .74rem; }
+html[data-route="app"] .db .rd-attention { margin: 0; padding: 1.05rem 1.15rem; }
+html[data-route="app"] .db .rd-attention li { padding: .65rem 0; }
+
+/* fixes seen on screen: the global .num rule right-aligns, the empty strip inherited centring, the table overflowed */
+html[data-route="app"] .shell :is(.db-kpi > b, .db-wallet b, .db-chain b) { text-align: left !important; justify-self: start; }
+html[data-route="app"] .shell .db-wallet.empty, html[data-route="app"] .shell .db-wallet.empty > div { text-align: left; justify-items: start; }
+html[data-route="app"] .db-col-track, html[data-route="app"] .db-col-track i { border-radius: 10px; }
+html[data-route="app"] .db .rd-table .tag { white-space: nowrap; }
+html[data-route="app"] .db .rd-layout { grid-template-columns: minmax(0, 1fr) 17rem; }
+html[data-route="app"] .db .rd-table :is(th, td) { padding-inline: .5rem; }
+html[data-route="app"] .db .rd-table .rd-pick { min-width: 0; }
+html[data-route="app"] .db .rd-table td.acts .btn { white-space: nowrap; }
+@media (max-width: 87.5rem) { html[data-route="app"] .db .rd-layout { grid-template-columns: minmax(0, 1fr); } }
+
+@media (max-width: 75rem) {
+  html[data-route="app"] .db-grid.g2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  html[data-route="app"] .db-grid.g2 > :first-child { grid-column: 1 / -1; }
+}
+@media (max-width: 62rem) { html[data-route="app"] .db-grid.g1 { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 52rem) {
+  html[data-route="app"] .db-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  html[data-route="app"] .shell .db-kpi { min-height: 7.5rem; }
+  html[data-route="app"] .shell .db-kpi > b { font-size: 1.8rem; }
+  html[data-route="app"] .db-wallet { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  html[data-route="app"] .db-wallet > .btn { grid-column: 1 / -1; justify-self: start; }
+  html[data-route="app"] .db-wallet.empty { grid-template-columns: auto minmax(0, 1fr); }
+  html[data-route="app"] .db-wallet.empty > .btn { grid-column: 1 / -1; }
+  html[data-route="app"] .db-split, html[data-route="app"] .db-grid.g2 { grid-template-columns: minmax(0, 1fr); }
+  html[data-route="app"] .db-cols { grid-template-columns: repeat(3, minmax(0, 1fr)); row-gap: 1rem; min-height: 0; }
+  html[data-route="app"] .db-col-track { height: 6rem; }
+  html[data-route="app"] .db-head-side { width: 100%; }
+  html[data-route="app"] .db-head-side .btn.primary { flex: 1 1 100%; }
+}
+@media (prefers-reduced-motion: reduce) { html[data-route="app"] .db-col-track i { transition: none; } }

@@ -1,0 +1,126 @@
+/* PotKit app — Dashboard motion, the Verify popover and the Cash-now planner modal. Every animation plays once on load or on
+   a user action (no looping in data areas) and is switched off for prefers-reduced-motion. */
+
+/* ---------- entrance: cards rise in one after another ---------- */
+@keyframes nv-in { from { opacity: 0; transform: translateY(14px) scale(.985); } }
+@keyframes nv-dot { from { opacity: 0; transform: translateY(5px); } }
+@keyframes nv-wipe { from { clip-path: inset(0 100% 0 0); } to { clip-path: inset(0 0 0 0); } }
+@keyframes nv-grow { from { transform: scaleY(0); } }
+@keyframes nv-sweep { from { transform: rotate(0deg); } }
+@keyframes nv-arc { from { stroke-dasharray: 0 100; } }
+@keyframes nv-fade { from { opacity: 0; } }
+@keyframes nv-pop { from { opacity: 0; transform: translateY(-8px) scale(.97); } }
+@keyframes nv-rise { from { opacity: 0; transform: translateY(26px) rotate(-3deg); } }
+@keyframes nv-toast { from { opacity: 0; transform: translateX(28px); } }
+
+html[data-route="app"] .nv .nv-card { animation: nv-in .6s var(--ease) both; animation-delay: calc(var(--i, 0) * 70ms); }
+html[data-route="app"] .nv .m-col { animation: nv-dot .45s var(--ease) both; animation-delay: calc(.35s + var(--x, 0) * 22ms); }
+html[data-route="app"] .nv .nv-spark, html[data-route="app"] .nv .nv-lines { animation: nv-wipe 1.1s var(--ease) .45s both; }
+html[data-route="app"] .nv .nv-histo i { transform-origin: bottom; animation: nv-grow .7s var(--ease) both; animation-delay: calc(.55s + var(--k, 0) * 45ms); }
+html[data-route="app"] .nv .nv-segs i.on { animation: nv-fade .5s var(--ease) both; animation-delay: calc(.6s + var(--k, 0) * 80ms); }
+html[data-route="app"] .nv .nv-rcard { animation: nv-rise .8s var(--ease) .7s both; }
+html[data-route="app"] .nv-needle .n-hand-g { transform-box: view-box; transform-origin: 100px 92px; transition: transform .6s var(--ease); animation: nv-sweep 1.4s var(--ease) .5s both; }
+html[data-route="app"] .nv-needle .n-fill { animation: nv-arc 1.2s var(--ease) .5s both; }
+html[data-route="app"] .nv-swap { animation: nv-fade .35s var(--ease) both; }
+html[data-route="app"] .toast { animation: nv-toast .35s var(--ease) both; }
+
+/* chart hover */
+html[data-route="app"] .nv-chart { position: relative; }
+html[data-route="app"] .nv-matrix .m-col { transition: opacity .15s; }
+html[data-route="app"] .nv-chart:hover .m-col:not(.hot) { opacity: .55; }
+html[data-route="app"] .nv-matrix .m-col.hot .m-0 { fill: rgba(196,168,255,.18); }
+html[data-route="app"] .nv-tip { position: absolute; top: .2rem; z-index: 5; display: grid; gap: .1rem; min-width: 9.5rem; padding: .55rem .75rem; border: 1px solid rgba(181,141,255,.5); border-radius: 12px; background: #1d0f44; box-shadow: 0 14px 30px -10px rgba(0,0,0,.8); pointer-events: none; transform: translate(-50%, -100%); animation: nv-fade .12s both; }
+html[data-route="app"] .nv-tip b { color: #fff; font-size: .8rem; font-weight: 600; }
+html[data-route="app"] .nv-tip span { color: #e7defb; font-size: .86rem; }
+html[data-route="app"] .nv-tip small { color: #a99fd0; font-size: .72rem; }
+html[data-route="app"] .nv-lines .l-b { stroke: rgba(231,210,255,.75); stroke-dasharray: 3 5; }
+html[data-route="app"] .k-p { background: transparent; border: 1px dashed #e7d2ff; }
+
+/* delta chip, inline action */
+html[data-route="app"] .nv-chip.up { color: #7ee2b8; border-color: rgba(62,207,142,.4); background: rgba(62,207,142,.1); }
+html[data-route="app"] .nv-chip.down { color: #ff8d92; border-color: rgba(255,107,114,.4); background: rgba(255,107,114,.1); }
+html[data-route="app"] .nv-chip { gap: .35rem; }
+html[data-route="app"] .nv-chip.down svg { transform: rotate(90deg); }
+html[data-route="app"] .nv-chip.up svg { transform: rotate(-90deg); }
+html[data-route="app"] .shell .nv-inline { display: inline; min-height: 0; padding: 0; border: 0; background: none; color: #c4b0ff; font: 500 inherit var(--n-sans); cursor: pointer; text-underline-offset: 3px; }
+html[data-route="app"] .shell .nv-inline:hover { color: #fff; text-decoration: underline; }
+
+/* ---------- Verify popover (under the top-bar pill) ---------- */
+html[data-route="app"] .shell .top .top-verify-wrap { display: none; position: relative; }
+@media (min-width: 68.76rem) { html[data-route="app"] .shell .top .top-verify-wrap { display: inline-flex; } }
+html[data-route="app"] .qv { position: absolute; right: 0; top: calc(100% + .7rem); z-index: 90; display: grid; gap: .8rem; width: min(21.5rem, calc(100vw - 2rem)); padding: 1.1rem 1.15rem 1rem; border: 1px solid rgba(181,141,255,.55); border-radius: 24px; background: radial-gradient(120% 80% at 50% 0%, rgba(167,123,255,.35), transparent 60%), linear-gradient(180deg, #34197a, #170c37); box-shadow: 0 30px 70px -20px rgba(0,0,0,.9), 0 0 0 1px rgba(139,92,246,.2); animation: nv-pop .22s var(--ease) both; transform-origin: top right; }
+html[data-route="app"] .qv > header, html[data-route="app"] .nv-modal > header { display: flex; align-items: center; gap: .6rem; }
+html[data-route="app"] .shell .qv h3 { margin: 0; font-size: 1rem; font-weight: 500; flex: 1; }
+html[data-route="app"] .qv form { display: grid; gap: .4rem; }
+html[data-route="app"] .qv label { color: #cfc6ea; font-size: .78rem; }
+html[data-route="app"] .qv-row { display: flex; gap: .5rem; }
+html[data-route="app"] .shell .qv-row input { flex: 1; min-width: 0; min-height: 44px; padding: 0 1rem; background: rgba(10,5,25,.6); }
+html[data-route="app"] .shell .qv-row .btn { min-height: 44px; }
+html[data-route="app"] .qv form small { font-size: .76rem; }
+html[data-route="app"] .qv-recent { display: grid; gap: .45rem; }
+html[data-route="app"] .qv-recent > span { color: #a99fd0; font-size: .74rem; }
+html[data-route="app"] .qv-recent > div { display: flex; gap: .4rem; flex-wrap: wrap; }
+html[data-route="app"] .shell .qv-recent button { display: inline-flex; align-items: center; gap: .4rem; min-height: 36px; padding: 0 .8rem; border: 1px solid rgba(196,168,255,.22); border-radius: 999px; background: rgba(255,255,255,.05); color: #e7defb; font: 500 .8rem var(--n-sans); cursor: pointer; max-width: 100%; }
+html[data-route="app"] .shell .qv-recent button:hover { border-color: #b58dff; color: #fff; }
+html[data-route="app"] .qv-note { margin: 0; color: #a99fd0; font-size: .74rem; line-height: 1.4; }
+html[data-route="app"] .shell .nv-x { display: inline-grid; place-items: center; flex: none; width: 36px; height: 36px; min-height: 0; padding: 0; border: 1px solid rgba(196,168,255,.25); border-radius: 50%; background: rgba(255,255,255,.05); color: #e7defb; cursor: pointer; margin-left: auto; }
+html[data-route="app"] .shell .nv-x:hover { color: #fff; border-color: #b58dff; }
+
+/* ---------- Cash-now planner modal ---------- */
+html[data-route="app"] .nv-modal-back { position: fixed; inset: 0; z-index: 300; display: grid; place-items: center; padding: 1rem; background: rgba(6,3,16,.66); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); animation: nv-fade .2s both; }
+html[data-route="app"] .nv-modal { display: grid; gap: .9rem; width: min(37rem, 100%); max-height: calc(100dvh - 2rem); overflow-y: auto; padding: 1.4rem; border: 1px solid rgba(181,141,255,.45); border-radius: 28px; background: radial-gradient(90% 50% at 50% 0%, rgba(139,92,246,.35), transparent 70%), linear-gradient(180deg, #25125a, #130a2e); box-shadow: 0 40px 100px -30px rgba(0,0,0,.95); animation: nv-pop .28s var(--ease) both; transform-origin: top center; }
+html[data-route="app"] .nv-modal > header > div { min-width: 0; }
+html[data-route="app"] .shell .nv-modal h2 { margin: 0; font-size: 1.25rem; font-weight: 500; }
+html[data-route="app"] .nv-modal > header p { margin: .15rem 0 0; color: #bdb3dc; font-size: .86rem; }
+html[data-route="app"] .nv-ico.big { width: 46px; height: 46px; border-radius: 50%; }
+html[data-route="app"] .nv-ico.big svg { width: 22px; height: 22px; }
+html[data-route="app"] .nv-modal-label { margin: .3rem 0 -.2rem; color: #a99fd0; font-size: .72rem; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; }
+html[data-route="app"] .nv-modal-label em { margin-left: .5rem; padding: .1rem .5rem; border: 1px solid rgba(196,168,255,.3); border-radius: 999px; color: #d8cff2; font-style: normal; letter-spacing: .02em; text-transform: none; font-weight: 500; }
+html[data-route="app"] .nv-rule { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr) auto minmax(0, 1fr); align-items: center; gap: .3rem; }
+html[data-route="app"] .nv-node { display: grid; gap: .5rem; align-content: start; min-width: 0; height: 100%; padding: .8rem; border: 1px solid rgba(196,168,255,.2); border-radius: 18px; background: rgba(10,5,25,.5); }
+html[data-route="app"] .nv-node > span { color: #cfc6ea; font-size: .72rem; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; }
+html[data-route="app"] .nv-node small { color: #a99fd0; font-size: .74rem; }
+html[data-route="app"] .nv-node small b { color: #fff; font-weight: 500; }
+html[data-route="app"] .shell .nv-node select { min-height: 40px; width: 100%; padding: 0 .6rem; border-radius: 12px !important; font-size: .82rem; }
+html[data-route="app"] .nv-link-dot { width: 22px; height: 2px; background: linear-gradient(90deg, #8b5cf6, #c4b0ff); position: relative; box-shadow: 0 0 10px #8b5cf6; }
+html[data-route="app"] .nv-link-dot::before, html[data-route="app"] .nv-link-dot::after { content: ""; position: absolute; top: -3px; width: 8px; height: 8px; border-radius: 50%; background: #c4b0ff; box-shadow: 0 0 10px #a77bff; }
+html[data-route="app"] .nv-link-dot::before { left: -4px; } html[data-route="app"] .nv-link-dot::after { right: -4px; }
+html[data-route="app"] .nv-seg { display: grid; grid-template-columns: repeat(2, 1fr); gap: 4px; }
+html[data-route="app"] .shell .nv-seg button { min-height: 36px; padding: 0; border: 1px solid rgba(196,168,255,.2); border-radius: 999px; background: rgba(255,255,255,.04); color: #cfc6ea; font: 500 .8rem var(--n-sans); cursor: pointer; }
+html[data-route="app"] .shell .nv-seg button[aria-pressed="true"] { color: #fff; border-color: transparent; background: linear-gradient(180deg, #b58dff, #8b5cf6); }
+html[data-route="app"] .nv-step { display: grid; grid-template-columns: 40px 1fr 40px; align-items: center; border: 1px solid rgba(196,168,255,.2); border-radius: 999px; overflow: hidden; }
+html[data-route="app"] .shell .nv-step button { min-height: 40px; padding: 0; border: 0; background: rgba(255,255,255,.05); color: #fff; font-size: 1.1rem; cursor: pointer; }
+html[data-route="app"] .shell .nv-step button:hover:not(:disabled) { background: rgba(139,92,246,.4); }
+html[data-route="app"] .shell .nv-step button:disabled { opacity: .35; cursor: default; }
+html[data-route="app"] .shell .nv-step b { text-align: center; color: #fff; font-weight: 500; }
+html[data-route="app"] .nv-impact { display: grid; grid-template-columns: minmax(0, 11rem) minmax(0, 1fr); align-items: center; gap: 1rem; padding: 1rem; border: 1px solid rgba(196,168,255,.2); border-radius: 20px; background: rgba(10,5,25,.5); }
+html[data-route="app"] .nv-impact-g { display: grid; justify-items: center; gap: .2rem; text-align: center; }
+html[data-route="app"] .nv-impact-g small { color: #cfc6ea; font-size: .78rem; }
+html[data-route="app"] .nv-impact-g .nv-needle { width: 100%; }
+html[data-route="app"] .nv-impact dl { display: grid; gap: .55rem; margin: 0; }
+html[data-route="app"] .nv-impact dl > div { display: flex; justify-content: space-between; align-items: baseline; gap: .8rem; }
+html[data-route="app"] .nv-impact dt { color: #bdb3dc; font-size: .8rem; }
+html[data-route="app"] .shell .nv-impact dd { margin: 0; color: #fff; font-size: .88rem; text-align: right; }
+html[data-route="app"] .shell .nv-impact dd.big { color: #c9a8ff; font-size: 1.2rem; font-weight: 500; }
+html[data-route="app"] .nv-modal footer { display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap; }
+html[data-route="app"] .nv-ctl { display: flex; gap: .7rem; align-items: flex-start; flex: 1 1 16rem; color: #c4b0ff; }
+html[data-route="app"] .nv-ctl b { display: block; color: #fff; font-weight: 500; font-size: .86rem; }
+html[data-route="app"] .nv-ctl small { color: #a99fd0; font-size: .74rem; line-height: 1.4; }
+html[data-route="app"] .nv-modal-btns { display: flex; gap: .5rem; margin-left: auto; }
+html[data-route="app"] .nv-modal-empty { display: grid; gap: .8rem; justify-items: start; padding: 1rem; border: 1px dashed rgba(196,168,255,.3); border-radius: 18px; color: #cfc6ea; }
+html[data-route="app"] .nv-modal-empty p { margin: 0; }
+@media (max-width: 40rem) {
+  html[data-route="app"] .nv-rule { grid-template-columns: minmax(0, 1fr); gap: .2rem; }
+  html[data-route="app"] .nv-link-dot { width: 2px; height: 18px; justify-self: center; background: linear-gradient(180deg, #8b5cf6, #c4b0ff); }
+  html[data-route="app"] .nv-link-dot::before, html[data-route="app"] .nv-link-dot::after { left: -3px; right: auto; }
+  html[data-route="app"] .nv-link-dot::before { top: -4px; } html[data-route="app"] .nv-link-dot::after { top: auto; bottom: -4px; }
+  html[data-route="app"] .nv-seg { grid-template-columns: repeat(4, 1fr); }
+  html[data-route="app"] .nv-impact { grid-template-columns: minmax(0, 1fr); }
+  html[data-route="app"] .nv-modal { padding: 1.1rem; border-radius: 24px; }
+  html[data-route="app"] .nv-modal-btns { width: 100%; } html[data-route="app"] .nv-modal-btns .btn { flex: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html[data-route="app"] .nv .nv-card, html[data-route="app"] .nv .m-col, html[data-route="app"] .nv .nv-spark, html[data-route="app"] .nv .nv-lines, html[data-route="app"] .nv .nv-histo i, html[data-route="app"] .nv .nv-segs i, html[data-route="app"] .nv .nv-rcard,
+  html[data-route="app"] .nv-needle .n-hand-g, html[data-route="app"] .nv-needle .n-fill, html[data-route="app"] .nv-swap, html[data-route="app"] .toast, html[data-route="app"] .qv, html[data-route="app"] .nv-modal, html[data-route="app"] .nv-modal-back, html[data-route="app"] .nv-tip { animation: none !important; transition: none !important; }
+}
