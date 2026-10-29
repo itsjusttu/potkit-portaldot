@@ -1,4 +1,5 @@
 // Path routing. '/' = landing, '/app' = dApp. On an `app.` subdomain the dApp is served at '/'.
+import { deploymentSearch } from "./lib/params";
 export const isAppHost = () => window.location.hostname.startsWith("app.");
 /** Landing doc pages (SPA routes, served by the vercel.json catch-all rewrite). */
 export const DOC_ROUTES = ["/help", "/how-it-works", "/protocol", "/security"];
@@ -27,8 +28,9 @@ export const profileShareUrl = (address: string, kit?: string) => APP_ORIGIN
 /** URL of the landing page. On app.<domain> it points to the bare domain. */
 export const homeUrl = () => {
   const { hostname, protocol, port, search } = window.location;
-  if (!isAppHost()) return `/${search}`;
-  return `${protocol}//${hostname.slice(4)}${port ? `:${port}` : ""}/${search}`;
+  const keep = deploymentSearch(search); // the judge link survives, the current tab (?tab=trade...) does not
+  if (!isAppHost()) return `/${keep}`;
+  return `${protocol}//${hostname.slice(4)}${port ? `:${port}` : ""}/${keep}`;
 };
 /** Backward compat: old '#/app' links → '/app?…' (query preserved). Returns true if it redirected in-place. */
 export function migrateHashRoute() {
