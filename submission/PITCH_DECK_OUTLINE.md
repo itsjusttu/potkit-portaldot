@@ -48,6 +48,6 @@ Minting is permissioned today (issuer and approved minters), so any plan that ha
 
 ## Before you export
 
-- Replace the video link everywhere once the new video is public (README, `submission/DORAHACKS.md`, this deck).
+- The new demo video is public (https://youtu.be/Cr7XRDwAU6g) and linked in the README and `submission/DORAHACKS.md`. The deck itself carries no video link.
 - Re-read the evidence table and the traction numbers against the chain on the export day.
 - Keep claims to what the repository and the chain show; the DoraHacks scoring is based on objective evidence.

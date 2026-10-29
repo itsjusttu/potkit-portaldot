@@ -1,6 +1,6 @@
 # PotKit - tokenised receipts on Portaldot V3
 
-**Links:** [Live app](https://app.potkit.pro) · [Website](https://potkit.pro) · [Demo video](https://youtu.be/3rF0QRqJNAU) · [X](https://x.com/potkitpro) · [Judge link](https://app.potkit.pro/?kit=0x3c26351ad8b9dc7bb4f837c5b921879c35e20fb7)
+**Links:** [Live app](https://app.potkit.pro) · [Website](https://potkit.pro) · [Demo video](https://youtu.be/Cr7XRDwAU6g) · [X](https://x.com/potkitpro) · [Judge link](https://app.potkit.pro/?kit=0x3c26351ad8b9dc7bb4f837c5b921879c35e20fb7)
 
 **Track:** Ecosystem DApps (RWA tokenisation) · Portaldot Hacker House 2026
 
@@ -12,7 +12,7 @@ The deployed version uses **one contract, `PotKit`** (hand-written Yul): receipt
 
 ## Judge quick start
 Steps 1–3 need no wallet and no test tokens.
-1. **Watch the demo video:** https://youtu.be/3rF0QRqJNAU <!-- TODO(video): this is the first demo, recorded on the older UI. Replace it with the new public video and state its length when it is published. -->
+1. **Watch the demo video:** https://youtu.be/Cr7XRDwAU6g
 2. **Open the live app on the deployed contract:** [app.potkit.pro/?kit=0x3c26351ad8b9dc7bb4f837c5b921879c35e20fb7](https://app.potkit.pro/?kit=0x3c26351ad8b9dc7bb4f837c5b921879c35e20fb7). Dashboard, Explore and Verify read straight from Portaldot V3; connect a wallet only if you want to transact.
 3. **Check the on-chain evidence:** [Testnet evidence](#testnet-evidence) lists the whole lifecycle (deploy → mint → lock → list → buy → settle → claim → redeem) with UTC times and a block link per transaction. Any hash can be checked with `eth_getTransactionReceipt`.
 4. **Run it yourself with no tokens** (local chain with sample data):

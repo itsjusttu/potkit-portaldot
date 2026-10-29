@@ -186,5 +186,5 @@ Assets: wallet logos are bundled locally (see `src/assets/wallets/SOURCES.md`: w
 - Website: https://potkit.pro
 - Live dApp: https://app.potkit.pro
 - Judge link (opens the exact deployed contracts): https://app.potkit.pro/?kit=0x3c26351ad8b9dc7bb4f837c5b921879c35e20fb7
-- Video: https://www.youtube.com/watch?v=3rF0QRqJNAU <!-- TODO(video): first demo (older UI). Replace with the new public video link when it is published. -->
+- Video: https://youtu.be/Cr7XRDwAU6g
 - License: MIT (see `LICENSE` in the repository)
