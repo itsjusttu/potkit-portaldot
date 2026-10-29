@@ -74,7 +74,7 @@ export function History({ c }: { c: Ctx }) {
             <time className="history-date num" role="cell" dateTime={it.t ? new Date(it.t).toISOString() : undefined}>{it.t ? <>{it.approx ? "~" : ""}{new Date(it.t).toLocaleDateString(undefined, { month: "short", day: "numeric" })}<small>{new Date(it.t).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</small></> : it.block !== undefined ? `Block ${it.block}` : "Recent"}</time>
             <span className={`history-type tone-${it.tone}`} role="cell"><Ico n={it.icon} size={14} />{kindLabel[it.tone] ?? "Activity"}</span>
             <span className="history-activity" role="cell"><b>{it.title}</b><small>{it.detail}</small></span>
-            <span className={`history-amount num ${it.money?.startsWith("+") ? "positive" : ""} ${it.money?.startsWith("−") ? "negative" : ""}`} role="cell">{it.money ?? "—"}</span>
+            <span className={`history-amount num ${it.money?.startsWith("+") ? "positive" : ""} ${it.money?.startsWith("−") ? "negative" : ""}`} role="cell" data-empty={it.money ? undefined : ""}>{it.money ?? "—"}</span>
             <span className="history-status" role="cell"><span className={`tag ${it.src === "chain" ? "paid" : ""}`}>{it.src === "chain" ? "Confirmed" : "Local"}</span></span>
             <span className="history-tx" role="cell">
               {it.hash ? <>

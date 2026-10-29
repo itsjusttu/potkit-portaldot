@@ -413,6 +413,14 @@ export function App() {
         )}
       </main>
 
+      {tab !== "pay" && (
+        <nav className="bottom-nav" aria-label="Main sections">
+          {(["dashboard", "explore", "issue", "trade", "portfolio"] as Tab[]).map((t) => (
+            <button key={t} type="button" className={`${tab === t ? "on" : ""} ${t === "issue" ? "bn-main" : ""}`} aria-current={tab === t ? "page" : undefined} aria-label={t === "issue" ? "Issue an invoice" : undefined} onClick={() => setTab(t)}><TabIco t={t} /><span>{t === "dashboard" ? "Home" : TITLES[t][0]}</span></button>
+          ))}
+        </nav>
+      )}
+
       <Drawer open={payFor !== null} onClose={() => setPayFor(null)} kicker="Settle invoice" title={payRow ? `Pay #${payRow.id} · ${payRow.note}` : "Pay invoice"}>
         {payRow && (
           <>

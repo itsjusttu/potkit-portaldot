@@ -18,6 +18,7 @@ import "./styles/night-dashboard.css";
 import "./styles/night-nivo.css";
 import "./styles/night-profile.css";
 import "./styles/night-motion.css";
+import "./styles/night-mobile.css";
 import { Intro } from "./Intro";
 
 migrateHashRoute();
