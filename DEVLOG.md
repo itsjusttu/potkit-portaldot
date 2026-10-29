@@ -6,7 +6,7 @@ This log lists what the repository history and the chain can show. Commit times 
 
 ## Team
 
-Solo project. Display name used in the deck: Tu - Builder, PotKit. The author confirms that the Git author names `itsjusttu` (34 commits) and `Tu` (1 commit, a README edit) are the same person.
+Solo project. Display name used in the deck: Tu - Builder, PotKit. The author confirms that the Git author names `itsjusttu` (38 commits) and `Tu` (1 commit, a README edit) are the same person.
 
 ## On-chain milestones (checked against the Portaldot V3 RPC)
 
@@ -25,8 +25,8 @@ As of 2026-10-29 the kit has 15 state-changing transactions after the deployment
 | What | When | Notes |
 |---|---|---|
 | Smart contract (`PotKit.yul`) | 2026-10-19 03:15:12 UTC (10:15 UTC+7) | One deployment, immutable. This is the only contract date that matters for the evidence above. |
-| Web frontend (Vercel, production), current build | commit `c74bb03` "Clarify Dashboard settled card, drop unused landing css, update devlog" (29 Oct, 09:05 UTC+7), deployed by hand with `vercel --prod` | The author reported the deploy as live; the live site agrees: `app.potkit.pro` and `potkit.pro` serve one build (identical ETag) with `Last-Modified: 2026-10-29 02:07:55 GMT` (09:07 UTC+7), which is when the served files were last modified, not a confirmed deployment time. In a browser check the Dashboard's Settled card shows the wording added in this commit. Deployment time and time zone: not verified. |
-| Web frontend, previous production deployments | `e549ee5` "Add set-minter admin script and tests" (29 Oct), before it `f03a5ea` "Improve Trade sell panel layout" (28 Oct) | `e549ee5`: the author's terminal output showed Ready in 54s, aliased to `potkit.pro`; live files had `Last-Modified: 2026-10-29 00:09:39 GMT` (07:09 UTC+7). `f03a5ea`: had the highlighted (blue) Production badge in the Vercel list supplied by the author ("21h ago"); live files had `Last-Modified: 2026-10-28 02:39:06 GMT` (09:39 UTC+7). |
+| Web frontend (Vercel, production), current build | commit `3c730af` "Redesign help, how it works, protocol and security pages with the landing system" (29 Oct, 10:01 UTC+7), deployed by hand with `vercel --prod` | The author reported the deploy as done; the live site agrees: `app.potkit.pro` and `potkit.pro` serve one build (identical ETag) with `Last-Modified: 2026-10-29 03:03:38 GMT` (10:03 UTC+7), which is when the served files were last modified, not a confirmed deployment time. In a browser check the four doc pages, the landing hero text and the Explore cards show the new design. Deployment time and time zone: not verified. |
+| Web frontend, previous production deployments | `c74bb03` (29 Oct; files `Last-Modified: 2026-10-29 02:07:55 GMT`), `e549ee5` (29 Oct; `Last-Modified: 2026-10-29 00:09:39 GMT`), before them `f03a5ea` (28 Oct; `Last-Modified: 2026-10-28 02:39:06 GMT`) | `e549ee5`: the author's terminal output showed Ready in 54s, aliased to `potkit.pro`. `f03a5ea`: had the highlighted (blue) Production badge in the Vercel list supplied by the author ("21h ago"). Each was replaced by the next deployment. |
 
 ### Vercel deployment list (screenshots supplied by the author)
 
@@ -43,7 +43,7 @@ Vercel shows a day or a relative age for each deployment. Time and time zone of 
 | 23 Oct | same | 1 | `6ab2c24` |
 | 24 Oct | same | 10 | `98698f3`, `8b91c0e`, `885dcfc`, `effd878`, `04dd84b`, `44c77fe`, `e28a5d7`, `e4a2767`, `a24068f`, `c240551` |
 | 28 Oct (shown as "1d ago", "22h ago", "21h ago") | same | 4 | `a04bc2c`, `0304387`, `1ea619e`, `f03a5ea` |
-| 29 Oct | `vercel --prod` (from the author's terminal output, not in the screenshots) | 2 | `e549ee5`, `c74bb03` |
+| 29 Oct | `vercel --prod` (from the author's terminal output, not in the screenshots) | 3 | `e549ee5`, `c74bb03`, `3c730af` |
 
 - All 23 commit hashes in the list exist in `git log`, with the same messages. Commit `696dd23` (21 Oct) was not the latest production deployment when the screenshots were taken; `f03a5ea` was, until `e549ee5` was deployed on 29 Oct.
 - Six commits have no row in the list: `04cfd1c`, `522cf05`, `86d61da`, `71f9f0b`, `0269a44`, `d907a3c`. Deployments are made by hand: the project is not connected to Git (the Vercel CLI offers `vercel git connect` after each deploy), so only commits the author chose to deploy have a row. The reason for each missing commit is not recorded. Older deployments may also have been removed under the project's Deployment Retention setting.
@@ -59,7 +59,7 @@ Vercel shows a day or a relative age for each deployment. Time and time zone of 
 
 ## Commit timeline (from `git log`)
 
-35 commits between 19 and 29 Oct 2026, all on `main`. Subjects are quoted as committed.
+39 commits between 19 and 29 Oct 2026, all on `main`. Subjects are quoted as committed.
 
 **19 Oct**
 - `04cfd1c` 23:22 Prepare PotKit hackathon submission (contracts, API, tests, app, README)
@@ -111,6 +111,10 @@ Vercel shows a day or a relative age for each deployment. Time and time zone of 
 - `43e0daf` 07:04 App: dashboard, portfolio, pay page, tour, sale planner, block links, scan start
 - `e549ee5` 07:04 Add set-minter admin script and tests
 - `c74bb03` 09:05 Clarify Dashboard settled card, drop unused landing css, update devlog
+- `df20c91` 09:10 DEVLOG: record the c74bb03 deployment
+- `402fb2e` 09:21 Deck outline: slide 9 plan
+- `6b99114` 09:27 Add business potential section and pitch deck PDF
+- `3c730af` 10:01 Redesign help, how it works, protocol and security pages with the landing system
 
 The five commits of 29 Oct were made within about a minute. They group changes that had been sitting uncommitted in the working tree, so their times show when the changes were grouped, not when each one was written.
 
@@ -134,6 +138,13 @@ The contract, API and script files first appear in `04cfd1c`; `contracts/` and `
 - Dashboard *Settled* card wording: "1 payment received · 0 receipts paid now" (the tPOT figure adds every settle event; "paid now" counts receipts currently marked Settled), with an explanation on hover
 - Removal of the unused `src/landing-xero.css`
 - Deployment and commit records in this log
+
+## Added after `c74bb03` (later on 29 Oct)
+
+- Business potential section in `submission/DORAHACKS.md` (a plan, stating no market size, customers or revenue) and the matching slide 9 in the deck outline
+- Pitch deck as a PDF (`submission/PotKit-pitch-deck.pdf`, 11 slides; source `submission/deck/deck.html`)
+- Landing: hero text without a long dash, and a line-art drawing for each of the six Explore cards
+- Doc pages (`/help`, `/how-it-works`, `/protocol`, `/security`) rebuilt on the landing's design system: shared top bar, header and footer (`src/plShell.tsx`), doc styles in `src/docs/docs-pk.css`, new line art for each lifecycle step, the help center search, cards and FAQ restyled; the old doc stylesheets and header were removed
 
 ## How the work is checked
 
