@@ -149,6 +149,14 @@ Run with two wallets (issuer/seller and investor/debtor). Each hash was re-check
 - **Contract is immutable** and its `tokenURI` points at `https://potkit.pro/api/r`; the JSON is built off-chain from chain state.
 
 
+## Business potential (a plan, not shipped)
+This section is the builder's plan. It states no market size, customers, partners, revenue or usage, because there are none yet: PotKit is a testnet demo built by one person.
+- **First users:** freelancers and small businesses with unpaid invoices, as issuers. Minting is permissioned today (the issuer and approved minters), so they are onboarded one by one with `scripts/set-minter.mjs` (README → step 6). Anyone can buy, trade, settle and claim without approval.
+- **Earning:** none today. The contract takes no fee and PotKit is open source (MIT). The near-term plan is ecosystem support through Portaldot's post-hackathon programme. A fee or paid software would be a later decision, and a fee needs a contract change and a new deployment (about 327 tPOT).
+- **First channel:** the Portaldot community (Discord, X, Hacker House mentors and testers). A tester sends an address, the issuer approves it, and the resulting testnet transactions are checkable evidence.
+- **Why now:** Portaldot V3's new EVM path (pallet-revive) and a design built around its storage deposit: deploy about 327 tPOT against 1,386 in the first design, full demo about 47 against 87 (testnet estimates from `scripts/measure.mjs`, not mainnet cost).
+- **Limits that stay true:** issuer-provided details are not verified by PotKit, and payment is not guaranteed.
+
 ## Roadmap
 - Partial payments and instalments; debtor attestation / signature on terms
 - Credit and reputation signals per issuer and debtor

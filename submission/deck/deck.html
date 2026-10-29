@@ -1,0 +1,281 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>PotKit pitch deck</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- Source of submission/PotKit-pitch-deck.pdf. Print from Chrome: A4 not needed, page size comes from @page (1280x720), margins none, background graphics on. -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root { --bg:#0b0619; --ink:#f4f0fb; --muted:#b9acd6; --faint:#8f82b0; --accent:#b79cff; --violet:#7c5cff; --card:rgba(255,255,255,.06); --edge:rgba(200,180,255,.22); --green:#4ade80; --amber:#fbbf24; --red:#f87171; }
+  @page { size: 1280px 720px; margin: 0; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--bg); color: var(--ink); font-family: "Hanken Grotesk", system-ui, -apple-system, "Segoe UI", sans-serif; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .slide { width: 1280px; height: 720px; position: relative; overflow: hidden; padding: 56px 80px 80px; display: flex; flex-direction: column; break-after: page; page-break-after: always;
+    background: radial-gradient(900px 520px at 92% -12%, rgba(124,92,255,.30), transparent 62%), radial-gradient(700px 420px at -8% 112%, rgba(80,60,200,.20), transparent 60%), var(--bg); }
+  .slide:last-child { break-after: auto; page-break-after: auto; }
+  @media screen { body { padding: 24px 0; } .slide { margin: 0 auto 24px; border: 1px solid var(--edge); border-radius: 6px; } }
+  .body { flex: 1; display: flex; flex-direction: column; justify-content: center; min-height: 0; padding-bottom: 8px; }
+  .kicker { font-size: 19px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: var(--accent); margin: 0 0 14px; }
+  h1, h2 { margin: 0; font-weight: 800; letter-spacing: -.02em; }
+  h2 { font-size: 46px; line-height: 1.12; max-width: 1040px; margin-bottom: 30px; }
+  p { margin: 0; }
+  .lead { font-size: 28px; line-height: 1.4; color: var(--muted); }
+  .mono { font-family: "IBM Plex Mono", ui-monospace, Consolas, monospace; }
+  .foot { position: absolute; left: 80px; right: 80px; bottom: 26px; display: flex; justify-content: space-between; font-size: 16px; color: var(--faint); }
+  .cards { display: grid; gap: 22px; }
+  .card { background: var(--card); border: 1px solid var(--edge); border-radius: 20px; padding: 26px 28px; }
+  .card h3 { margin: 0 0 10px; font-size: 27px; font-weight: 700; line-height: 1.2; }
+  .card p { font-size: 24px; line-height: 1.4; color: var(--muted); }
+  .note { font-size: 19px; line-height: 1.4; color: var(--faint); }
+  .tag { display: inline-block; font-size: 19px; font-weight: 600; color: var(--ink); background: rgba(124,92,255,.22); border: 1px solid var(--edge); border-radius: 999px; padding: 7px 16px; margin: 0 10px 10px 0; }
+  ul.big { margin: 0; padding: 0; list-style: none; }
+  ul.big li { font-size: 27px; line-height: 1.38; padding-left: 34px; position: relative; margin-bottom: 18px; }
+  ul.big li::before { content: ""; position: absolute; left: 0; top: .5em; width: 14px; height: 14px; border-radius: 4px; background: var(--violet); }
+  table { border-collapse: collapse; width: 100%; }
+  td, th { text-align: left; padding: 8px 12px; font-size: 22px; border-bottom: 1px solid var(--edge); }
+  th { font-size: 17px; letter-spacing: .1em; text-transform: uppercase; color: var(--faint); font-weight: 600; }
+  td.n { color: var(--accent); font-family: "IBM Plex Mono", monospace; }
+  td.r { text-align: right; font-family: "IBM Plex Mono", monospace; color: var(--muted); }
+  .ok { color: var(--green); }
+  /* 1 title */
+  .title { justify-content: center; }
+  .brand { display: flex; align-items: center; gap: 18px; font-size: 34px; font-weight: 800; margin-bottom: 36px; }
+  .brand img { width: 64px; height: 64px; }
+  .title h1 { font-size: 80px; line-height: 1.04; max-width: 1000px; margin-bottom: 26px; }
+  .title .lead { max-width: 960px; margin-bottom: 34px; }
+  /* 3 flow */
+  .flow { display: grid; grid-template-columns: repeat(6, 1fr); gap: 14px; margin: 6px 0 28px; }
+  .step { background: var(--card); border: 1px solid var(--edge); border-radius: 18px; padding: 18px 16px 20px; position: relative; }
+  .step b { display: block; font-size: 17px; letter-spacing: .12em; color: var(--accent); margin-bottom: 8px; }
+  .step h3 { margin: 0 0 8px; font-size: 27px; font-weight: 700; }
+  .step p { font-size: 19px; line-height: 1.35; color: var(--muted); }
+  .step:not(:last-child)::after { content: "›"; position: absolute; right: -13px; top: 42%; font-size: 34px; color: var(--accent); font-weight: 700; }
+  /* 4 proof */
+  .proof { display: grid; grid-template-columns: 1.55fr 1fr; gap: 34px; align-items: start; }
+  .facts .card { padding: 22px 24px; margin-bottom: 16px; }
+  .facts .card p { font-size: 22px; }
+  .facts .card b { color: var(--ink); }
+  /* 6 architecture */
+  .arch { display: grid; grid-template-columns: 1fr 120px 1.25fr; align-items: stretch; gap: 0; margin-bottom: 22px; }
+  .arch .arrow { display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 17px; color: var(--accent); text-align: center; line-height: 1.3; }
+  .arch .arrow span { font-size: 44px; line-height: 1; }
+  .arch .card p { font-size: 22px; }
+  .two { display: grid; grid-template-columns: 1fr 1fr; gap: 22px; }
+  /* 7 safety */
+  .col h3 { font-size: 24px; letter-spacing: .08em; text-transform: uppercase; margin: 0 0 14px; }
+  .col.good h3 { color: var(--green); } .col.bad h3 { color: var(--amber); }
+  .col ul { margin: 0; padding: 0; list-style: none; }
+  .col li { font-size: 24px; line-height: 1.38; margin-bottom: 12px; padding-left: 28px; position: relative; }
+  .col li::before { content: ""; position: absolute; left: 0; top: .52em; width: 12px; height: 12px; border-radius: 50%; }
+  .col.good li::before { background: var(--green); } .col.bad li::before { background: var(--amber); }
+  /* 8 stats */
+  .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 22px; margin-bottom: 26px; }
+  .stat { background: var(--card); border: 1px solid var(--edge); border-radius: 22px; padding: 30px 30px 28px; }
+  .stat b { display: block; font-size: 92px; line-height: 1; font-weight: 800; letter-spacing: -.03em; color: var(--ink); margin-bottom: 12px; }
+  .stat span { font-size: 24px; line-height: 1.35; color: var(--muted); }
+  .links { display: grid; grid-template-columns: 1fr 1fr; gap: 16px 22px; }
+  .links .card { padding: 18px 24px; } .links small { display: block; font-size: 16px; letter-spacing: .12em; text-transform: uppercase; color: var(--faint); margin-bottom: 4px; }
+  .links p { font-size: 23px; color: var(--ink); word-break: break-all; }
+</style>
+</head>
+<body>
+
+<!-- 1 -->
+<section class="slide title">
+  <div class="brand"><img src="../../public/potkit-p-circle-white.svg" alt="">PotKit</div>
+  <h1>Invoices that pay you now.</h1>
+  <p class="lead">Tokenise an unpaid invoice into backed, tradeable shares on Portaldot V3, and pay every holder pro-rata, on-chain, when the debtor settles.</p>
+  <div><span class="tag">Track 4 · Ecosystem DApps (RWA)</span><span class="tag">Testnet demo</span><span class="tag">Open source · MIT</span></div>
+  <p class="note" style="margin-top:22px;font-size:22px;color:var(--muted)">app.potkit.pro &nbsp;·&nbsp; github.com/itsjusttu/potkit-portaldot<br>Tu · Builder, PotKit (solo)</p>
+  <div class="foot"><span>Portaldot Hacker House 2026</span><span>tPOT is testnet currency with no market value</span></div>
+</section>
+
+<!-- 2 -->
+<section class="slide">
+  <p class="kicker">The problem</p>
+  <h2>Waiting to be paid is slow, and small invoices are hard to fund.</h2>
+  <div class="body">
+  <div class="cards" style="grid-template-columns:repeat(3,1fr)">
+    <div class="card"><h3>Freelancers and small businesses</h3><p>often have to wait to get paid after they deliver the work.</p></div>
+    <div class="card"><h3>Factoring is closed</h3><p>Opaque, manual, and not built for small invoices.</p></div>
+    <div class="card"><h3>Investors cannot verify</h3><p>No simple way to fund a slice of a receivable and be paid out automatically.</p></div>
+  </div>
+  </div>
+  <div class="foot"><span>PotKit · Portaldot Hacker House 2026</span><span>2 / 11</span></div>
+</section>
+
+<!-- 3 -->
+<section class="slide">
+  <p class="kicker">The solution</p>
+  <h2>One contract carries the whole receivable lifecycle.</h2>
+  <div class="body">
+  <div class="flow">
+    <div class="step"><b>1</b><h3>Mint</h3><p>The issuer records the invoice as an NFT receipt.</p></div>
+    <div class="step"><b>2</b><h3>Lock</h3><p>Terms are fixed and a fixed supply of shares is issued.</p></div>
+    <div class="step"><b>3</b><h3>Trade</h3><p>Shares are sold for tPOT on an escrow market.</p></div>
+    <div class="step"><b>4</b><h3>Settle</h3><p>The debtor pays at least the face value, in tPOT.</p></div>
+    <div class="step"><b>5</b><h3>Claim</h3><p>Every holder gets a pro-rata payout.</p></div>
+    <div class="step"><b>6</b><h3>Redeem</h3><p>The paid receipt returns to the issuer.</p></div>
+  </div>
+  <p class="lead">Payments use native tPOT: no stablecoin and no token approvals. Every step is a public transaction.</p>
+  </div>
+  <div class="foot"><span>PotKit · Portaldot Hacker House 2026</span><span>3 / 11</span></div>
+</section>
+
+<!-- 4 -->
+<section class="slide">
+  <p class="kicker">It works</p>
+  <h2>A full lifecycle, recorded on Portaldot V3 testnet.</h2>
+  <div class="body">
+  <div class="proof">
+    <table>
+      <tr><th>Step</th><th></th><th style="text-align:right">Block</th></tr>
+      <tr><td>Mint receipt #1</td><td class="ok">✓</td><td class="r">97600</td></tr>
+      <tr><td>Lock, set terms, issue 100 shares</td><td class="ok">✓</td><td class="r">97632</td></tr>
+      <tr><td>List 90 shares at 0.009 tPOT</td><td class="ok">✓</td><td class="r">97654</td></tr>
+      <tr><td>Buy 90 shares for 0.81 tPOT</td><td class="ok">✓</td><td class="r">97684</td></tr>
+      <tr><td>Debtor settles: pays 1 tPOT</td><td class="ok">✓</td><td class="r">97706</td></tr>
+      <tr><td>Investor claims 0.9 tPOT</td><td class="ok">✓</td><td class="r">97713</td></tr>
+      <tr><td>Issuer claims 0.1 tPOT</td><td class="ok">✓</td><td class="r">97719</td></tr>
+      <tr><td>Redeem the paid receipt NFT</td><td class="ok">✓</td><td class="r">97722</td></tr>
+    </table>
+    <div class="facts">
+      <div class="card"><p><b>Contract</b><br><span class="mono" style="font-size:20px">0x3c26…0fb7</span></p></div>
+      <div class="card"><p><b>Deployed</b> 2026-10-19, block 97421. All 8 transactions succeeded.</p></div>
+      <div class="card"><p><b>Checkable:</b> block links and hashes are in the README (Testnet evidence).</p></div>
+    </div>
+  </div>
+  </div>
+  <div class="foot"><span>Testnet data. tPOT has no market value.</span><span>4 / 11</span></div>
+</section>
+
+<!-- 5 -->
+<section class="slide">
+  <p class="kicker">Why Portaldot</p>
+  <h2>Built for Portaldot V3, around its storage deposit.</h2>
+  <div class="body">
+  <div class="two" style="grid-template-columns:1.25fr 1fr;gap:40px">
+    <ul class="big">
+      <li><b>EVM path (pallet-revive):</b> Solidity and Yul run as-is. ERC-721 receipts, ERC-20 shares.</li>
+      <li><b>Native tPOT settlement:</b> no stablecoin, no approvals.</li>
+      <li><b>Small on purpose:</b> one 3.9&nbsp;KB contract, 82&#8209;byte share forwarders, reads run inside <span class="mono" style="font-size:23px">eth_call</span>.</li>
+    </ul>
+    <div>
+      <table>
+        <tr><th></th><th style="text-align:right">First design<br>4 contracts</th><th style="text-align:right">PotKit<br>1 contract</th></tr>
+        <tr><td>Deploy</td><td class="r">1,386</td><td class="r ok">327</td></tr>
+        <tr><td>Full demo</td><td class="r">~87</td><td class="r ok">~47</td></tr>
+      </table>
+      <p class="note" style="margin-top:14px">tPOT. Testnet estimates from <span class="mono">eth_estimateGas</span> (<span class="mono">scripts/measure.mjs</span>), not mainnet cost.</p>
+    </div>
+  </div>
+  </div>
+  <div class="foot"><span>Not used today: WASM / ink!, cross-chain</span><span>5 / 11</span></div>
+</section>
+
+<!-- 6 -->
+<section class="slide">
+  <p class="kicker">Architecture</p>
+  <h2>No database: the chain is the source of truth.</h2>
+  <div class="body">
+  <div class="arch">
+    <div class="card"><h3>Web app</h3><p>React + viem, running in the browser. Reads and writes straight to the chain.</p></div>
+    <div class="arrow"><span>⇄</span>JSON-RPC</div>
+    <div class="card"><h3>Portaldot V3 testnet</h3><p><b>PotKit</b>: one hand-written Yul contract (3.9 KB). Receipts, vault, settlement and market in one place.</p></div>
+  </div>
+  <div class="two">
+    <div class="card"><h3>Lens</h3><p>Read logic that runs inside <span class="mono" style="font-size:20px">eth_call</span>. Never deployed, so it costs no storage deposit.</p></div>
+    <div class="card"><h3>Two small server functions</h3><p>tokenURI JSON for receipts, and an optional faucet (closed for now).</p></div>
+  </div>
+  </div>
+  <div class="foot"><span>PotKit · Portaldot Hacker House 2026</span><span>6 / 11</span></div>
+</section>
+
+<!-- 7 -->
+<section class="slide">
+  <p class="kicker">Safety and honesty</p>
+  <h2>Clear about what it proves, and what it does not.</h2>
+  <div class="body">
+  <div class="two" style="gap:40px">
+    <div class="col good"><h3>Enforced on-chain</h3><ul>
+      <li>Fixed share supply for each lock</li>
+      <li>Settlement must cover the face value</li>
+      <li>Payouts split pro-rata and empty the pool exactly</li>
+      <li>58 automated tests pass</li></ul></div>
+    <div class="col bad"><h3>Not proven</h3><ul>
+      <li>Invoices are issuer-provided: PotKit does not verify them</li>
+      <li>No debtor attestation, no default or recovery procedure</li>
+      <li>Payment is not guaranteed</li></ul></div>
+  </div>
+  <div class="card" style="margin-top:6px;padding:18px 24px"><p style="font-size:21px"><b style="color:var(--ink)">What the product does about it:</b> limits shown next to every action, a public Verify page, an optional off-chain debtor acknowledgement (a signature, not proof of identity), and an issuer payment record from on-chain events.</p></div>
+  </div>
+  <div class="foot"><span>PotKit · Portaldot Hacker House 2026</span><span>7 / 11</span></div>
+</section>
+
+<!-- 8 -->
+<section class="slide">
+  <p class="kicker">Traction, stated honestly</p>
+  <h2>What exists today, read from the chain.</h2>
+  <div class="body">
+  <div class="stats">
+    <div class="stat"><b>15</b><span>state-changing transactions after deployment</span></div>
+    <div class="stat"><b>2</b><span>wallets</span></div>
+    <div class="stat"><b>8 / 8</b><span>lifecycle steps recorded, from mint to redeem</span></div>
+  </div>
+  <p class="lead" style="font-size:25px">Read from the kit's event logs on 2026-10-29. Testnet only. No customers, revenue or partners are claimed. Live app: app.potkit.pro. Open source (MIT).</p>
+  </div>
+  <div class="foot"><span>PotKit · Portaldot Hacker House 2026</span><span>8 / 11</span></div>
+</section>
+
+<!-- 9 -->
+<section class="slide">
+  <p class="kicker">A plan, not shipped</p>
+  <h2>Where PotKit goes next.</h2>
+  <div class="body">
+  <div class="cards" style="grid-template-columns:1fr 1fr">
+    <div class="card"><h3>First users</h3><p>Freelancers and small businesses with unpaid invoices, as issuers. Minting is permissioned, so they are approved one by one.</p></div>
+    <div class="card"><h3>Earning</h3><p>None today: no fee in the contract, and PotKit is open source. Near term: ecosystem support after the hackathon.</p></div>
+    <div class="card"><h3>First channel</h3><p>The Portaldot community. A tester sends an address, the issuer approves it, and the testnet transactions are the evidence.</p></div>
+    <div class="card"><h3>Why now</h3><p>Portaldot V3's new EVM path, and a design built around its storage deposit: deploy ~327 tPOT against 1,386.</p></div>
+  </div>
+  </div>
+  <div class="foot"><span>Issuer-provided details are not verified; payment is not guaranteed. No market size or usage is claimed.</span><span>9 / 11</span></div>
+</section>
+
+<!-- 10 -->
+<section class="slide">
+  <p class="kicker">Roadmap and ask</p>
+  <h2>What comes next, and what support would unlock.</h2>
+  <div class="body">
+  <div class="two" style="gap:40px">
+    <div><h3 style="font-size:26px;margin:0 0 14px;color:var(--accent)">Roadmap</h3>
+      <ul class="big"><li>Debtor attestation and issuer reputation</li><li>An explicit default and recovery policy</li><li>Partial payments and instalments</li><li>An indexer for history</li></ul></div>
+    <div><h3 style="font-size:26px;margin:0 0 14px;color:var(--accent)">Continued support would unlock</h3>
+      <ul class="big"><li>Mainnet migration guidance</li><li>RWA data mapping, oracle or data synchronisation</li><li>A security review</li><li>Liquidity and gas incentives</li></ul></div>
+  </div>
+  </div>
+  <div class="foot"><span>PotKit · Portaldot Hacker House 2026</span><span>10 / 11</span></div>
+</section>
+
+<!-- 11 -->
+<section class="slide">
+  <p class="kicker">Links</p>
+  <h2>Try it, check it, read it.</h2>
+  <div class="body">
+  <div class="links">
+    <div class="card"><small>Live app</small><p>app.potkit.pro</p></div>
+    <div class="card"><small>Website</small><p>potkit.pro</p></div>
+    <div class="card"><small>Code (MIT)</small><p>github.com/itsjusttu/potkit-portaldot</p></div>
+    <div class="card"><small>Judge link</small><p>app.potkit.pro/?kit=0x3c26…0fb7</p></div>
+    <div class="card"><small>Contract · chain 420420777</small><p class="mono" style="font-size:19px">0x3c26351ad8b9dc7bb4f837c5b921879c35e20fb7</p></div>
+    <div class="card"><small>Team</small><p>Tu · Builder, PotKit (solo)</p></div>
+  </div>
+  </div>
+  <div class="foot"><span>Evidence: README → Testnet evidence · DEVLOG.md</span><span>11 / 11</span></div>
+</section>
+
+</body>
+</html>
