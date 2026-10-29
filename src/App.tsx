@@ -345,6 +345,7 @@ export function App() {
                 <button type="button" role="menuitem" onClick={() => { setHelpOpen(false); setSupportOpen(true); }}><Ico n="mail" /> Contact Support</button>
               </div>}
             </div>
+            <ThemeToggle />
             <span className={`top-net ${!account ? "" : chainOk ? "ok" : chainOk === false ? "bad" : ""}`} title={`Portaldot V3 Testnet · chain ${portaldot.id}`}><i aria-hidden />{!account ? "Portaldot V3 · read-only" : chainOk ? "Portaldot V3" : chainOk === false ? "Wrong network" : "Checking network…"}</span>
             {phase !== "idle" && <span className={`top-tx tx-${phase}`} role="status" aria-live="polite"><i aria-hidden />{phase === "signing" ? "Confirm in your wallet…" : phase === "pending" ? "Transaction pending…" : phase === "success" ? "Transaction confirmed" : "Transaction not completed"}</span>}
             <WalletButton account={account} label={short(account)} net={chainOk ? "ok" : chainOk === false ? "wrong" : "unknown"}
@@ -455,5 +456,24 @@ export function App() {
       </Drawer>
       <Toasts />
     </div>
+  );
+}
+
+/** Light / dark switch for the app. The choice is kept in this browser only; dark is the default. */
+function ThemeToggle() {
+  const [light, setLight] = useState(() => document.documentElement.dataset.theme === "light");
+  const flip = () => {
+    const next = !light;
+    setLight(next);
+    if (next) document.documentElement.dataset.theme = "light"; else delete document.documentElement.dataset.theme;
+    try { localStorage.setItem("potkit-theme", next ? "light" : "dark"); } catch { /* storage blocked: the switch still works until reload */ }
+  };
+  const label = light ? "Switch to dark theme" : "Switch to light theme";
+  return (
+    <button type="button" className="top-icon theme-toggle" aria-label={label} title={label} onClick={flip}>
+      {light
+        ? <svg className="ico" viewBox="0 0 24 24" width="17" height="17" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z" /></svg>
+        : <svg className="ico" viewBox="0 0 24 24" width="17" height="17" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><circle cx="12" cy="12" r="4" /><path d="M12 2.5v2M12 19.5v2M2.5 12h2M19.5 12h2M5.3 5.3l1.4 1.4M17.3 17.3l1.4 1.4M5.3 18.7l1.4-1.4M17.3 6.7l1.4-1.4" /></svg>}
+    </button>
   );
 }

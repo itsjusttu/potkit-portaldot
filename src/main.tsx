@@ -21,11 +21,14 @@ import "./styles/night-motion.css";
 import "./styles/night-mobile.css";
 import "./styles/night-ledger.css";
 import "./styles/night-grid.css";
+import "./styles/night-light.css";
 import { Intro } from "./Intro";
 
 migrateHashRoute();
 const app = isAppRoute();
 document.documentElement.dataset.route = app ? "app" : "landing";
+// the app has an optional light theme, remembered per browser; dark stays the default and the landing ignores it
+if (app) { try { if (localStorage.getItem("potkit-theme") === "light") document.documentElement.dataset.theme = "light"; } catch { /* storage blocked: stay dark */ } }
 
 // each route is its own chunk: the landing never downloads viem, the app never downloads lenis/landing code
 const App = lazy(() => import("./App").then((m) => ({ default: m.App })));

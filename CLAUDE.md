@@ -6,6 +6,7 @@ do not touch contracts/, api/, src/lib/chain.ts, VITE_* variable names or the tr
 - The same black-violet canvas as the landing (#07050d) with dark flat cards (no gradients, glows or glass; 1px light-violet edge), near-white text,
   violet-gray secondary text. Primary buttons are a solid violet (#5b3df5, hover #6a4ff7) with white text and a light-violet edge, no glow,
   never a white or lavender fill; one primary action per screen. The old white accent token (`--pk-accent`) is violet now.
+- An optional light theme (cool white #f4f4f6, ink #16141e, same violet accent, darker status shades) is switched from the top bar and remembered per browser; dark stays the default. Its rules live in `src/styles/night-light.css` (loaded last) under `html[data-theme="light"]`; every new dark-only colour needs a light counterpart there.
 - Desktop (>= 1100px) uses pill navigation across the top bar; the sidebar stays for tablet rail and the mobile sheet.
 - Violet marks the selected item, focus and chart series. No marquees or looping animation in data areas. Status colours
   keep their meaning and are always paired with a word: blue open/trading, amber due soon, red overdue/error, green settled.
