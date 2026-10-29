@@ -7,7 +7,6 @@ import { withoutRedeemed } from "./receipt-history";
 import { lifecycleSteps } from "./Tour";
 import { EV_ICON } from "./Explore";
 import { periodDelta, settlementSplit } from "./insights";
-import { Needle } from "./charts";
 import { MaturityStrip } from "./MaturityStrip";
 import { SalePlanner } from "./SalePlanner";
 
@@ -132,7 +131,7 @@ export function Dashboard({ c }: { c: Ctx }) {
         <article className="nv-card nv-gauge" style={{ "--i": 3 } as React.CSSProperties} aria-labelledby="nv-rec">
           <header><span className="nv-ico"><Ico n="check" /></span><h2 id="nv-rec">Settlement record</h2></header>
           <b className="nv-gauge-v num">{rated ? `${split.onTime} of ${rated}` : "—"}</b>
-          <Needle pct={rated ? (split.onTime / rated) * 100 : null} label={`${split.onTime} paid on time, ${split.late} late or unpaid past due, ${split.open} still open`} />
+          <div className="nv-split" role="img" aria-label={`${split.onTime} paid on time, ${split.late} late or unpaid past due, ${split.open} still open`}>{split.onTime + split.late + split.open ? <>{split.onTime > 0 && <i className="ok" style={{ flexGrow: split.onTime }} />}{split.late > 0 && <i className="late" style={{ flexGrow: split.late }} />}{split.open > 0 && <i className="open" style={{ flexGrow: split.open }} />}</> : <i className="none" />}</div>
           <footer><span><i className="d-ok" />On time {split.onTime}</span><span><i className="d-late" />Late {split.late}</span><span><i className="d-open" />Open {split.open}</span></footer>
           <small className="muted">paid on time, dated receipts only</small>
         </article>

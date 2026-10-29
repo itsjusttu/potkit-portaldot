@@ -20,6 +20,7 @@ import "./styles/night-profile.css";
 import "./styles/night-motion.css";
 import "./styles/night-mobile.css";
 import "./styles/night-ledger.css";
+import "./styles/night-grid.css";
 import { Intro } from "./Intro";
 
 migrateHashRoute();

@@ -1,0 +1,121 @@
+/* Grid layer (app, loaded last). Flat surfaces, one gutter, explicit 12-column dashboard grid.
+   No gradients, glows or glass; violet stays only for selection, focus, primary actions and data. */
+html[data-route="app"] {
+  --g-gap: 1rem;
+  --g-surface: #0e0b1c;
+  --g-line: rgba(187, 168, 255, .16);
+  --g-ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --nv-cta: #5b3df5;
+  --nv-cta-hi: #6a4ff7;
+}
+
+/* primary buttons: solid violet, no glow */
+html[data-route="app"] .shell .btn.primary { background: #5b3df5; border-color: rgba(187, 168, 255, .45); box-shadow: none; transition: background-color 180ms var(--g-ease); }
+html[data-route="app"] .shell .btn.primary:hover:not(:disabled) { background: #6a4ff7; box-shadow: none; }
+html[data-route="app"] .bottom-nav .bn-main { background: #5b3df5; box-shadow: none; }
+
+/* flat surfaces everywhere in the app: one tone step and a 1px line, no shadow */
+html[data-route="app"] .shell :is(.card, .db-card, .nv-card, .pf2-sec, .pf2-balances, .ex-stats, .trade-market-card, .wiz-pane, .wiz-preview, .verify-cert, .pay-doc, .pay-panel, .issue-steps, .tour, .rd-attention, .empty, .kpi, .trade-kpis, .history-table, .verify-lookup, .db-wallet) {
+  background: var(--g-surface) !important; border-color: var(--g-line) !important; box-shadow: none !important; backdrop-filter: none !important;
+}
+
+/* ---------- dashboard ---------- */
+/* no entrance choreography on a data screen: content is simply there */
+html[data-route="app"] .nv :is(.nv-card, .nv-rcard, .nv-segs i, .nv-histo i) { animation: none !important; }
+html[data-route="app"] .shell .nv .nv-card { border-radius: 14px !important; padding: 1.25rem; gap: .8rem; }
+html[data-route="app"] .shell .nv .nv-kpi:hover, html[data-route="app"] .shell .nv button.nv-card:hover { border-color: rgba(187, 168, 255, .38) !important; transition: border-color 180ms var(--g-ease); }
+
+/* the wrappers dissolve so every card sits on one grid; rows end level */
+html[data-route="app"] .nv .nv-grid { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: var(--g-gap); align-items: stretch; margin-bottom: var(--g-gap); }
+html[data-route="app"] .nv :is(.nv-main, .nv-side, .nv-row) { display: contents; }
+html[data-route="app"] .nv .nv-hero { grid-column: span 8; }
+html[data-route="app"] .nv .nv-gauge { grid-column: span 4; }
+html[data-route="app"] .nv .nv-kpis { grid-column: span 8; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--g-gap); }
+html[data-route="app"] .nv .nv-progress { grid-column: span 4; }
+html[data-route="app"] .nv .nv-due { grid-column: span 5; }
+html[data-route="app"] .nv .nv-receipt { grid-column: span 3; }
+html[data-route="app"] .nv .nv-attn { grid-column: span 4; }
+html[data-route="app"] .nv .nv-list { grid-column: span 8; }
+html[data-route="app"] .nv .nv-activity { grid-column: span 4; }
+html[data-route="app"] .nv .nv-hero { order: 1; } html[data-route="app"] .nv .nv-gauge { order: 2; }
+html[data-route="app"] .nv .nv-kpis { order: 3; } html[data-route="app"] .nv .nv-attn { order: 4; }
+html[data-route="app"] .nv .nv-due { order: 5; } html[data-route="app"] .nv .nv-receipt { order: 6; } html[data-route="app"] .nv .nv-progress { order: 7; }
+html[data-route="app"] .nv .nv-list { order: 8; } html[data-route="app"] .nv .nv-activity { order: 9; }
+
+/* figures: one scale, nothing shouts */
+html[data-route="app"] .shell .nv .nv-big { font-size: 2.5rem; font-weight: 400; letter-spacing: -.02em; }
+html[data-route="app"] .shell .nv .nv-kpi > b { font-size: 1.6rem; font-weight: 500; }
+html[data-route="app"] .shell .nv .nv-kpi > span { font-size: .84rem; }
+html[data-route="app"] .nv .nv-chip { background: transparent; }
+
+/* settlement record: the count, then one flat split bar with words under it */
+html[data-route="app"] .nv .nv-gauge { justify-items: stretch; text-align: left; align-content: start; }
+html[data-route="app"] .shell .nv .nv-gauge-v { justify-self: start; font-size: 1.6rem; font-family: var(--n-mono, ui-monospace, monospace); }
+html[data-route="app"] .nv .nv-split { display: flex; gap: 2px; height: 10px; overflow: hidden; border-radius: 3px; background: rgba(187, 168, 255, .08); }
+html[data-route="app"] .nv .nv-split i { flex-basis: 0; min-width: 4px; }
+html[data-route="app"] .nv .nv-split i.ok { background: #3ecf8e; }
+html[data-route="app"] .nv .nv-split i.late { background: #ff6b72; }
+html[data-route="app"] .nv .nv-split i.open { background: #6f8bff; }
+html[data-route="app"] .nv .nv-split i.none { flex: 1; background: transparent; }
+html[data-route="app"] .nv .nv-gauge footer { justify-content: flex-start; }
+html[data-route="app"] .nv .nv-gauge footer i.d-ok { background: #3ecf8e; } html[data-route="app"] .nv .nv-gauge footer i.d-late { background: #ff6b72; } html[data-route="app"] .nv .nv-gauge footer i.d-open { background: #6f8bff; }
+
+/* progress: flat segments */
+html[data-route="app"] .nv .nv-prog-box { background: transparent; border-color: var(--g-line); }
+html[data-route="app"] .nv .nv-segs i { background: rgba(187, 168, 255, .12); }
+html[data-route="app"] .nv .nv-segs i.on { background: #7b5cff; }
+
+/* latest receipt: a flat stub instead of a glowing violet card */
+html[data-route="app"] .nv .nv-receipt { align-content: start; }
+html[data-route="app"] .nv .nv-podium { display: none; }
+html[data-route="app"] .nv .nv-rcard { width: 100%; aspect-ratio: auto; margin: 0; padding: 1rem; border: 1px dashed rgba(187, 168, 255, .35); border-radius: 10px; background: transparent; box-shadow: none; color: #fff; }
+html[data-route="app"] .shell .nv .nv-receipt:hover .nv-rcard { transform: none; border-color: rgba(187, 168, 255, .6); }
+html[data-route="app"] .nv .nv-rcard-top { color: #bba8ff; }
+html[data-route="app"] .nv .nv-rcard-top img { filter: none; }
+html[data-route="app"] .nv .nv-rcard-foot { padding-top: .6rem; border-top: 1px dashed rgba(187, 168, 255, .3); font-family: var(--n-mono, ui-monospace, monospace); opacity: 1; }
+
+/* empty and list surfaces inside cards: one tone, no inner boxes */
+html[data-route="app"] .shell .nv .db-none { background: transparent; border-style: dashed; }
+
+/* ---------- smaller screens ---------- */
+@media (max-width: 75rem) {
+  html[data-route="app"] .nv .nv-grid { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+  html[data-route="app"] .nv :is(.nv-hero, .nv-kpis, .nv-list) { grid-column: 1 / -1; }
+  html[data-route="app"] .nv :is(.nv-gauge, .nv-progress, .nv-due, .nv-receipt, .nv-attn, .nv-activity) { grid-column: span 3; }
+  html[data-route="app"] .nv .nv-hero { order: 1; } html[data-route="app"] .nv .nv-kpis { order: 2; }
+  html[data-route="app"] .nv .nv-due { order: 3; } html[data-route="app"] .nv .nv-receipt { order: 4; }
+  html[data-route="app"] .nv .nv-gauge { order: 5; } html[data-route="app"] .nv .nv-progress { order: 6; }
+  html[data-route="app"] .nv .nv-attn { order: 7; } html[data-route="app"] .nv .nv-activity { order: 8; } html[data-route="app"] .nv .nv-list { order: 9; }
+}
+@media (max-width: 52rem) {
+  html[data-route="app"] .nv .nv-grid { grid-template-columns: minmax(0, 1fr); }
+  html[data-route="app"] .nv .nv-grid > *, html[data-route="app"] .nv :is(.nv-hero, .nv-gauge, .nv-kpis, .nv-progress, .nv-due, .nv-receipt, .nv-attn, .nv-list, .nv-activity) { grid-column: 1 / -1; order: 0; }
+  html[data-route="app"] .shell .nv .nv-big { font-size: 2.2rem; }
+  html[data-route="app"] .nv .nv-kpis { display: block; } /* the ledger block from night-ledger.css */
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html[data-route="app"] .shell :is(.btn, .nv-card, .nv-rcard) { transition: none !important; }
+}
+
+/* fill rules found by the audit: no blank band inside a card */
+html[data-route="app"] .nv .nv-gauge { align-content: space-between; }
+html[data-route="app"] .nv .nv-activity { grid-template-rows: auto 1fr auto; }
+html[data-route="app"] .nv .nv-activity > ul { align-self: start; }
+html[data-route="app"] .nv .nv-activity > .nv-foot { align-self: end; }
+html[data-route="app"] .nv .nv-attn { grid-template-rows: auto 1fr; }
+html[data-route="app"] .shell .nv .nv-attn > .db-none { display: grid; place-items: center; margin: 0; }
+/* labels never below 11px */
+html[data-route="app"] .ms-today b, html[data-route="app"] .ms-pin > span small { font-size: .7rem; }
+html[data-route="app"] .shell .term-q { font-size: 11px; }
+
+/* progress: "Next" and "All steps" share one line so the card is no taller than its neighbours */
+html[data-route="app"] .nv .nv-progress { grid-template-columns: minmax(0, 1fr) auto; grid-auto-flow: row dense; align-items: center; }
+html[data-route="app"] .nv .nv-progress > * { grid-column: 1 / -1; }
+html[data-route="app"] .nv .nv-progress > .nv-next { grid-column: 1; justify-self: start; }
+html[data-route="app"] .nv .nv-progress > .nv-link { grid-column: 2; justify-self: end; }
+/* latest receipt: the stub sits in the middle of its cell */
+html[data-route="app"] .nv .nv-receipt { grid-template-rows: auto 1fr; }
+html[data-route="app"] .nv .nv-receipt > .nv-rcard { align-self: center; }
+/* the wallet button is a primary action too: same solid fill, no glow */
+html[data-route="app"] .cw-btn:not(.on) { box-shadow: none !important; }
