@@ -4,7 +4,7 @@
 **One-liner:** Tokenise an unpaid invoice into backed, tradeable shares on Portaldot V3 — and pay every holder pro-rata, on-chain, when the debtor settles.
 
 ## Problem
-Freelancers and small businesses wait 30–90 days to get paid. Factoring is opaque, manual and closed to small invoices.
+Freelancers and small businesses often have to wait to get paid after they deliver the work. Factoring is opaque, manual and closed to small invoices.
 Investors who would happily fund a receivable have no simple, verifiable way to buy a slice of one and get paid out automatically.
 
 ## Solution
@@ -98,14 +98,14 @@ sequenceDiagram
 - MetaMask / injected-wallet UX with one-click "Switch to Portaldot V3" (`wallet_addEthereumChain`).
 
 ## dApp at a glance
-Issue (one-click deploy + guided 3-step wizard) · Trade (marketplace + drawer) · Portfolio (allocation, P&L, claims) · Explore (network explorer, judge link, "Load older") · Verify (shareable proof) · History (on-chain timeline) · **Profile** (wallet identity, balances, mapped gas account, reset saved deployment) · floating **Demo guide** checklist that tracks the 7-step demo path (mint, lock, list, buy, settle, claim, redeem) from contract state.
+Dashboard (market figures and an 8-step lifecycle tracker, all read from the chain) · Issue (one-click deploy + guided 3-step wizard with live receipt preview) · Trade (listing board, quick buy, sell panel, cash-now planner) · Portfolio (shares held, claims with *Claim all*, open listings, receipts issued; CSV and calendar export) · Explore (network explorer, judge link, "Load older") · Verify (shareable proof) · History (on-chain timeline, CSV export) · Profile (wallet identity, on-time payment record, mapped gas account) · Pay page (`?tab=pay&id=N`, debtor view with an optional off-chain EIP-712 acknowledgement; the contract does not use it).
 Read-only mode: Explore and Verify work without a wallet through a direct RPC client (with retries and an optional fallback RPC).
 
 ## Tech stack
 Yul + Solidity 0.8.28 (solc-js, pinned) · custom compile script (no Hardhat) · node:test + ganache · React 19 + TypeScript + Vite 7 ·
-viem 2 · lenis (smooth scroll) · canvas 2D landing animation. No database: every screen reads the chain directly (the only server code is the optional gas faucet and the `tokenURI` JSON endpoint).
+viem 2 · lenis (smooth scroll on the docs pages) · canvas 2D intro animation. No database: every screen reads the chain directly (the only server code is the optional gas faucet and the `tokenURI` JSON endpoint).
 
-## What's tested (28 automated tests, `npm test`)
+## What's tested (`npm test`)
 - ERC-721 compliance (ERC-165, approve, operators, transferFrom, safeTransferFrom with receiver contracts and rejection), mint permissions, unknown ids revert
 - Notes of every length 1–140 stored losslessly; metadata JSON escapes quotes, backslashes and control characters
 - Lock: owner-only, terms set in the same call, whole supply to the owner; share tokens are identical 82-byte forwarders and their events cannot be spoofed
@@ -116,31 +116,36 @@ viem 2 · lenis (smooth scroll) · canvas 2D landing animation. No database: eve
 - Market: escrow, partial and full buys with exact tPOT, round-up cost, seller paid, cancel; no listing on unlocked receipts; trading blocked after settlement while cancel + claim still work
 - Lens windows (`rows`, `balances`, `claimables`, `listings`) consistent
 - Gas faucet API and wallet network switching
+- Settle-amount checks (underpay, exact, overpay needs confirmation), Trade input precision (at most 18 decimals), receipt-history rules, and the dashboard figures (issuer record, due buckets, per-day series, sale plan, CSV and calendar export)
 
 ## Deployed contracts (Portaldot V3 testnet)
 - PotKit (receipts, vault, settlement, market): `0x3c26351ad8b9dc7bb4f837c5b921879c35e20fb7`
 - Deploy tx hash: `0x5ce8a4a4661025a4cac0fe059dd3f10b111a05890c4530abb5d6490c9bf41614`
-- Deploy block: `97421`
+- Deploy block: `97421` (block time 2026-10-19 03:15:12 UTC; status success, deployed code 3,910 bytes)
 
 ### Full lifecycle executed on Portaldot V3 testnet
-Run with two wallets (issuer/seller and investor/debtor). Hashes can be checked with `eth_getTransactionReceipt` on `https://test-evm-rpc-v3.portaldot.dev`.
+Run with two wallets (issuer/seller and investor/debtor). Each hash was re-checked with `eth_getTransactionReceipt` on `https://test-evm-rpc-v3.portaldot.dev` (status success, sent to the kit); times are block timestamps in UTC. The node console opens block numbers, not EVM transaction hashes, so each block links to its console page.
 
-| # | Step | Block | Tx hash |
-|---|---|---:|---|
-| 1 | Mint receipt #1 | 97600 | `0x734848b6b369f4b54fd204f0fe96253bab46bb6cd73ff495f5f36bba2bcd7bee` |
-| 2 | Lock + set terms + issue 100 shares | 97632 | `0x6b36874b7e82cb29098017292314243aea17accc1825169b6ea81223637a846d` |
-| 3 | List 90 shares @ 0.009 tPOT | 97654 | `0x36d70079020ad47a3b7350794c706bc68a87980cac1e08789a0516f4cc7ede4d` |
-| 4 | Buy 90 shares (0.81 tPOT) | 97684 | `0xd9adf39c377817b8761e9e48814ba18c605dd464e9e3fd7515b9fbab8b930cb5` |
-| 5 | Settle (debtor pays 1 tPOT) | 97706 | `0xa3c4e3920fc77a62d5c6c9902994285ff22345f92feb69e824d6583db81df25c` |
-| 6 | Claim (investor, 0.9 tPOT) | 97713 | `0x41e96b79547671cf597ee0c3f7b27635fbfaf82c55b8b1231cecf47b640dd557` |
-| 7 | Claim (issuer, 0.1 tPOT) | 97719 | `0x83cc9d7f3606d28e9cdd4c9dcd58525731987b79ffdf404a1952dd2bcf420e66` |
-| 8 | Redeem paid receipt NFT | 97722 | `0x8e4f7704cce8d0224116c855f5789a5ef18260714a9520eddb00ed4e0cdf1b89` |
+| # | Step | Block | Time (UTC) | Transaction hash |
+|---|---|---:|---|---|
+| 1 | Deploy kit | [97421](https://node-console.portaldot.dev/?rpc=wss%3A%2F%2Ftest-node-v3.portaldot.dev#/explorer/query/97421) | 2026-10-19 03:15:12 | `0x5ce8a4a4661025a4cac0fe059dd3f10b111a05890c4530abb5d6490c9bf41614` |
+| 2 | Mint receipt #1 | [97600](https://node-console.portaldot.dev/?rpc=wss%3A%2F%2Ftest-node-v3.portaldot.dev#/explorer/query/97600) | 2026-10-19 03:33:06 | `0x734848b6b369f4b54fd204f0fe96253bab46bb6cd73ff495f5f36bba2bcd7bee` |
+| 3 | Lock + terms + issue 100 shares | [97632](https://node-console.portaldot.dev/?rpc=wss%3A%2F%2Ftest-node-v3.portaldot.dev#/explorer/query/97632) | 2026-10-19 03:36:18 | `0x6b36874b7e82cb29098017292314243aea17accc1825169b6ea81223637a846d` |
+| 4 | List 90 shares @ 0.009 tPOT | [97654](https://node-console.portaldot.dev/?rpc=wss%3A%2F%2Ftest-node-v3.portaldot.dev#/explorer/query/97654) | 2026-10-19 03:38:30 | `0x36d70079020ad47a3b7350794c706bc68a87980cac1e08789a0516f4cc7ede4d` |
+| 5 | Buy 90 shares (0.81 tPOT) | [97684](https://node-console.portaldot.dev/?rpc=wss%3A%2F%2Ftest-node-v3.portaldot.dev#/explorer/query/97684) | 2026-10-19 03:41:30 | `0xd9adf39c377817b8761e9e48814ba18c605dd464e9e3fd7515b9fbab8b930cb5` |
+| 6 | Settle (debtor pays 1 tPOT) | [97706](https://node-console.portaldot.dev/?rpc=wss%3A%2F%2Ftest-node-v3.portaldot.dev#/explorer/query/97706) | 2026-10-19 03:43:42 | `0xa3c4e3920fc77a62d5c6c9902994285ff22345f92feb69e824d6583db81df25c` |
+| 7 | Claim (investor, 0.9 tPOT) | [97713](https://node-console.portaldot.dev/?rpc=wss%3A%2F%2Ftest-node-v3.portaldot.dev#/explorer/query/97713) | 2026-10-19 03:44:24 | `0x41e96b79547671cf597ee0c3f7b27635fbfaf82c55b8b1231cecf47b640dd557` |
+| 8 | Claim (issuer, 0.1 tPOT) | [97719](https://node-console.portaldot.dev/?rpc=wss%3A%2F%2Ftest-node-v3.portaldot.dev#/explorer/query/97719) | 2026-10-19 03:45:00 | `0x83cc9d7f3606d28e9cdd4c9dcd58525731987b79ffdf404a1952dd2bcf420e66` |
+| 9 | Redeem paid receipt NFT | [97722](https://node-console.portaldot.dev/?rpc=wss%3A%2F%2Ftest-node-v3.portaldot.dev#/explorer/query/97722) | 2026-10-19 03:45:18 | `0x8e4f7704cce8d0224116c855f5789a5ef18260714a9520eddb00ed4e0cdf1b89` |
 - Share tokens: created by PotKit on each lock (`Lens.rows` lists them)
 
 ## Known limitations
 - **No debtor attestation yet.** Anyone can mint an invoice and the contract cannot verify that the debtor agreed to it; trust in the issuer is off-chain. Debtor signatures and issuer reputation are on the roadmap.
 - **Shares left in an open listing at settlement** stay in escrow until the seller cancels; the depositor cannot redeem the NFT until every share is claimed, so sellers should cancel before or right after settlement.
 - **Testnet only.** Payments use native tPOT; there is no stablecoin option or KYC for mainnet yet.
+- **Minting is permissioned.** Only the issuer and approved minters can mint (`not minter` otherwise); anyone can still hold, trade, settle and claim. Judges can run the local demo (README → Judge quick start) or be approved with `scripts/set-minter.mjs`.
+- **The PotKit faucet is closed.** Hackathon test tokens are handed out by the Portaldot team.
+- **Overdue is an app rule.** The contract accepts a purchase until the invoice is settled; the app hides Buy on overdue listings.
 - **Contract is immutable** and its `tokenURI` points at `https://potkit.pro/api/r`; the JSON is built off-chain from chain state.
 
 
@@ -159,13 +164,13 @@ No third-party Solidity/Yul code is used in the contracts (`PotKit.yul`, `Lens.s
 | react, react-dom | 19.x | MIT | UI |
 | viem | 2.57 | MIT | RPC, ABI encoding, wallet calls |
 | @noble/hashes | 1.8 | MIT | blake2b for the mapped `5…` account |
-| lenis | 1.3 | MIT | smooth scrolling on the landing page |
+| lenis | 1.3 | MIT | smooth scrolling on the docs pages |
 | vite, @vitejs/plugin-react | 7.x / 5.x | MIT | build tooling |
 | typescript | 5.9 | Apache-2.0 | type checking |
 | solc (solc-js) | 0.8.28 | MIT | compiling Yul / Solidity |
 | ganache | 7.9 | MIT | local test chain |
 
-Assets: wallet logos are bundled locally (see `src/assets/wallets/SOURCES.md`: web3icons MIT, simple-icons CC0; trademarks belong to their owners). Fonts Inter, JetBrains Mono and Space Grotesk are loaded from Google Fonts (SIL Open Font License). Landing and dApp visuals were created for this project.
+Assets: wallet logos are bundled locally (see `src/assets/wallets/SOURCES.md`: web3icons MIT, simple-icons CC0; trademarks belong to their owners). Fonts Hanken Grotesk, Newsreader and IBM Plex Mono are loaded from Google Fonts (SIL Open Font License). Landing and dApp visuals were created for this project; layout ideas came from public design references, and no code, images, logos or text were copied.
 
 
 ## Links
@@ -173,5 +178,5 @@ Assets: wallet logos are bundled locally (see `src/assets/wallets/SOURCES.md`: w
 - Website: https://potkit.pro
 - Live dApp: https://app.potkit.pro
 - Judge link (opens the exact deployed contracts): https://app.potkit.pro/?kit=0x3c26351ad8b9dc7bb4f837c5b921879c35e20fb7
-- Video: https://www.youtube.com/watch?v=3rF0QRqJNAU
+- Video: https://www.youtube.com/watch?v=3rF0QRqJNAU <!-- TODO(video): first demo (older UI). Replace with the new public video link when it is published. -->
 - License: MIT (see `LICENSE` in the repository)

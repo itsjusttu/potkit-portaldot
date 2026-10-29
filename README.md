@@ -10,6 +10,21 @@ The NFT is held by the contract while shares are outstanding. Shares provide a c
 
 The deployed version uses **one contract, `PotKit`** (hand-written Yul): receipt NFT, vault, settlement pool and share market. Each share token is an 82-byte forwarder whose ERC-20 balances live in PotKit.
 
+## Judge quick start
+Steps 1–3 need no wallet and no test tokens.
+1. **Watch the demo video:** https://youtu.be/3rF0QRqJNAU <!-- TODO(video): this is the first demo, recorded on the older UI. Replace it with the new public video and state its length when it is published. -->
+2. **Open the live app on the deployed contract:** [app.potkit.pro/?kit=0x3c26351ad8b9dc7bb4f837c5b921879c35e20fb7](https://app.potkit.pro/?kit=0x3c26351ad8b9dc7bb4f837c5b921879c35e20fb7). Dashboard, Explore and Verify read straight from Portaldot V3; connect a wallet only if you want to transact.
+3. **Check the on-chain evidence:** [Testnet evidence](#testnet-evidence) lists the whole lifecycle (deploy → mint → lock → list → buy → settle → claim → redeem) with UTC times and a block link per transaction. Any hash can be checked with `eth_getTransactionReceipt`.
+4. **Run it yourself with no tokens** (local chain with sample data):
+   ```bash
+   npm install
+   npx ganache --chain.chainId 420420777 --wallet.deterministic    # terminal 1: local chain, in memory
+   node scripts/seed-local.mjs                                     # terminal 2: prints {"kit":"0x…","alice":"0x…","bob":"0x…"}
+   VITE_RPC_URL=http://localhost:8545 npm run dev                  # terminal 3: open the URL Vite prints, then /app?kit=<kit from step 2>
+   ```
+   Explore, Verify and the Dashboard work without a wallet. To transact, add the network manually in MetaMask (RPC `http://localhost:8545`, chain ID `420420777`) and import a Ganache deterministic account: account 0 (`alice`) is the issuer and can mint; the other accounts can buy, settle and claim. Restarting Ganache resets the chain.
+5. **Mint on the shared testnet kit:** minting is limited to the issuer and approved minters (any other wallet gets `not minter`); holding, trading, settling and claiming are open to everyone. Send your 0x address to the team on Discord; the issuer decides whether to approve it, with `node scripts/set-minter.mjs 0xYourWallet --send` (issuer key only; without `--send` it is a read-only dry run). How the issuer does this: [step 6](#6-approve-a-tester-as-minter-issuer-only). The PotKit faucet is closed: test tokens are handed out by the Portaldot team to hackathon participants.
+
 ## How it works
 1. **Mint:** The deployer (issuer) or an issuer-approved minter creates an ERC-721 receipt with a type and note. No invoice document or debtor signature is checked by the contract.
 2. **Lock:** The NFT owner calls `fractionalize(id, units, faceValue, dueDate)`. PotKit holds the NFT, fixes the terms for this lock cycle, and issues all fixed-supply shares to the depositor. The due date is optional.
@@ -85,6 +100,8 @@ The optional due date is used only by `Lens.statuses`: an unpaid locked receipt 
 - Invoice notes and terms are issuer/depositor self-reported. The contract does not verify the invoice, delivery, debtor identity, debtor consent, or legal enforceability.
 - There is no oracle, KYC, debtor attestation, credit underwriting, stablecoin, or mainnet deployment. All payments here use testnet native tPOT.
 - The app simulates the roles of issuer, seller, buyer/investor, and debtor with wallets; the contract does not know which wallet is the real debtor.
+- Minting is permissioned: only the issuer and approved minters can mint (`not minter` otherwise). Holding, trading, settling and claiming are open to everyone. The issuer approves a minter with `setMinter` (see `scripts/set-minter.mjs`).
+- The contract does not look at the due date when someone buys, so it still accepts a purchase on an overdue, unpaid invoice. The app hides the Buy button for overdue listings as a product rule.
 - The RPC can discard old block state/log ranges. The app estimates event timestamps from the latest block at roughly six seconds per block and labels those times approximate; block numbers and transaction hashes remain the evidence.
 - Open listings are not automatically cancelled at settlement. Sellers must cancel them before claiming, and the depositor cannot redeem until all shares have been claimed.
 
@@ -92,19 +109,21 @@ The optional due date is used only by `Lens.statuses`: an unpaid locked receipt 
 PotKit is deployed to Portaldot V3 EVM testnet, chain ID **420420777**, using the public RPC `https://test-evm-rpc-v3.portaldot.dev`. The deployed kit address is `0x3c26351ad8b9dc7bb4f837c5b921879c35e20fb7`. The app reads the kit and the never-deployed Lens through `eth_call`; writes use the wallet on the same network. Portaldot's EVM address maps to a Substrate gas account: use the [node console](https://node-console.portaldot.dev/) → Developer → Runtime calls → `reviveApi` → `accountId` to find it, then fund that mapped account with **tPOTv3**. Transaction proof links use the [Portaldot node console explorer](https://node-console.portaldot.dev/?rpc=wss%3A%2F%2Ftest-node-v3.portaldot.dev#/explorer).
 
 ## Testnet evidence
-The following is the recorded end-to-end testnet run for kit `0x3c26351ad8b9dc7bb4f837c5b921879c35e20fb7` on chain 420420777. Each hash can be checked with `eth_getTransactionReceipt` against the RPC above.
+The recorded end-to-end testnet run for kit `0x3c26351ad8b9dc7bb4f837c5b921879c35e20fb7` on chain 420420777. Every hash below was re-checked against the public RPC with `eth_getTransactionReceipt` (status `0x1`, sent to the kit; the deploy receipt returns it as `contractAddress`); times are the block timestamps in UTC. The deployed code is 3,910 bytes.
 
-| Step | Block | Transaction hash |
-|---|---:|---|
-| Deploy kit | 97421 | `0x5ce8a4a4661025a4cac0fe059dd3f10b111a05890c4530abb5d6490c9bf41614` |
-| Mint receipt #1 | 97600 | `0x734848b6b369f4b54fd204f0fe96253bab46bb6cd73ff495f5f36bba2bcd7bee` |
-| Lock + terms + issue 100 shares | 97632 | `0x6b36874b7e82cb29098017292314243aea17accc1825169b6ea81223637a846d` |
-| List 90 shares | 97654 | `0x36d70079020ad47a3b7350794c706bc68a87980cac1e08789a0516f4cc7ede4d` |
-| Buy 90 shares | 97684 | `0xd9adf39c377817b8761e9e48814ba18c605dd464e9e3fd7515b9fbab8b930cb5` |
-| Settle, 1 tPOT | 97706 | `0xa3c4e3920fc77a62d5c6c9902994285ff22345f92feb69e824d6583db81df25c` |
-| Claim, investor | 97713 | `0x41e96b79547671cf597ee0c3f7b27635fbfaf82c55b8b1231cecf47b640dd557` |
-| Claim, issuer | 97719 | `0x83cc9d7f3606d28e9cdd4c9dcd58525731987b79ffdf404a1952dd2bcf420e66` |
-| Redeem paid receipt | 97722 | `0x8e4f7704cce8d0224116c855f5789a5ef18260714a9520eddb00ed4e0cdf1b89` |
+| Step | Block | Time (UTC) | Transaction hash |
+|---|---:|---|---|
+| Deploy kit | [97421](https://node-console.portaldot.dev/?rpc=wss%3A%2F%2Ftest-node-v3.portaldot.dev#/explorer/query/97421) | 2026-10-19 03:15:12 | `0x5ce8a4a4661025a4cac0fe059dd3f10b111a05890c4530abb5d6490c9bf41614` |
+| Mint receipt #1 | [97600](https://node-console.portaldot.dev/?rpc=wss%3A%2F%2Ftest-node-v3.portaldot.dev#/explorer/query/97600) | 2026-10-19 03:33:06 | `0x734848b6b369f4b54fd204f0fe96253bab46bb6cd73ff495f5f36bba2bcd7bee` |
+| Lock + terms + issue 100 shares | [97632](https://node-console.portaldot.dev/?rpc=wss%3A%2F%2Ftest-node-v3.portaldot.dev#/explorer/query/97632) | 2026-10-19 03:36:18 | `0x6b36874b7e82cb29098017292314243aea17accc1825169b6ea81223637a846d` |
+| List 90 shares @ 0.009 tPOT | [97654](https://node-console.portaldot.dev/?rpc=wss%3A%2F%2Ftest-node-v3.portaldot.dev#/explorer/query/97654) | 2026-10-19 03:38:30 | `0x36d70079020ad47a3b7350794c706bc68a87980cac1e08789a0516f4cc7ede4d` |
+| Buy 90 shares (0.81 tPOT) | [97684](https://node-console.portaldot.dev/?rpc=wss%3A%2F%2Ftest-node-v3.portaldot.dev#/explorer/query/97684) | 2026-10-19 03:41:30 | `0xd9adf39c377817b8761e9e48814ba18c605dd464e9e3fd7515b9fbab8b930cb5` |
+| Settle (debtor pays 1 tPOT) | [97706](https://node-console.portaldot.dev/?rpc=wss%3A%2F%2Ftest-node-v3.portaldot.dev#/explorer/query/97706) | 2026-10-19 03:43:42 | `0xa3c4e3920fc77a62d5c6c9902994285ff22345f92feb69e824d6583db81df25c` |
+| Claim (investor, 0.9 tPOT) | [97713](https://node-console.portaldot.dev/?rpc=wss%3A%2F%2Ftest-node-v3.portaldot.dev#/explorer/query/97713) | 2026-10-19 03:44:24 | `0x41e96b79547671cf597ee0c3f7b27635fbfaf82c55b8b1231cecf47b640dd557` |
+| Claim (issuer, 0.1 tPOT) | [97719](https://node-console.portaldot.dev/?rpc=wss%3A%2F%2Ftest-node-v3.portaldot.dev#/explorer/query/97719) | 2026-10-19 03:45:00 | `0x83cc9d7f3606d28e9cdd4c9dcd58525731987b79ffdf404a1952dd2bcf420e66` |
+| Redeem paid receipt NFT | [97722](https://node-console.portaldot.dev/?rpc=wss%3A%2F%2Ftest-node-v3.portaldot.dev#/explorer/query/97722) | 2026-10-19 03:45:18 | `0x8e4f7704cce8d0224116c855f5789a5ef18260714a9520eddb00ed4e0cdf1b89` |
+
+The node console explorer is Substrate-based: it opens **block numbers** but cannot resolve an EVM transaction hash, so each block above links to its console page and the hash is verified through the RPC. The contract was deployed once (block 97421); the web frontend is a separate Vercel deployment that is rebuilt as the UI changes, so its deploy dates are not the contract's.
 
 ## Roadmap
 - Add debtor attestation/signatures, issuer reputation, and invoice-document verification without pretending that on-chain metadata is proof.
@@ -113,9 +132,9 @@ The following is the recorded end-to-end testnet run for kit `0x3c26351ad8b9dc7b
 - Explore optional stablecoin settlement, KYC/compliance integrations, and deeper secondary-market mechanisms for a production deployment.
 
 ## Landing page
-`/` uses the current monochrome XERO redesign: a black hero with an ASCII-text field, invoice-focused copy, app/docs CTAs, a receipt-number verification form, and illustrative phone mockups. The white sections below show the issue/trade flow, issuer/investor/debtor roles with a node diagram, black-and-white protocol cards, Yul snippets and security notes, docs links, and the technology stack. A closing Portaldot Hacker House section links to the app and DoraHacks. The phone screens are labelled as illustrative, not live balances or returns.
+`/` is the marketing landing: a dark violet hero with an animated receipt → shares → settlement illustration, an evidence strip of checkable facts, a scroll-driven lifecycle walkthrough, product tabs, a proof section built from this repository (contract excerpts, test names), a resource list and a receipt-number verification form. Every mock-up is labelled illustrative, and the page states that issuer-provided information is not verified and that payment is not guaranteed. Motion respects `prefers-reduced-motion`.
 
-The dApp has its own sidebar layout at **`/app`**; judge links can pass the kit address in the URL. The landing styles are in `landing-xero.css` alongside the shared landing styles, and the app's XERO styling is in `styles/app-xero.css`.
+The dApp lives at **`/app`**: pill navigation across the top on desktop (a sidebar on tablets and in the mobile sheet). Judge links can pass the kit address (`?kit=0x…`). Landing styles are in `src/landing-pk.css`; the app's styles are in `src/styles/`, with the final layers in `night*.css`.
 
 ## Hosting on Vercel
 `vercel.json` rewrites every path except `/api/*` to `index.html`, so `/app` works on refresh (static assets are served first).
@@ -143,7 +162,7 @@ VITE_RPC_URL=http://localhost:8545 npm run dev        # open /app?kit=0x… (imp
 Requires Node.js 20+.
 ```bash
 npm install
-npm test        # compiles contracts + 30 tests (PotKit on local Ganache, faucet, network switch, transaction errors)
+npm test        # compiles the contracts, then runs the whole suite in test/ (PotKit on local Ganache, faucet, network switch, transaction errors, settle and trade input checks, receipt history, dashboard figures, the `set-minter` script)
 npm run dev     # open the URL Vite prints (http://localhost:8080 by default)
 npm run build   # type-check + production build into dist/
 ```
@@ -163,7 +182,7 @@ MetaMask → network selector → **Add network → Add a network manually**:
 ### 3. Map your account and fund gas
 Portaldot gas is paid by the **mapped** Substrate account, not the 0x address directly.
 1. Open the [node console](https://node-console.portaldot.dev/) → Developer → Runtime calls → `reviveApi` → `accountId`, enter your 0x address to get the mapped account.
-2. Fund that mapped account with tPOTv3 (faucet / Discord, see the [testnet guide](https://github.com/ItsCogumellum/portaldot-v3-testnet-guide)).
+2. Fund that mapped account with tPOTv3 (ask the Portaldot team on Discord, as the PotKit faucet is closed; see the [testnet guide](https://github.com/ItsCogumellum/portaldot-v3-testnet-guide)).
 3. A second wallet for the "buyer / debtor" role needs ~6 tPOT (buy + 1 tPOT face value + ~3.9 tPOT settle deposit + gas): send it from wallet A (a plain transfer to its 0x address credits its mapped account).
 
 ### 4. Deploy from the UI (one transaction, ≈327 tPOT)
@@ -183,6 +202,29 @@ Portaldot gas is paid by the **mapped** Substrate account, not the 0x address di
 6. Each holder opens **Portfolio** and presses **Claim**: B gets 0.9 tPOT (profit 0.09), A gets 0.1 tPOT.
 7. Wallet A: **Portfolio → Redeem** takes the paid receipt NFT back (refunds the lock's storage deposit). Show **Explore** / **Verify**.
 
+### 6. Approve a tester as minter (issuer only)
+Only the issuer wallet (`0xd1AffC3b88E23bCBfF209b36267744f8e2035BFB`, read from `issuer()`) can call `setMinter`; nobody else can, and a minter cannot approve other wallets (`not issuer`). An approved minter can `mint` receipts (kind 0–2, note 1–140 bytes) to any address and nothing else extra: it cannot touch other people's receipts or funds. Revoking stops future mints only; receipts already minted stay where they are. A wallet that only buys or invests needs no approval.
+
+| | |
+|---|---|
+| Network | Portaldot V3 Testnet, chain ID `420420777`, RPC `https://test-evm-rpc-v3.portaldot.dev` |
+| Contract | `0x3c26351ad8b9dc7bb4f837c5b921879c35e20fb7` |
+| Cost to the issuer | about 3.92 tPOT to approve a new minter (a new storage slot; simulated with `eth_estimateGas`). Revoking costs very little gas and should refund that deposit when the slot is cleared (not yet checked on-chain). |
+| Cost to the tester | the tester pays for minting: about 11.7 tPOT for a 30-character note, up to about 27.3 tPOT for 140 characters, and about 35.4 tPOT more to lock and set terms (table below). The faucet is closed, so send the tester tPOT first. |
+
+1. **Dry run** (reads the chain only; no key, nothing is sent): `node scripts/set-minter.mjs 0xTesterWallet`. Check that `issuer` is your wallet, `minter now: false` and `wanted: true`, and read the `estimate` line (expected cost and the issuer's balance).
+2. **Enter the issuer key for this terminal session only** (never in a file, never pasted into chat). PowerShell, which does not keep the input in the history:
+   ```powershell
+   $s = Read-Host "Issuer key" -AsSecureString
+   $env:ISSUER_PRIVATE_KEY = [Runtime.InteropServices.Marshal]::PtrToStringAuto([Runtime.InteropServices.Marshal]::SecureStringToBSTR($s))
+   ```
+   bash: `read -rs ISSUER_PRIVATE_KEY; export ISSUER_PRIVATE_KEY`
+3. **Approve:** `node scripts/set-minter.mjs 0xTesterWallet --send`. The script refuses if the key is not the issuer's or the balance is too low, then prints the transaction hash, the block (with a link) and `minter now true`. Then clear the key: `Remove-Item Env:ISSUER_PRIVATE_KEY` (bash: `unset ISSUER_PRIVATE_KEY`).
+4. **Check at any time:** run step 1 again; it prints `minter now: true`.
+5. **Revoke after the test:** enter the key again, run `node scripts/set-minter.mjs 0xTesterWallet --off --send`, clear the key, and run the dry run to see `false`.
+
+Notes: the `--send` path is covered by `test/setminter.test.mjs` on a local Ganache chain only, and the dry run was run on Portaldot (read-only); no Portaldot transaction has been sent with this script yet, so try it first with a second wallet you control. The RPC gateway sometimes returns a transient HTML error; run the command again. Receipts a tester mints on the shared kit are public (Explore) and add to the kit's transaction count, so start the note with `TEST`.
+
 ### Invoice status (`Lens.statuses()`)
 `None` (not locked) · `Pending` · `Due soon` (≤ 3 days to due date) · `Overdue` (past due, unpaid) · `Settled`.
 The due date is optional (0 = none). Late payment is still accepted.
@@ -191,11 +233,12 @@ The due date is optional (0 = none). Late payment is still accepted.
 Fixed-price listings priced in tPOT. Shares are **escrowed** in the contract on `list`, so a listing can never point at shares the
 seller has moved; `buy(listing, amount)` takes partial or full amounts, cost rounds **up** in the seller's favour and must be sent
 exactly as `msg.value` (that also replaces a slippage cap: the price can't change under you); payment goes to the seller directly;
-`cancel` returns the rest. Listing needs a locked, unsettled receipt; buying/listing is blocked once the invoice is settled (cancel, then claim).
+`cancel` returns the rest. Listing needs a locked, unsettled receipt; buying/listing is blocked once the invoice is settled (cancel, then claim). The contract does not check the due date on a purchase; the app hides Buy on overdue listings as a product rule.
 
-### Profile & Demo guide
-- **Profile** (wallet menu → My Profile): address, wallet, balances, holdings, recent activity, the **mapped gas account** (with Copy), and **Reset saved deployment**.
-- **Demo guide** (floating button): 7-step checklist — mint, lock + terms, list, buy, settle, claim, redeem — computed from contract state (listings, held shares), with the local action log as fallback, so it works even when the RPC limits `eth_getLogs`.
+### Profile, Dashboard and the pay page
+- **Profile** (wallet menu → Profile, or `?tab=profile`): wallet identity and roles, an on-time payment record computed from scanned events, receipts issued and shares bought, achievements, and the **mapped gas account** (with Copy). Name, bio and avatar are stored in the browser only. A stale saved deployment is dropped automatically when the baked `VITE_KIT` changes, and a `?kit=` link always wins.
+- **Dashboard**: market figures read from the chain (outstanding face value, open listings, traded and settled tPOT, upcoming payments, settlement record, latest receipt, recent activity) and an 8-step *Your progress* tracker computed from the wallet's own on-chain activity. The *Cash-now planner* estimates what selling part of a receipt could raise; it sends nothing.
+- **Pay page** (`?tab=pay&id=N`): a debtor-facing page for one receipt. The debtor may sign an optional acknowledgement (EIP-712, off-chain, no gas). It only shows which wallet signed; the contract does not use it.
 
 Deployed kit and recorded transaction hashes are collected under [Testnet evidence](#testnet-evidence). Judge link: https://app.potkit.pro/?kit=0x3c26351ad8b9dc7bb4f837c5b921879c35e20fb7
 
@@ -231,12 +274,12 @@ Limits from packing: face value and listing price ≤ 2^96−1 wei, share units 
 ## Layout
 ```
 contracts/   PotKit.yul (deployed kit), IPotKit.sol (ABI), Lens.sol (eth_call only), test/, v30/ (reference)
-scripts/     compile.mjs, yulprep.mjs, seed-local.mjs, measure.mjs and measure/ (cost measurement)
+scripts/     compile.mjs, yulprep.mjs, seed-local.mjs, set-minter.mjs (issuer admin), measure.mjs and measure/ (cost measurement)
 api/         faucet.ts, r.ts (tokenURI JSON)
 test/        potkit.test.mjs, faucet.test.mjs, netswitch.test.mjs, txerrors.test.mjs
 src/         main.tsx, App.tsx, Landing.tsx, lib/chain.ts (viem), tabs/ (app views), docs/ (guides)
-             theme-tokens.css, landing.css, landing-polish.css, landing-xero.css
-             styles/app.css, styles/app-xero.css (dApp styles)
+             theme-tokens.css, landing-pk.css (landing), landing.css (docs pages)
+             styles/ (dApp styles; the night*.css files are the final layers)
 ```
 Contract builds generate `src/generated/`; no contract changes are part of this README update.
 
@@ -248,18 +291,20 @@ No third-party Solidity/Yul code is used in the contracts (`PotKit.yul`, `Lens.s
 | react, react-dom | 19.x | MIT | UI |
 | viem | 2.57 | MIT | RPC, ABI encoding, wallet calls |
 | @noble/hashes | 1.8 | MIT | blake2b for the mapped `5…` account |
-| lenis | 1.3 | MIT | smooth scrolling on the landing page |
+| lenis | 1.3 | MIT | smooth scrolling on the docs pages |
 | vite, @vitejs/plugin-react | 7.x / 5.x | MIT | build tooling |
 | typescript | 5.9 | Apache-2.0 | type checking |
 | solc (solc-js) | 0.8.28 | MIT | compiling Yul / Solidity |
 | ganache | 7.9 | MIT | local test chain |
 
-Assets: wallet logos are bundled locally (see `src/assets/wallets/SOURCES.md`: web3icons MIT, simple-icons CC0; trademarks belong to their owners). Fonts Inter, JetBrains Mono and Space Grotesk are loaded from Google Fonts (SIL Open Font License). Landing and dApp visuals were created for this project.
+Assets: wallet logos are bundled locally (see `src/assets/wallets/SOURCES.md`: web3icons MIT, simple-icons CC0; trademarks belong to their owners). Fonts Hanken Grotesk, Newsreader and IBM Plex Mono are loaded from Google Fonts (SIL Open Font License). Landing and dApp visuals were created for this project; layout ideas came from public design references, and no code, images, logos or text were copied.
 
 ## Known limitations
 See [Assumptions & limitations](#assumptions--limitations) and [Default / overdue handling](#default--overdue-handling). The contract is immutable and its `tokenURI` points at `https://potkit.pro/api/r`; the JSON is built off-chain from chain state.
 
 ## Gas faucet
+
+> **Status:** the production faucet is closed. During the hackathon, test tokens are handed out by the Portaldot team to participants (Portaldot Discord). The code below is kept for self-hosting; without `FAUCET_PRIVATE_KEY` the app shows the mapped account for manual funding and says where tokens come from.
 
 New users can't send a transaction without tPOTv3, so PotKit ships a small **"Request test gas"** faucet:
 a Vercel Function at `api/faucet.ts` (Node runtime, viem) plus a button in the gas tip, the Profile page
