@@ -27,7 +27,8 @@ export const COMMUNITY: Item[] = [
 if (typeof document !== "undefined" && !document.getElementById("pl-fonts")) {
   const l = document.createElement("link");
   l.id = "pl-fonts"; l.rel = "stylesheet";
-  l.href = "https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,300;6..72,400&family=Hanken+Grotesk:wght@400;500;600&family=IBM+Plex+Mono:wght@400&display=swap";
+  // Newsreader without its optical-size axis: the full opsz file is 128 KB, this one 56 KB, and headings look almost the same
+  l.href = "https://fonts.googleapis.com/css2?family=Newsreader:wght@300;400&family=Hanken+Grotesk:wght@400;500;600&family=IBM+Plex+Mono:wght@400&display=swap";
   document.head.appendChild(l);
 }
 

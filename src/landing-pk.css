@@ -443,6 +443,23 @@ html[data-route="landing"] { scroll-behavior: smooth; }
   .pl-hub-flow b:nth-child(3) { display: none; }
 }
 
+/* ---------- phones: a tidier rhythm (one-line top bar, tighter sections, shorter diagrams, two-column footer) ---------- */
+.pl-hub-core { background: #120e26; border: 1px solid rgba(187,168,255,.45); } .pl-hub-core img { filter: invert(1); } /* the centre of the "works with" diagram: dark, like every other filled control */
+@media (max-width: 40rem) {
+  .pl-bar .pl-wrap { flex-wrap: nowrap; min-height: 32px; } .pl-bar a { display: none; } .pl-bar span { font-size: .74rem; }
+  .pl-kicker { gap: .5rem; font-size: .72rem; letter-spacing: .09em; } .pl-kicker::before { width: 1rem; }
+  .pl-sec { padding-block: clamp(3rem, 12vw, 3.6rem); }
+  .pl-hero { padding-block: 2.6rem 3rem; }
+  .pl-hero-art { margin-top: 4.2rem; } .pl-fan-m { height: 5rem; }
+  .pl-walk-steps li { padding-block: 1.15rem; }
+  .pl-walk-m { margin-top: .4rem; padding: .6rem; } .pl-walk-m .pl-motif { height: 10.5rem; }
+  .pl-head2.center { justify-items: start; text-align: left; } .pl-head2.center .pl-body { margin-inline: 0; }
+  .pl-code pre { font-size: .74rem; line-height: 1.7; }
+  .pl-foot-cols { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.8rem 1rem; padding-block: 2.6rem 1.6rem; }
+  .pl-foot nav a { min-height: 34px; font-size: .9rem; }
+  .pl-foot-base { flex-direction: column; align-items: flex-start; gap: .6rem; }
+}
+
 /* ---------- reduced motion: no loops, no drawing, everything visible ---------- */
 @media (prefers-reduced-motion: reduce) {
   .pl-xart svg, .pl-xart .dash, .pl-xart .a { transition: none; }

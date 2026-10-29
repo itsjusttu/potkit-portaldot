@@ -134,6 +134,21 @@
   .dx-sec h2 { gap: .7rem; } .dx-n { width: 2rem; height: 2rem; font-size: .9rem; }
   .dx-next b { font-size: 1.5rem; }
 }
+@media (max-width: 40rem) {
+  /* a table is a stack of small cards on a phone: every cell carries its column name instead of scrolling sideways */
+  .dx-tw { overflow: visible; border: 0; background: none; }
+  .dx-t { min-width: 0; }
+  .dx-t thead { display: none; }
+  .dx-t, .dx-t tbody, .dx-t tr { display: block; width: 100%; }
+  .dx-t tr { margin-bottom: .8rem; overflow: hidden; border: 1px solid var(--line2); border-radius: 10px; background: var(--panel); }
+  .dx-t td { display: grid; grid-template-columns: 6.6rem minmax(0, 1fr); gap: .2rem .9rem; align-items: baseline; padding: .65rem 1rem; }
+  .dx-t td:last-child { border-bottom: 0; }
+  .dx-t td::before { content: attr(data-label); font-size: .68rem; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: var(--violet-l); }
+  .dx-t tbody tr:hover td { background: none; }
+  /* diagrams keep their size and scroll sideways: say so */
+  .dx-fig::before { content: "Swipe sideways to see the whole diagram"; display: block; position: sticky; left: 0; padding: .7rem 1rem 0; font-size: .78rem; color: var(--dim); }
+  .dx-c, .dx-sec code { white-space: normal; word-break: break-word; }
+}
 @media (prefers-reduced-motion: reduce) {
   .dg-ar path { animation: none; }
   .dx-next, .help-card, .help-faq summary span, .help-contact-link, .dx-toc a { transition: none; }

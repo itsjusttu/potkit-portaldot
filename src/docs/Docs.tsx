@@ -13,7 +13,7 @@ const Fn = ({ sig, who, children }: { sig: string; who?: string; children: React
 );
 const Callout = ({ tone = "info", children }: { tone?: "info" | "warn"; children: ReactNode }) => <div className={`dx-call ${tone}`}>{children}</div>;
 const Table = ({ head, rows }: { head: string[]; rows: ReactNode[][] }) => (
-  <div className="dx-tw"><table className="dx-t"><thead><tr>{head.map((h) => <th key={h}>{h}</th>)}</tr></thead><tbody>{rows.map((r, i) => <tr key={i}>{r.map((c, j) => <td key={j}>{c}</td>)}</tr>)}</tbody></table></div>
+  <div className="dx-tw"><table className="dx-t"><thead><tr>{head.map((h) => <th key={h}>{h}</th>)}</tr></thead><tbody>{rows.map((r, i) => <tr key={i}>{r.map((c, j) => <td key={j} data-label={head[j]}>{c}</td>)}</tr>)}</tbody></table></div>
 );
 
 const HELP_LINKS: { ico: string; title: string; desc: string; href: string; tag: string }[] = [
