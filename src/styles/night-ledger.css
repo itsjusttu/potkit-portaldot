@@ -108,3 +108,9 @@ html[data-route="app"] .explore-card-facts > div:first-child b { color: #fff; fo
   html[data-route="app"] .shell .pf2-claim .rtable tbody td:nth-child(3)::after { bottom: -8px; }
   html[data-route="app"] .shell .pf2-claim .rtable tbody td:nth-child(3) b { font-size: 1.15rem; font-family: var(--n-mono, ui-monospace, monospace); }
 }
+
+/* Portfolio empty state: actions first, the last claim as a separate ledger line under a dashed rule */
+html[data-route="app"] .pf-empty-acts { display: grid; justify-items: center; gap: 1.1rem; width: 100%; }
+html[data-route="app"] .pf-lastclaim { display: block; max-width: 30rem; min-width: min(100%, 26rem); text-align: center; line-height: 1.6; margin: 0; padding-top: 1rem; border-top: 1px dashed rgba(187,168,255,.3); color: #8f86b4; font-size: .84rem; }
+html[data-route="app"] .pf-lastclaim b { color: #7ee2b8; font-family: var(--n-mono, ui-monospace, monospace); font-weight: 600; }
+html[data-route="app"] .pf-lastclaim .nv-link { font-size: .84rem; }
