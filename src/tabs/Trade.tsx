@@ -7,6 +7,7 @@ import { daysTo, faceShare, type Ctx } from "./ctx";
 import { isUserRejected } from "../lib/txerrors";
 import { exceedsDecimals } from "../lib/settlecheck";
 import { day, N, pct, SettleBadge, Term, Why, txBlock, useWatch, WatchBtn } from "./shared";
+import { ReceiptThumb } from "./ReceiptThumb";
 import { issuerRecord, recordLabel } from "./insights";
 
 type Card = { l: Listing; r: Row; price: number; face: number; discount: number; ret: number; apr: number | null; days: number; progress: number | null; state: "Open" | "Due soon" | "Overdue" | "Settled" };
@@ -31,7 +32,7 @@ function ClosedWhy({ state, onPortfolio }: { state: string; onPortfolio: () => v
   const settled = state === "Settled";
   return (
     <div className="closed-why" role="note">
-      <b>{settled ? "Settled — this listing can no longer be bought." : "Overdue — this app hides the Buy button."}</b>
+      <b>{settled ? "Settled: this listing can no longer be bought." : "Overdue: this app hides the Buy button."}</b>
       <p>{settled ? "The debtor has paid, so the shares are now payout tickets. Holders claim their part of the payment from Portfolio." : "The due date has passed without payment, so the app does not offer new purchases. This is an app rule: the PotKit contract itself accepts a purchase until the invoice is settled. The seller can still cancel to get the shares back, and anyone can still settle the invoice."}</p>
       {settled && <button className="btn sm" onClick={onPortfolio}>Open Portfolio <Ico n="arrow" /></button>}
     </div>
@@ -186,7 +187,7 @@ export function Trade({ c }: { c: Ctx }) {
                     const tradable = x.state !== "Settled" && x.state !== "Overdue";
                     const due = x.state === "Settled" ? "Settled" : x.state === "Overdue" ? "Overdue" : x.r.dueDate ? `${Math.ceil(x.days)}d` : "No due";
                     return <div className={`trade-row ${open === x.l.lid ? "trade-row-selected" : ""} ${!tradable ? "trade-row-closed" : ""}`} role="row" key={x.l.lid}>
-                      <button type="button" className="trade-row-invoice" onClick={() => selectListing(x)} aria-label={`View ${x.r.note}, invoice ${x.r.id}`} aria-pressed={open === x.l.lid}><span className="trade-row-icon"><Ico n="terms" /></span><span><b>{x.r.note}</b><small className="trade-issuer">Issuer: {recordLabel(recordOf(x))}</small><small>KIT#{x.r.id} · {KINDS[x.r.kind]}{x.l.seller === c.account ? " · YOUR LISTING" : ""}{x === bestVisibleYield && <i className="trade-best-badge">Best yield</i>}<i className={`trade-status-tag ${x.state.toLowerCase().replace(" ", "-")}`}>{x.state}</i></small></span></button>
+                      <button type="button" className="trade-row-invoice" onClick={() => selectListing(x)} aria-label={`View ${x.r.note}, invoice ${x.r.id}`} aria-pressed={open === x.l.lid}><ReceiptThumb id={x.r.id} status={x.r.status} /><span><b>{x.r.note}</b><small className="trade-issuer">Issuer: {recordLabel(recordOf(x))}</small><small>KIT#{x.r.id} · {KINDS[x.r.kind]}{x.l.seller === c.account ? " · Your listing" : ""}{x === bestVisibleYield && <i className="trade-best-badge">Best yield</i>}<i className={`trade-status-tag ${x.state.toLowerCase().replace(" ", "-")}`}>{x.state}</i></small></span></button>
                       <span className="trade-row-price">{num(x.price)} <small>tPOT</small></span>
                       <span className="trade-row-discount">{x.face ? pct(x.discount) : "—"}</span>
                       <span className="trade-row-apr">{x.apr !== null ? pct(x.apr) : "—"}</span>

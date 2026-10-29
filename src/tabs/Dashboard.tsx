@@ -45,7 +45,7 @@ export function Dashboard({ c }: { c: Ctx }) {
   const claimTotal = [...c.claims.values()].reduce((s, v) => s + v, 0n);
   const pending = active.filter(needsAction).length;
   const attention = [
-    ...market.filter((r) => r.settle.settled && (c.claims.get(r.id) ?? 0n) > 0n).map((r) => ({ r, why: `Paid — ${fmt(c.claims.get(r.id) ?? 0n, 18)} tPOT ready for you`, label: "Claim payout", go: () => c.setTab("portfolio") })),
+    ...market.filter((r) => r.settle.settled && (c.claims.get(r.id) ?? 0n) > 0n).map((r) => ({ r, why: `Paid. ${fmt(c.claims.get(r.id) ?? 0n, 18)} tPOT ready for you`, label: "Claim payout", go: () => c.setTab("portfolio") })),
     ...active.filter((r) => !r.fraction).map((r) => ({ r, why: "Minted but not locked: add terms to issue shares", label: "Add terms", go: () => c.setTab("issue", { id: String(r.id) }) })),
     ...active.filter((r) => r.status === "Overdue").map((r) => ({ r, why: "Past due and unpaid; nothing is collected automatically", label: "View proof", go: () => c.setTab("verify", { id: String(r.id) }) })),
   ].slice(0, 4);

@@ -119,3 +119,52 @@ html[data-route="app"] .nv .nv-receipt { grid-template-rows: auto 1fr; }
 html[data-route="app"] .nv .nv-receipt > .nv-rcard { align-self: center; }
 /* the wallet button is a primary action too: same solid fill, no glow */
 html[data-route="app"] .cw-btn:not(.on) { box-shadow: none !important; }
+
+/* ---------- drawn invoice (ReceiptThumb) ---------- */
+html[data-route="app"] .rthumb { --st: #8f86b4; flex: none; display: block; overflow: visible; }
+html[data-route="app"] .rthumb[data-status="Pending"] { --st: #6f8bff; }
+html[data-route="app"] .rthumb[data-status="Due soon"] { --st: #f1b64a; }
+html[data-route="app"] .rthumb[data-status="Overdue"] { --st: #ff6b72; }
+html[data-route="app"] .rthumb[data-status="Settled"] { --st: #3ecf8e; }
+html[data-route="app"] .rthumb[data-status="Redeemed"] { --st: #8f86b4; }
+html[data-route="app"] .rthumb-sheet { fill: #151129; stroke: rgba(187, 168, 255, .45); stroke-width: 1; stroke-linejoin: round; }
+html[data-route="app"] .rthumb-fold { fill: none; stroke: rgba(187, 168, 255, .45); stroke-width: 1; stroke-linejoin: round; }
+html[data-route="app"] .rthumb-lines { stroke: rgba(187, 168, 255, .3); stroke-width: 1.6; stroke-linecap: round; }
+html[data-route="app"] .rthumb-total { stroke: rgba(255, 255, 255, .55); stroke-width: 1; stroke-dasharray: 2 2; }
+html[data-route="app"] .rthumb-stamp { fill: none; stroke: var(--st); stroke-width: 1.4; }
+html[data-route="app"] .rthumb-id { fill: #e9e5f1; font: 600 6.6px var(--n-mono, ui-monospace, monospace); }
+html[data-route="app"] .rcell { display: flex; align-items: center; gap: .75rem; min-width: 0; }
+html[data-route="app"] .rcell > div { display: grid; gap: .2rem; min-width: 0; }
+
+/* ---------- one type scale for list text ---------- */
+/* Trade invoice cell: title 14px, meta 12px (was 11px and 8.6px) */
+html[data-route="app"] .shell .trade-row-invoice { gap: .75rem; }
+html[data-route="app"] .shell .trade-row-invoice b { font-size: .88rem; }
+html[data-route="app"] .shell .trade-row-invoice small { font: 500 .74rem/1.35 var(--n-sans); letter-spacing: 0; color: #9a92bd; }
+html[data-route="app"] .shell .trade-row-invoice small .trade-status-tag, html[data-route="app"] .shell .trade-row-invoice small .trade-best-badge { font-size: .66rem; }
+/* Explore cards: labels 11px, values 14px (were 9.6px and 10.7px) */
+html[data-route="app"] .explore-card > header { gap: .6rem; }
+html[data-route="app"] .explore-card .ex-id { font-size: .72rem; }
+html[data-route="app"] .explore-card h3 { font-size: 1rem; margin: .1rem 0 0; }
+html[data-route="app"] .explore-card .explore-issuer { font-size: .78rem; }
+html[data-route="app"] .explore-card-facts small, html[data-route="app"] .explore-meter-label { font-size: .7rem; }
+html[data-route="app"] .explore-card-facts b, html[data-route="app"] .explore-meter-label b, html[data-route="app"] .explore-card-foot > b { font-size: .88rem; }
+html[data-route="app"] .explore-card-foot { font-size: .76rem; }
+html[data-route="app"] .explore-card-foot small { font-size: .7rem; }
+/* Trade "Last trades": the note matches the card's own text size */
+html[data-route="app"] .trade-chart-grid article > small.muted { display: block; margin-top: .4rem; font-size: .76rem; line-height: 1.35; }
+/* Portfolio balances: the count and its word at one size */
+html[data-route="app"] .shell .pf2-balances strong .num { font-size: inherit; }
+html[data-route="app"] .rthumb-id { font-size: 8.5px; }
+html[data-route="app"] .explore-card .explore-issuer { margin: -.35rem 0 0; }
+
+/* Explore filters on phones: one swipeable row of chips instead of a ragged two-column grid */
+@media (max-width: 52rem) {
+  html[data-route="app"] .shell .t-explore .seg-tabs, html[data-route="app"] .shell .seg-tabs[aria-label="Filter receipts by lifecycle"] { display: flex !important; flex-wrap: nowrap; gap: .4rem; overflow-x: auto; scrollbar-width: none; grid-template-columns: none !important; padding-bottom: .2rem; }
+  html[data-route="app"] .shell .seg-tabs[aria-label="Filter receipts by lifecycle"] > button { flex: none; width: auto !important; min-height: 38px; padding: 0 .8rem; border: 1px solid var(--g-line); border-radius: 999px; }
+  html[data-route="app"] .shell .seg-tabs[aria-label="Filter receipts by lifecycle"] > button[aria-pressed="true"] { border-color: rgba(187, 168, 255, .55); background: rgba(123, 92, 255, .16); }
+}
+/* Trade on phones: the Listings heading and its toggle sit left like every other card heading */
+@media (max-width: 52rem) {
+  html[data-route="app"] .shell .t-trade .trade-market-heading { align-items: flex-start !important; }
+}

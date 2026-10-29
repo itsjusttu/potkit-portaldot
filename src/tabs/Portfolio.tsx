@@ -4,6 +4,7 @@ import { cancelListing, claim, fmt, KINDS, redeem, transferUnits, units, type Ro
 import { Empty, Ico, toast } from "../AppUi";
 import { faceShare, type Ctx } from "./ctx";
 import { day, download, SettleBadge, Term, txBlock, Why } from "./shared";
+import { ReceiptThumb } from "./ReceiptThumb";
 import { toCsv, toIcs } from "./insights";
 import { SkelRows } from "./Explore";
 import { readReceiptHistory } from "./receipt-history";
@@ -22,12 +23,14 @@ export function Portfolio({ c }: { c: Ctx }) {
   const myListings = c.listings.filter((l) => l.seller.toLowerCase() === c.account.toLowerCase() && l.remaining > 0n);
   const claimable = c.rows.filter((r) => r.settle.settled && (c.claims.get(r.id) ?? 0n) > 0n);
   const dec = 18; // native tPOT
-  const valueAt = (id: number, bal: bigint) => { const r = c.rows.find((x) => x.id === id); return r ? (faceShare(r) * bal) / 10n ** 18n : 0n; };
+  // face value of `units` shares, multiplied before dividing so 60 of 60 shares is exactly the face value
+  const faceOfUnits = (r: Row, units: bigint) => (r.settle.faceValue > 0n && r.supply > 0n ? (r.settle.faceValue * units) / r.supply : faceShare(r) * units / 10n ** 18n);
+  const valueAt = (id: number, bal: bigint) => { const r = c.rows.find((x) => x.id === id); return r ? faceOfUnits(r, bal) : 0n; };
   // cost basis from on-chain Bought events where you were the buyer
   const buys = new Map<number, { shares: bigint; cost: bigint }>();
   for (const e of c.events) if (e.kind === "buy" && e.actors[0]?.toLowerCase() === c.account?.toLowerCase()) { const b = buys.get(e.id) ?? { shares: 0n, cost: 0n }; buys.set(e.id, { shares: b.shares + (e.amount ?? 0n), cost: b.cost + (e.value ?? 0n) }); }
   const listedOf = (id: number) => myListings.filter((l) => l.receiptId === id).reduce((s, l) => s + l.remaining, 0n);
-  const totalValue = holdings.reduce((s, r) => s + valueAt(r.id, c.held.get(r.id) ?? 0n), 0n) + myListings.reduce((s, l) => { const r = c.rows.find((x) => x.id === l.receiptId); return r ? s + (faceShare(r) * l.remaining) / 10n ** 18n : s; }, 0n);
+  const totalValue = holdings.reduce((s, r) => s + valueAt(r.id, c.held.get(r.id) ?? 0n), 0n) + myListings.reduce((s, l) => { const r = c.rows.find((x) => x.id === l.receiptId); return r ? s + faceOfUnits(r, l.remaining) : s; }, 0n);
   const claimTotal = claimable.reduce((s, r) => s + (c.claims.get(r.id) ?? 0n), 0n);
   const isRedeemed = (id: number) => receiptHistory.get(id)?.redeemed ?? false;
   const activeReceipts = receipts.filter((r) => !isRedeemed(r.id));
@@ -68,16 +71,16 @@ export function Portfolio({ c }: { c: Ctx }) {
 
   const holdingStep = (r: Row) => {
     const cl = c.claims.get(r.id) ?? 0n;
-    if (r.settle.settled && cl > 0n) return { text: "Paid — claim your part", act: claimBtn(r, false) };
+    if (r.settle.settled && cl > 0n) return { text: "Paid. Claim your part", act: claimBtn(r, false) };
     if (r.settle.settled) return { text: "Paid and claimed", act: null };
     if (r.status === "Overdue") return { text: "Past due, unpaid. Wait for settlement or sell.", act: <button className="btn sm" onClick={() => c.setTab("trade", { sell: String(r.id) })}>Sell shares</button> };
     return { text: "Waiting for the debtor to pay", act: <button className="btn sm" onClick={() => c.setTab("trade", { sell: String(r.id) })}>Sell shares</button> };
   };
   const receiptStep = (r: Row) => {
     if (isRedeemed(r.id)) return { text: "Lifecycle complete", act: <button className="btn sm" onClick={() => c.setTab("verify", { id: String(r.id) })}>Verify</button> };
-    if (!r.fraction) return { text: "Minted — add terms to issue shares", act: <button className="btn sm" onClick={() => c.setTab("issue", { id: String(r.id) })}>Add terms</button> };
-    if (r.settle.settled) return { text: "Paid — holders can claim", act: <button className="btn sm" onClick={() => c.setTab("verify", { id: String(r.id) })}>Verify</button> };
-    return { text: listedOf(r.id) > 0n ? "Shares on the market" : "Locked — list shares to raise tPOT", act: <button className="btn sm" onClick={() => c.setTab("trade", { sell: String(r.id) })}>{listedOf(r.id) > 0n ? "Manage listing" : "List shares"}</button> };
+    if (!r.fraction) return { text: "Minted. Add terms to issue shares", act: <button className="btn sm" onClick={() => c.setTab("issue", { id: String(r.id) })}>Add terms</button> };
+    if (r.settle.settled) return { text: "Paid. Holders can claim", act: <button className="btn sm" onClick={() => c.setTab("verify", { id: String(r.id) })}>Verify</button> };
+    return { text: listedOf(r.id) > 0n ? "Shares on the market" : "Locked. List shares to raise tPOT", act: <button className="btn sm" onClick={() => c.setTab("trade", { sell: String(r.id) })}>{listedOf(r.id) > 0n ? "Manage listing" : "List shares"}</button> };
   };
 
   return (
@@ -94,7 +97,7 @@ export function Portfolio({ c }: { c: Ctx }) {
         <section className="pf2-sec pf2-claim" aria-labelledby="pf-claim">
           <div className="pf2-sec-head"><div><h2 id="pf-claim">Ready to claim</h2><p className="muted">These receipts are settled. Claiming sends your pro-rata payout in tPOT and burns those shares.</p></div>{claimable.length > 1 && <div><button className="btn sm primary" disabled={dis} onClick={claimAll}>{c.busy === "claim-all" ? "Claiming…" : `Claim all · ${fmt(claimTotal, dec)} tPOT`}</button><small className="why">{claimable.length} separate wallet transactions, one per receipt.</small></div>}</div>
           <div className="tscroll"><table className="rtable"><thead><tr><th scope="col">Receipt</th><th scope="col" className="num">Your shares</th><th scope="col" className="num">Your payout</th><th scope="col"><span className="sr-only">Action</span></th></tr></thead><tbody>
-            {claimable.map((r) => <tr key={r.id}><td data-label="Receipt"><b>#{r.id} · {r.note || KINDS[r.kind]}</b><small className="muted">Settled · {fmt(r.settle.amount, r.settle.decimals)} tPOT paid</small></td><td data-label="Your shares" className="num">{units(c.held.get(r.id) ?? 0n)}</td><td data-label="Your payout" className="num"><b className="pos">{fmt(c.claims.get(r.id) ?? 0n, r.settle.decimals)} tPOT</b></td><td className="acts">{claimBtn(r)}<Why text={why} /></td></tr>)}
+            {claimable.map((r) => <tr key={r.id}><td data-label="Receipt"><div className="rcell"><ReceiptThumb id={r.id} status={r.status} /><div><b>#{r.id} · {r.note || KINDS[r.kind]}</b><small className="muted">Settled · {fmt(r.settle.amount, r.settle.decimals)} tPOT paid</small></div></div></td><td data-label="Your shares" className="num">{units(c.held.get(r.id) ?? 0n)}</td><td data-label="Your payout" className="num"><b className="pos">{fmt(c.claims.get(r.id) ?? 0n, r.settle.decimals)} tPOT</b></td><td className="acts">{claimBtn(r)}<Why text={why} /></td></tr>)}
           </tbody></table></div>
         </section>
       )}
@@ -108,7 +111,7 @@ export function Portfolio({ c }: { c: Ctx }) {
               const bal = c.held.get(r.id) ?? 0n; const b = buys.get(r.id); const v = valueAt(r.id, bal); const step = holdingStep(r);
               return (
                 <tr key={r.id}>
-                  <td data-label="Receipt"><b>#{r.id} · {r.note || KINDS[r.kind]}</b><small className="muted">{KINDS[r.kind]}{r.dueDate ? ` · due ${day(r.dueDate)}` : ""}</small></td>
+                  <td data-label="Receipt"><div className="rcell"><ReceiptThumb id={r.id} status={r.status} /><div><b>#{r.id} · {r.note || KINDS[r.kind]}</b><small className="muted">{KINDS[r.kind]}{r.dueDate ? ` · due ${day(r.dueDate)}` : ""}</small></div></div></td>
                   <td data-label="Status"><div className="tags"><SettleBadge r={r} terms={false} /></div></td>
                   <td data-label="Your shares" className="num"><b>{units(bal)}</b><small className="muted"> {r.supply > 0n ? ((Number((bal * 10000n) / r.supply)) / 100).toFixed(1) : 0}% of {units(r.supply)}</small>{listedOf(r.id) > 0n && <small className="muted">+{units(listedOf(r.id))} listed</small>}</td>
                   <td data-label="Face-value estimate" className="num">{v ? `${fmt(v, dec)} tPOT` : "—"}</td>
@@ -143,7 +146,7 @@ export function Portfolio({ c }: { c: Ctx }) {
           <div className="pf2-sec-head"><div><h2 id="pf-listings">Your open listings</h2><p className="muted">Shares in escrow on the market. Cancel to get the remaining shares back.</p></div></div>
           <div className="tscroll"><table className="rtable"><thead><tr><th scope="col">Receipt</th><th scope="col" className="num">Remaining</th><th scope="col" className="num">Price / share</th><th scope="col" className="num">Asking total</th><th scope="col"><span className="sr-only">Action</span></th></tr></thead><tbody>
             {myListings.map((l) => { const r = c.rows.find((x) => x.id === l.receiptId); return (
-              <tr key={l.lid}><td data-label="Receipt"><b>#{l.receiptId} · {r?.note}</b><small className="muted">Listing {l.lid}</small></td><td data-label="Remaining" className="num">{units(l.remaining)}</td><td data-label="Price / share" className="num">{fmt(l.price, 18)} tPOT</td><td data-label="Asking total" className="num">{fmt((l.price * l.remaining) / 10n ** 18n, 18)} tPOT</td>
+              <tr key={l.lid}><td data-label="Receipt"><div className="rcell"><ReceiptThumb id={l.receiptId} status={r?.status ?? "Pending"} /><div><b>#{l.receiptId} · {r?.note}</b><small className="muted">Listing {l.lid}</small></div></div></td><td data-label="Remaining" className="num">{units(l.remaining)}</td><td data-label="Price / share" className="num">{fmt(l.price, 18)} tPOT</td><td data-label="Asking total" className="num">{fmt((l.price * l.remaining) / 10n ** 18n, 18)} tPOT</td>
                 <td className="acts"><button className="btn sm" disabled={dis} onClick={() => void c.run(`cancel${l.lid}`, async () => { const h = await cancelListing(c.ready(), c.market as Address, l.lid); c.note("Listing cancelled", `#${l.lid}`, h); })}>{c.busy === `cancel${l.lid}` ? "Cancelling…" : "Cancel listing"}</button><Why text={why} /></td></tr>
             ); })}
           </tbody></table></div>
@@ -159,7 +162,7 @@ export function Portfolio({ c }: { c: Ctx }) {
             {visibleReceipts.map((r) => {
               const h = receiptHistory.get(r.id); const face = r.settle.faceValue > 0n ? r.settle.faceValue : (h?.terms?.value ?? 0n); const due = r.dueDate || h?.terms?.dueDate || 0;
               const supply = r.supply > 0n ? r.supply : (h?.lock?.amount ?? 0n) * 10n ** 18n; const step = receiptStep(r);
-              return <tr key={r.id}><td data-label="Receipt"><b>#{r.id} · {r.note || KINDS[r.kind]}</b><small className="muted">{KINDS[r.kind]} · {r.owner.toLowerCase() === c.account.toLowerCase() ? "in your wallet" : "held by PotKit"}</small></td>
+              return <tr key={r.id}><td data-label="Receipt"><div className="rcell"><ReceiptThumb id={r.id} status={r.status} /><div><b>#{r.id} · {r.note || KINDS[r.kind]}</b><small className="muted">{KINDS[r.kind]} · {r.owner.toLowerCase() === c.account.toLowerCase() ? "in your wallet" : "held by PotKit"}</small></div></div></td>
                 <td data-label="Status"><div className="tags">{isRedeemed(r.id) ? <span className="tag paid">Redeemed</span> : <SettleBadge r={r} terms={false} />}</div></td>
                 <td data-label="Face value" className="num">{face ? `${fmt(face, r.settle.decimals)} tPOT` : "—"}</td>
                 <td data-label="Due">{due ? day(due) : "—"}</td>

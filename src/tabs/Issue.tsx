@@ -11,7 +11,7 @@ const WKEY = "potkit.v17.wizard";
 export function Issue({ c }: { c: Ctx }) {
   const saved = (() => { try { return JSON.parse(localStorage.getItem(WKEY) ?? "{}"); } catch { return {}; } })();
   const [kind, setKind] = useState<number>(saved.kind ?? 0);
-  const [note, setNote] = useState<string>(saved.note ?? "Invoice 042 — content delivery");
+  const [note, setNote] = useState<string>(saved.note ?? "Invoice 042: content delivery");
   const [face, setFace] = useState<string>(saved.face ?? "1");
   const [due, setDue] = useState<string>(saved.due ?? new Date(Date.now() + 60 * 86400e3).toISOString().slice(0, 10));
   const [supply, setSupply] = useState<string>(saved.supply ?? "100");
