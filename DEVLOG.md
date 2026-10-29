@@ -156,6 +156,18 @@ The contract, API and script files first appear in `04cfd1c`; `contracts/` and `
 - Landing and doc pages on phones: one-line testnet bar, tighter sections, two-column footer, tables as stacked cards, a swipe hint on diagrams; the serif font is loaded without its optical-size axis (128 KB to 56 KB)
 - Vite's preload helper is kept out of the viem chunk, so the landing and doc pages no longer download viem. Lab measurement on the live site (mobile profile, cold cache, runs vary): landing 472 KB to 315 KB (JS 174 KB to 89 KB), first paint about 3.4–3.9 s to 2.4 s, largest paint about 4.8–4.9 s to 3.2 s. The app is unchanged (about 408 KB, it needs viem). Splitting the app stylesheet off the landing (about 74 KB) was left out on purpose.
 
+## Added later on 29 Oct (app mobile layout and visual refresh, deployed by hand with `vercel --prod`)
+
+- App on phones: a top row (logo, Verify, wallet, menu), a fixed bottom tab bar (Home, Explore, Issue, Trade, Portfolio), listings and history as cards, the Issue wizard without nested cards (`src/styles/night-mobile.css`). The bottom bar width was fixed after it overflowed on an iPhone-sized viewport
+- Shorter helper copy across the app (tab descriptions hidden on phones, repeated "loaded" and "scanned events" suffixes removed); privacy and disabled-button explanations kept
+- One date and number style in the app (`21 Nov 2026`, `156.0%`, fixed `en` locale), replacing browser-locale output such as "30 thg 9" and "156,0%". `src/lib/chain.ts` was not touched, so event note text it builds still follows the browser locale
+- Dashboard: the 30-day activity grid and the weekly histogram were replaced by a maturity line (open receipts placed by due date, label = face value, colour = status word; `src/tabs/MaturityStrip.tsx`) and ledger-style rows for upcoming payments; the sparklines and card icon chips were removed; the settlement gauge reads "0 of 1" instead of "0%"
+- Trade: price, yield and time to due use larger type; mobile stat cells are aligned
+- Explore cards and the Portfolio "Ready to claim" rows use a receipt-stub style (perforation, notches, dashed rules); small uppercase kickers above headings are hidden in the app except on the Verify certificate
+- Verify: larger receipt facts and a plain message when the node cannot be reached
+- Landing footer: the decorative bars were replaced by a static maturity line labelled as an illustrative example; docs callouts and diagrams lost the side stripe and the grid background
+- Styles for this layer live in `src/styles/night-ledger.css` (loaded last). Checked with `npm run build`, `npm test` (60 pass) and screenshots at 1440 px and 390 px; not checked on a physical phone, and the Portfolio claim rows were checked only on an injected sample row (no wallet with settled shares)
+
 ## How the work is checked
 
 - `npm test` compiles the contracts and runs the suite in `test/` (contract behaviour on a local Ganache chain, faucet logic, network switching, transaction errors, settle and trade input checks, receipt history, dashboard figures).
