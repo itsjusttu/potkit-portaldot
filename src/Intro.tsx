@@ -61,13 +61,13 @@ export function Intro() {
     const frame = (now: number) => {
       const t = Math.min((now - t0) / MS, 1), e = t < 1 ? 1 - Math.pow(1 - t, 2.2) : 1, a = now / 2600, R = S * 0.46, cx = S / 2;
       g.clearRect(0, 0, S, S);
-      g.strokeStyle = `rgba(255,255,255,${0.16 + Math.sin(now / 700) * .035})`; g.lineWidth = 0.7;
+      g.strokeStyle = `rgba(187,168,255,${0.2 + Math.sin(now / 700) * .04})`; g.lineWidth = 0.7;
       for (let m = 0; m < 6; m++) { g.beginPath(); g.ellipse(cx, cx, R * Math.abs(Math.cos(a + (m * Math.PI) / 6)), R, 0, 0, 7); g.stroke(); }
       for (const l of [-0.5, 0, 0.5]) { g.beginPath(); g.ellipse(cx, cx - l * R, R * Math.sqrt(1 - l * l), R * 0.12 * Math.sqrt(1 - l * l), 0, 0, 7); g.stroke(); }
       const ca = Math.cos(a), sa = Math.sin(a), show = e * DOTS.length;
       for (let i = 0; i < show; i++) {
         const [x, y, z, r] = DOTS[i], X = x * ca + z * sa, Z = -x * sa + z * ca, f = (Z + 1) / 2;
-        g.fillStyle = `rgba(255,255,255,${0.16 + f * 0.65 + r * 0.08})`;
+        g.fillStyle = `rgba(${(170 + f * 72) | 0},${(150 + f * 92) | 0},255,${0.16 + f * 0.65 + r * 0.08})`;
         g.fillRect(cx + X * R, cx - y * R, 0.8 + f * 1.1 + r * 0.4, 0.8 + f * 1.1 + r * 0.4);
       }
       setPct(Math.round(e * 100));

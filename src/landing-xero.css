@@ -1,5 +1,39 @@
-/* PotKit landing — page layout. Black hero frame on a black page, light-grey sections, black bento/footer blocks.
-   Layout and rhythm follow the supplied reference; all artwork is original (CSS/SVG/ASCII). */
+/* Public home: editorial record instead of an app-shaped phone mock. */
+.lx-ledger-top { display:flex; justify-content:space-between; flex-wrap:wrap; gap:.5rem; color:#a3a3a3; font-size:.58rem; letter-spacing:.1em; }
+.lx-ledger-title { display:grid; gap:1.1rem; }
+.lx-ledger-title .lx-i { width:2rem; height:2rem; }
+.lx-ledger-title strong { max-width:12ch; font-size:clamp(1.6rem,3.2vw,3rem); font-weight:500; line-height:1.07; letter-spacing:-.05em; }
+.lx-hero-ledger dl { display:grid; gap:0; margin:0; border-top:1px solid rgba(255,255,255,.2); }
+.lx-hero-ledger dl div { display:flex; justify-content:space-between; gap:1rem; padding:.8rem 0; border-bottom:1px solid rgba(255,255,255,.2); font-size:.75rem; }
+.lx-hero-ledger dt { color:#8a8a8a; }
+.lx-hero-ledger dd { margin:0; text-align:right; }
+.lx-hero-ledger p { font-size:.68rem; }
+.lx-hero-ledger a { display:inline-flex; align-items:center; gap:.5rem; width:fit-content; border-bottom:1px solid #fff; padding-bottom:.25rem; font-size:.78rem; }
+.lx-x .lx-paper { background:#101010; color:#fff; border:1px solid rgba(255,255,255,.15); --tx:#fff; --mu:#a3a3a3; --hair:rgba(255,255,255,.15); }
+.lx-x .lx-paper h2,.lx-x .lx-paper h3 { color:#fff; }
+.lx-x .lx-paper .lx-link.dark { color:#fff; border-bottom-color:rgba(255,255,255,.5); }
+.lx-x .lx-wcard { min-height:24rem; justify-content:flex-end; gap:1rem; padding:clamp(1.3rem,3vw,2.3rem); border:1px solid rgba(255,255,255,.16); border-radius:1rem; background:#181818; }
+.lx-x .lx-wcard h3 { max-width:21ch; font-size:clamp(1.3rem,2vw,2rem); }
+.lx-x .lx-wcard p { max-width:30ch; font-size:.78rem; }
+.lx-x .lx-wcard .lx-link { align-self:start; }
+.lx-feature-letter { margin:auto 0 0; color:rgba(255,255,255,.25); font-size:clamp(3rem,7vw,7rem); line-height:.9; letter-spacing:-.1em; }
+.lx-feature-letter span { color:#fff; font-size:.5em; vertical-align:middle; }
+.lx-x .lx-pillbadge { position:static; align-self:start; color:#fff; background:#252525; }
+.lx-x .lx-bento { grid-template-columns:repeat(4,minmax(0,1fr)); grid-template-rows:1fr; min-height:17rem; }
+.lx-x .lx-bcard { grid-column:auto; grid-row:auto; border:1px solid rgba(255,255,255,.18); background:#000; color:#fff; }
+.lx-x .lx-bcard.light .lx-i path { stroke:#fff; }
+.lx-x .lx-bcard.light .lx-bgo { background:#fff; color:#000; }
+.lx-x .lx-bcard h3 { color:#fff; }
+.lx-x .lx-docs .lx-dcard a { background:#1a1a1a; color:#fff; }
+.lx-x .lx-docs .lx-dcard h3 { color:#fff; }
+.lx-x .lx-docs .lx-dcard small,.lx-x .lx-docs .lx-dcard p { color:#a3a3a3; }
+.lx-x .lx-marq b,.lx-x .lx-pnote b { color:#fff; }
+.lx-x .lx-pnote { color:#a3a3a3; }
+@media (max-width:68rem) { .lx-x .lx-hero-frame { grid-template-columns:1fr; } .lx-x .lx-hero-copy { padding-bottom:0; } .lx-hero-ledger { margin:0 0 1.5rem; } .lx-x .lx-bento { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+@media (max-width:36rem) { .lx-x .lx-bento { grid-template-columns:1fr; } .lx-x .lx-hero-frame { gap:1.5rem; } .lx-hero-ledger { padding:1.25rem; } .lx-x .lx-wcard { min-height:19rem; } }
+
+/* Legacy declarations below remain available to the inherited landing sections. */
+
 .lx-x { --paper: #e6e6e6; --card: #f6f6f6; background: #000; }
 .lx-x main { z-index: 1; }
 
@@ -168,7 +202,20 @@
 .lx-head .lx-btn, .lx-x .lx-btn { white-space: nowrap; }
 .lx-pnote b { color: #000; }
 
-/* ---------- Xero-inspired product landing pass ---------- */
+/* v25 landing information architecture: explicit lifecycle rail between promise and detail */
+.lx-lifecycle { max-width:90rem; margin:1rem auto 0; padding:clamp(2rem,5vw,4rem) clamp(1rem,5vw,4rem); border:1px solid rgba(255,255,255,.16); border-radius:var(--r-frame); background:#0a0a0a; }
+.lx-lifecycle-head { display:flex; align-items:end; justify-content:space-between; gap:2rem; margin-bottom:2rem; }
+.lx-lifecycle-head h2 { margin:0; font-size:clamp(1.8rem,4vw,3rem); letter-spacing:-.05em; }
+.lx-lifecycle-head p { max-width:24rem; margin:0; color:#a3a3a3; font-size:.82rem; line-height:1.55; }
+.lx-lifecycle-rail { position:relative; display:grid; grid-template-columns:repeat(6,1fr); gap:0; margin:0; padding:0; list-style:none; }
+.lx-lifecycle-rail::before { content:""; position:absolute; top:1.05rem; left:1.25rem; right:1.25rem; border-top:1px solid rgba(255,255,255,.26); }
+.lx-lifecycle-rail li { position:relative; display:grid; gap:.35rem; padding-right:1rem; }
+.lx-lifecycle-rail li span { display:grid; place-items:center; width:2.1rem; height:2.1rem; border:1px solid #fff; border-radius:50%; background:#0a0a0a; color:#fff; font:600 .65rem var(--font); z-index:1; }
+.lx-lifecycle-rail li b { margin-top:.45rem; font-size:.78rem; }
+.lx-lifecycle-rail li small { color:#8a8a8a; font-size:.68rem; line-height:1.35; }
+@media (max-width:52rem) { .lx-lifecycle { border-radius:1.5rem; } .lx-lifecycle-head { align-items:flex-start; flex-direction:column; gap:.8rem; } .lx-lifecycle-rail { grid-template-columns:repeat(2,1fr); gap:1.25rem 1rem; } .lx-lifecycle-rail::before { display:none; } .lx-lifecycle-rail li { padding:0; } }
+@media (max-width:30rem) { .lx-lifecycle-rail { grid-template-columns:1fr; gap:.8rem; } .lx-lifecycle-rail li { grid-template-columns:2.1rem 1fr; column-gap:.7rem; align-items:center; } .lx-lifecycle-rail li b,.lx-lifecycle-rail li small { grid-column:2; margin:0; } .lx-lifecycle-rail li span { grid-row:1 / span 2; } }
+
 .lx-x { --paper: #e6e6e6; --card: var(--pk-text); }
 .lx-x .lx-hero-frame { background: var(--pk-bg); border-color: rgba(255,255,255,.24); border-radius: 1.5rem; text-align: left; }
 .lx-x .lx-head { border-bottom-color: rgba(255,255,255,.12); }
@@ -234,4 +281,28 @@
   .lx-x .lx-pillform label { width: 100%; padding: .15rem .45rem 0; }
   .lx-x .lx-pillform input { height: 2.35rem; padding-left: .45rem; }
 }
+
+/* Home composition owns these elements in place of the previous device mock and bento layout. */
+.lx-x .lx-hero-x .lx-hero-frame { display:grid; grid-template-columns:minmax(0,1.2fr) minmax(17rem,.8fr); align-items:stretch; gap:clamp(1rem,4vw,4rem); min-height:0; }
+.lx-x .lx-hero-x .lx-head { grid-column:1/-1; }
+.lx-x .lx-hero-x .lx-hero-copy { align-self:center; max-width:none; margin:0; padding:clamp(1.5rem,5vw,4rem) 0 clamp(2rem,6vw,5rem); }
+.lx-x .lx-hero-ledger { position:relative; z-index:2; align-self:stretch; display:flex; flex-direction:column; justify-content:space-between; gap:1.4rem; margin:0 0 clamp(1rem,3vw,2.5rem); padding:clamp(1.2rem,3vw,2.2rem); border:1px solid rgba(255,255,255,.2); background:#111; text-align:left; }
+.lx-x .lx-paper { background:#101010; color:#fff; border:1px solid rgba(255,255,255,.15); --tx:#fff; --mu:#a3a3a3; --hair:rgba(255,255,255,.15); }
+.lx-x .lx-paper h2,.lx-x .lx-paper h3 { color:#fff; }
+.lx-x .lx-paper .lx-link.dark { color:#fff; border-bottom-color:rgba(255,255,255,.5); }
+.lx-x .lx-wcard { min-height:24rem; justify-content:flex-end; gap:1rem; padding:clamp(1.3rem,3vw,2.3rem); border:1px solid rgba(255,255,255,.16); border-radius:1rem; background:#181818; }
+.lx-x .lx-wcard h3 { max-width:21ch; font-size:clamp(1.3rem,2vw,2rem); }
+.lx-x .lx-wcard p { max-width:30ch; font-size:.78rem; }
+.lx-x .lx-wcard .lx-link { align-self:start; }
+.lx-x .lx-pillbadge { position:static; align-self:start; color:#fff; background:#252525; }
+.lx-x .lx-bento { grid-template-columns:repeat(4,minmax(0,1fr)); grid-template-rows:1fr; min-height:17rem; }
+.lx-x .lx-bcard { grid-column:auto; grid-row:auto; border:1px solid rgba(255,255,255,.18); background:#000; color:#fff; }
+.lx-x .lx-bcard.light .lx-i path { stroke:#fff; }
+.lx-x .lx-bcard.light .lx-bgo { background:#fff; color:#000; }
+.lx-x .lx-bcard h3,.lx-x .lx-docs .lx-dcard h3 { color:#fff; }
+.lx-x .lx-docs .lx-dcard a { background:#1a1a1a; color:#fff; }
+.lx-x .lx-docs .lx-dcard small,.lx-x .lx-docs .lx-dcard p,.lx-x .lx-pnote { color:#a3a3a3; }
+.lx-x .lx-marq b,.lx-x .lx-pnote b { color:#fff; }
+@media (max-width:68rem) { .lx-x .lx-hero-x .lx-hero-frame { grid-template-columns:minmax(0,1fr); } .lx-x .lx-hero-x .lx-hero-copy { padding-bottom:0; } .lx-x .lx-hero-ledger { margin:0 0 1.5rem; } .lx-x .lx-bento { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+@media (max-width:36rem) { .lx-x .lx-bento { grid-template-columns:1fr; } .lx-x .lx-wcard { min-height:19rem; } .lx-x .lx-hero-x .lx-hero-frame { width:100%; min-width:0; padding-inline:1rem; } .lx-x .lx-hero-x .lx-hero-copy { width:100%; min-width:0; padding-top:1.8rem; } .lx-x .lx-hero-x h1 { font-size:clamp(2.15rem,10vw,3rem); letter-spacing:-.055em; overflow-wrap:normal; } .lx-x .lx-hero-x .lx-hero-copy > .lx-rv > p:not(.lx-eyebrow) { font-size:.88rem; overflow-wrap:anywhere; } .lx-x .lx-hero-x .lx-cta-row { width:100%; } .lx-x .lx-hero-x .lx-cta-row .lx-btn { min-width:0; } .lx-x .lx-pillform { width:100%; } .lx-x .lx-hero-ledger { min-width:0; } .lx-x .lx-ledger-top { line-height:1.5; } }
 

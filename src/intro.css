@@ -1,17 +1,17 @@
-.pk-intro { --pk-g: min(80vw, 50vh, 460px); position: fixed; inset: 0; z-index: 9999; background: var(--pk-bg); color: var(--pk-text); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3.2rem; font-family: "IBM Plex Mono", system-ui, sans-serif; cursor: pointer; overflow: hidden; transition: opacity .8s ease, transform .9s cubic-bezier(.7,0,.2,1); background-image: radial-gradient(rgba(255,255,255,.13) 1px, transparent 1px); background-size: 22px 22px; }
-.pk-intro::before { content:""; position:absolute; inset:0; pointer-events:none; background:radial-gradient(ellipse at 50% 43%,rgba(255,255,255,.2),transparent 36%),radial-gradient(ellipse at 74% 64%,rgba(255,255,255,.11),transparent 35%); }
+.pk-intro { --pk-g: min(80vw, 50vh, 460px); position: fixed; inset: 0; z-index: 9999; background-color: #07050d; color: #f5f3ff; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3.2rem; font-family: "IBM Plex Mono", system-ui, sans-serif; cursor: pointer; overflow: hidden; transition: opacity .8s ease, transform .9s cubic-bezier(.7,0,.2,1); background-image: radial-gradient(rgba(178,160,255,.13) 1px, transparent 1px), radial-gradient(60% 70% at 85% 10%, rgba(88,52,200,.38), transparent 70%), radial-gradient(45% 50% at 10% 100%, rgba(60,40,160,.2), transparent 70%); background-size: 22px 22px, 100% 100%, 100% 100%; }
+.pk-intro::before { content:""; position:absolute; inset:0; pointer-events:none; background:radial-gradient(ellipse at 50% 43%,rgba(123,92,255,.3),transparent 36%),radial-gradient(ellipse at 74% 64%,rgba(79,107,255,.16),transparent 35%); }
 .pk-intro.out { opacity: 0; transform: scale(1.04); pointer-events: none; }
 .pk-stage { position: relative; width: var(--pk-g); height: var(--pk-g); display: grid; place-items: center; }
 .pk-stage canvas { position: relative; }
-.pk-orbit { position: absolute; left: 50%; top: 50%; aspect-ratio: 1; translate: -50% -50%; border-radius: 50%; border: 1px dotted rgba(255,255,255,.24); opacity: 0; animation: pk-ring 1.2s ease forwards; pointer-events: none; box-shadow: inset 0 0 45px rgba(255,255,255,.035),0 0 36px rgba(255,255,255,.035); }
+.pk-orbit { position: absolute; left: 50%; top: 50%; aspect-ratio: 1; translate: -50% -50%; border-radius: 50%; border: 1px dotted rgba(187,168,255,.32); opacity: 0; animation: pk-ring 1.2s ease forwards; pointer-events: none; box-shadow: inset 0 0 45px rgba(123,92,255,.08),0 0 36px rgba(123,92,255,.08); }
 .pk-logo { position: absolute; left: 50%; top: 50%; translate: -50% -50%; border-radius: 50%; opacity: .0; animation: pk-ring .8s ease 1.9s forwards; mix-blend-mode: screen; }
 .pk-load { display: grid; justify-items: center; gap: .4rem; }
-.pk-load span { font-size: .95rem; color: var(--pk-text); }
+.pk-load span { font-size: .95rem; color: #c9c4de; }
 .pk-load b { font: 600 2.4rem/1 "IBM Plex Mono", sans-serif; font-variant-numeric: tabular-nums; min-width: 5ch; text-align: center; }
 .pk-load b small { font-size: 1rem; font-weight: 500; }
 .pk-ticks { display: flex; gap: 4px; margin-top: .6rem; }
-.pk-ticks i { width: 3px; height: 22px; background: rgba(255,255,255,.16); transition: background .2s; }
-.pk-ticks i.on { background: var(--pk-accent); }
-.pk-skip { position:absolute; bottom:2rem; color:var(--pk-muted); font-size:.72rem; letter-spacing:.04em; }
+.pk-ticks i { width: 3px; height: 22px; background: rgba(178,160,255,.16); transition: background .2s, box-shadow .2s; }
+.pk-ticks i.on { background: linear-gradient(180deg, #bba8ff, #8aa2ff); box-shadow: 0 0 8px rgba(123,92,255,.8); }
+.pk-skip { position:absolute; bottom:2rem; color:#9993b5; font-size:.72rem; letter-spacing:.04em; }
 @keyframes pk-ring { to { opacity: 1; } }
 @media (prefers-reduced-motion: reduce) { .pk-intro { transition: none; } .pk-orbit, .pk-logo { animation: none; opacity: 1; } }
