@@ -149,7 +149,7 @@ export function Dashboard({ c }: { c: Ctx }) {
           <b className="nv-gauge-v num">{rated ? `${Math.round((split.onTime / rated) * 100)}%` : "—"}</b>
           <Needle pct={rated ? (split.onTime / rated) * 100 : null} label={`${split.onTime} paid on time, ${split.late} late or unpaid past due, ${split.open} still open`} />
           <footer><span><i className="d-ok" />On time {split.onTime}</span><span><i className="d-late" />Late {split.late}</span><span><i className="d-open" />Open {split.open}</span></footer>
-          <small className="muted">Dated receipts · scanned events only</small>
+          <small className="muted">Dated receipts only</small>
         </article>
 
         <article className="nv-card nv-progress" style={{ "--i": 4 } as React.CSSProperties} aria-labelledby="nv-prog">

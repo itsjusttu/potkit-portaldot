@@ -86,14 +86,14 @@ function initialAddrs(): { a: Addrs | null; shared: boolean } {
 }
 
 const TITLES: Record<Tab, [string, string]> = {
-  dashboard: ["Dashboard", "Your PotKit workspace: receipts, market activity and quick actions from Portaldot V3."],
-  issue: ["Issue", "Turn an unpaid invoice into an on-chain receipt and tradeable shares — three guided steps."],
-  trade: ["Trade", "Buy discounted claims on future payouts, or sell your shares for tPOT today."],
-  portfolio: ["Portfolio", "Your allocation, value at settlement, profit on bought shares and payouts ready to claim."],
-  explore: ["Explore", "Every receipt, listing and event on this deployment, read live from Portaldot V3."],
-  verify: ["Verify", "An independent, shareable proof of a receipt's backing, terms and settlement."],
-  history: ["History", "Your transactions as a timeline, straight from on-chain events."],
-  profile: ["Profile", "Your wallet identity, balances and footprint on PotKit."],
+  dashboard: ["Dashboard", "Receipts, market activity and quick actions."],
+  issue: ["Issue", "Turn an unpaid invoice into tradeable shares in three steps."],
+  trade: ["Trade", "Buy discounted claims or sell your shares for tPOT."],
+  portfolio: ["Portfolio", "Your shares, value at settlement and payouts to claim."],
+  explore: ["Explore", "Every receipt and listing on this deployment."],
+  verify: ["Verify", "A shareable proof of a receipt's terms and settlement."],
+  history: ["History", "Your transactions, from on-chain events."],
+  profile: ["Profile", "Your wallet, balances and activity."],
   pay: ["Pay invoice", "Review one invoice, acknowledge it and pay it in tPOT."],
 };
 const TAB_PATHS: Record<Tab, string> = {

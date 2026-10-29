@@ -145,12 +145,12 @@ export function Trade({ c }: { c: Ctx }) {
 
   return (
     <div className="trade">
-      <section className="trade-intro"><div><p className="kicker">Markets · Portaldot V3</p><h1>Trade</h1><p>Compare open listings by price, discount and due date. Payout estimates assume full repayment and are not guaranteed.</p></div><div className="trade-intro-stats"><span><b>{eligible.length}</b> open listings</span><span><b>{num(eligible.reduce((s, x) => s + x.price * Number(x.l.remaining) / 1e18, 0))}</b> tPOT listed</span></div></section>
+      <section className="trade-intro"><div><p className="kicker">Markets · Portaldot V3</p><h1>Trade</h1><p>Compare listings by price, discount and due date. Payouts are not guaranteed.</p></div><div className="trade-intro-stats"><span><b>{eligible.length}</b> open listings</span><span><b>{num(eligible.reduce((s, x) => s + x.price * Number(x.l.remaining) / 1e18, 0))}</b> tPOT listed</span></div></section>
       <section className="trade-kpis" aria-label="Market overview">
         <article><small>Best APR</small><strong className="yield-text">{bestYield ? pct(bestYield.apr!) : "—"}</strong><span>{bestYield ? `KIT#${bestYield.r.id} · due in ${Math.ceil(bestYield.days)}d` : "No eligible listings"}</span></article>
-        <article><small>Average discount</small><strong>{openAvgDiscount === null ? "—" : pct(openAvgDiscount)}</strong><span>Across eligible listings</span></article>
+        <article><small>Average discount</small><strong>{openAvgDiscount === null ? "—" : pct(openAvgDiscount)}</strong><span>Open listings</span></article>
         <article><small>Open listings</small><strong>{eligible.length}</strong><span>{num(eligible.reduce((s, x) => s + Number(x.l.remaining) / 1e18, 0), 2)} shares available</span></article>
-        <article><small>24h volume · scanned history</small><strong>{c.eventsLoading ? "…" : c.eventsOk ? `${fmt(volume24hRaw, 18)} tPOT` : "—"}</strong><span>{c.eventsLoading ? "Reading chain activity" : c.eventsOk ? `${buys24h.length} scanned on-chain buys` : "History unavailable"}</span></article>
+        <article><small>24h volume</small><strong>{c.eventsLoading ? "…" : c.eventsOk ? `${fmt(volume24hRaw, 18)} tPOT` : "—"}</strong><span>{c.eventsLoading ? "Reading chain activity" : c.eventsOk ? `${buys24h.length} buys` : "History unavailable"}</span></article>
       </section>
       {cards.length > 0 && <div className="trade-bar" role="search">
         <div className="tb-search"><Ico n="search" /><input aria-label="Search listings" placeholder="Search invoice, id or kind" value={q} onChange={(e) => setQ(e.target.value)} /></div>

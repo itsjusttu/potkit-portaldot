@@ -53,15 +53,15 @@ export function Explore({ c }: { c: Ctx }) {
 
   return (
     <div className="explore">
-      <section className="explore-intro"><div><p className="kicker">Loaded receipts · {R.length} of {c.total}</p><h1>Explore real-world receivables</h1><p>Compare status, terms and open asks across issuer-provided receipts. Select a receipt to inspect its proof.</p></div><div className="explore-intro-actions"><span className="explore-live"><i /> Live from Portaldot V3</span><button className="btn sm primary" onClick={() => c.setTab("trade")}>Open share market <Ico n="arrow" /></button></div></section>
+      <section className="explore-intro"><div><p className="kicker">Loaded receipts · {R.length} of {c.total}</p><h1>Explore real-world receivables</h1><p>Issuer-provided receipts. Select one to inspect its proof.</p></div><div className="explore-intro-actions"><span className="explore-live"><i /> Live from Portaldot V3</span><button className="btn sm primary" onClick={() => c.setTab("trade")}>Open share market <Ico n="arrow" /></button></div></section>
       {!c.eventsOk && !c.eventsLoading && <p className="banner ex-scan-warning" role="status">Event scan incomplete. Trade totals and redeemed statuses may omit transactions outside the readable range.</p>}
       <section className="ex-stats" aria-label="Loaded network overview">
         <div className="kpi"><span>Receipts on contract</span><b className="num"><N l={c.loading}><CountUp v={c.total} /></N></b><small><N l={c.loading}>{R.filter((r) => r.fraction).length} locked among loaded receipts</N></small></div>
-        <div className="kpi"><span>Outstanding · loaded</span><b className="num"><N l={c.loading}><CountUp v={fmt(outstanding, 18)} /></N></b><small>tPOT owed by debtors</small></div>
-        <div className="kpi"><span>Settled · loaded</span><b className="num"><N l={c.loading}><CountUp v={fmt(settledVol, 18)} /></N></b><small>tPOT paid into PotKit</small></div>
+        <div className="kpi"><span>Outstanding</span><b className="num"><N l={c.loading}><CountUp v={fmt(outstanding, 18)} /></N></b><small>tPOT owed by debtors</small></div>
+        <div className="kpi"><span>Settled</span><b className="num"><N l={c.loading}><CountUp v={fmt(settledVol, 18)} /></N></b><small>tPOT paid into PotKit</small></div>
         <div className="kpi"><span>Open listings</span><b className="num"><N l={c.loading}><CountUp v={open.length} /></N></b><small><N l={c.loading}>{fmt(listedVal, 18)} tPOT asked</N></small></div>
-        <div className="kpi"><span>Traded · scanned events</span><b className="num">{c.eventsLoading ? "Reading…" : !c.eventsOk ? "—" : <CountUp v={fmt(traded, 18)} />}</b><small>{c.eventsOk ? "tPOT in scanned buys" : "Incomplete event scan"}</small></div>
-        <div className={`kpi ${R.some((r) => r.status === "Overdue") ? "neg" : ""}`}><span>Overdue · loaded</span><b className="num"><N l={c.loading}><CountUp v={R.filter((r) => r.status === "Overdue").length} /></N></b><small>past due, unpaid</small></div>
+        <div className="kpi"><span>Traded</span><b className="num">{c.eventsLoading ? "Reading…" : !c.eventsOk ? "—" : <CountUp v={fmt(traded, 18)} />}</b><small>{c.eventsOk ? "tPOT in scanned buys" : "Incomplete event scan"}</small></div>
+        <div className={`kpi ${R.some((r) => r.status === "Overdue") ? "neg" : ""}`}><span>Overdue</span><b className="num"><N l={c.loading}><CountUp v={R.filter((r) => r.status === "Overdue").length} /></N></b><small>past due, unpaid</small></div>
       </section>
 
       <div className="ex-grid ex-stack">

@@ -71,7 +71,7 @@ export function Issue({ c }: { c: Ctx }) {
           {cur === 0 && (
             <div className="wiz-pane">
               <h2>1 · Receipt</h2>
-              <p className="muted">Describe the real-world claim. Kind and note are written on-chain when you mint the ERC-721 receipt in your wallet (one transaction). Face value and due date are set in the next step.</p>
+              <p className="muted">Kind and note are written on-chain when you mint the receipt. Face value and due date come next.</p>
               <p className="issue-privacy"><b>Public on-chain record.</b> Anyone can read these details. Do not include names, account numbers, invoice files or other sensitive personal data. PotKit records issuer-provided information; it does not independently authenticate the underlying invoice.</p>
               <div className="row fields">
                 <div><label htmlFor="w-kind">Kind</label><select id="w-kind" value={kind} onChange={(e) => setKind(Number(e.target.value))}>{KINDS.map((k, i) => <option key={k} value={i}>{k}</option>)}</select></div>
@@ -141,7 +141,7 @@ export function Issue({ c }: { c: Ctx }) {
             <div className="ir-foot"><span>{row?.depositor || row?.owner || c.account ? short(row?.depositor || row?.owner || c.account) : "ISSUER WALLET NOT CONNECTED"}</span><span className="ir-state"><i />{row?.settle.settled ? "SETTLED" : cur >= 3 ? "LIVE · TERMS ON-CHAIN" : cur >= 2 ? "MINTED" : "READY TO MINT"}</span></div>
           </div>
           {cur >= 2 && <p className="wiz-minted-note"><Ico n="check" /> Mint confirmed. The receipt can now be locked and split into shares.</p>}
-          <p className="muted small">This preview follows the invoice details above. The NFT stays inside PotKit while shares are outstanding.</p>
+          <p className="muted small">The NFT stays inside PotKit while shares are outstanding.</p>
         </aside>
       </section>
 
