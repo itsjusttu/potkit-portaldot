@@ -83,7 +83,7 @@ export function Portfolio({ c }: { c: Ctx }) {
     <div className="portfolio pf2">
       {head}
       <section className="pf2-balances" aria-label="Balances">
-        <div><span>Wallet balance</span><strong title={c.usdBal || undefined}>{c.native === null ? (c.nativeLoading ? "…" : "—") : `${(Number(c.native) / 1e18).toLocaleString(undefined, { maximumFractionDigits: 4 })} tPOT`}</strong><small>Native tPOT for buying and gas</small></div>
+        <div><span>Wallet balance</span><strong title={c.usdBal || undefined}>{c.native === null ? (c.nativeLoading ? "…" : "—") : `${(Number(c.native) / 1e18).toLocaleString("en-US", { maximumFractionDigits: 4 })} tPOT`}</strong><small>Native tPOT for buying and gas</small></div>
         <div className={claimTotal > 0n ? "is-claim" : ""}><span><Term k="claim">Claimable now</Term></span><strong>{fmt(claimTotal, dec)} tPOT</strong><small>{claimable.length ? `${claimable.length} settled receipt${claimable.length === 1 ? "" : "s"}` : "No payouts waiting"}</small></div>
         <div><span><Term k="share">Shares held</Term></span><strong><span className="num">{holdings.length}</span> position{holdings.length === 1 ? "" : "s"}</strong><small>{fmt(totalValue, dec)} tPOT at face value · estimate, incl. listed</small></div>
         <div><span><Term k="receipt">Receipts issued</Term></span><strong><span className="num">{activeReceipts.length}</span> active</strong><small>{historyReceipts.length} completed</small></div>

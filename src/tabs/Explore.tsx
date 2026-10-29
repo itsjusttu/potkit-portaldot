@@ -2,7 +2,7 @@ import { useState } from "react";
 import { fmt, KINDS, short, units, type ChainEvent, type Row } from "../lib/chain";
 import { Addr, CountUp, Empty, Ico } from "../AppUi";
 import { faceShare, type Ctx } from "./ctx";
-import { day, pct } from "./shared";
+import { day, fmtDate, pct } from "./shared";
 import { N } from "./shared";
 import { readReceiptHistory } from "./receipt-history";
 export const SkelRows = ({ n = 6, cols = 6 }: { n?: number; cols?: number }) => <div className="skel-rows" aria-busy="true" aria-label="Loading">{Array.from({ length: n }, (_, i) => <div key={i} className="skel-row">{Array.from({ length: cols }, (_, j) => <span key={j} className={`skel ${j === 0 ? "w100" : "w60"}`} />)}</div>)}</div>;
@@ -86,7 +86,7 @@ export function Explore({ c }: { c: Ctx }) {
                   <article className={`explore-card ex-${tone}`} key={r.id}>
                     <header><span className="explore-icon"><Ico n={redeemed ? "redeem" : isSettled(r) ? "check" : r.fraction ? "swap" : "terms"} size={17} /></span><span className="ex-id">INVOICE #{r.id}</span>{redeemed ? <span className="tag explore-redeemed-tag">REDEEMED</span> : <SettleBadge r={r} terms={false} />}</header>
                     <h3>{r.note || KINDS[r.kind]}</h3><p className="explore-issuer">{KINDS[r.kind]} · issuer wallet {short(r.depositor || r.owner)}</p>
-                    <div className="explore-card-facts"><div><small>Face value</small><b>{face ? `${fmt(face, r.settle.decimals)} ${r.settle.symbol}` : "Terms pending"}</b></div><div><small>Due</small><b>{dueDate ? new Date(dueDate * 1000).toLocaleDateString("en-US", { month: "short", day: "2-digit", year: "numeric" }) : redeemed ? "No due date" : "—"}</b></div></div>
+                    <div className="explore-card-facts"><div><small>Face value</small><b>{face ? `${fmt(face, r.settle.decimals)} ${r.settle.symbol}` : "Terms pending"}</b></div><div><small>Due</small><b>{dueDate ? fmtDate(new Date(dueDate * 1000)) : redeemed ? "No due date" : "—"}</b></div></div>
                     <div className="explore-meter-label"><span>{redeemed ? "Shares issued before redemption" : "Currently listed"}</span><b>{redeemed && totalShares > 0n ? units(totalShares) : totalShares > 0n ? `${units(onMkt)} / ${units(totalShares)}` : "Not issued"}</b></div><div className="explore-meter"><i style={{ width: `${redeemed ? 0 : marketPct}%` }} /></div>
                     <div className="explore-card-foot"><span>{redeemed ? "Lifecycle complete" : r.fraction ? `${units(totalShares)} shares` : "Receipt only"}</span><b>{redeemed && receiptHistory.get(r.id)?.settled ? <>Settled · {fmt(receiptHistory.get(r.id)?.settle?.value ?? r.settle.amount, r.settle.decimals)} {r.settle.symbol} paid</> : p === undefined ? (redeemed ? "REDEEMED" : "Not listed") : <>{fmt(p, 18)} <small>tPOT / share</small></>}</b></div>
                     <footer><button className="btn sm" onClick={() => c.setTab("verify", { id: String(r.id) })}><Ico n="shield" /> Verify</button>{!redeemed && r.fraction && !r.settle.settled && <button className="btn sm" onClick={() => p !== undefined ? c.setTab("trade") : c.openPay(r.id)}>{p !== undefined ? "View market" : "Pay invoice"}</button>}</footer>

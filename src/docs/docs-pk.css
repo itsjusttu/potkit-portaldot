@@ -48,8 +48,10 @@
 .dx-sec::after { content: ""; display: table; clear: both; }
 
 /* callouts, tables, function cards */
-.dx-call { max-width: 46rem; margin: 1.4rem 0 1.6rem; padding: 1.05rem 1.25rem; border: 1px solid var(--line2); border-left: 3px solid var(--violet-l); border-radius: 8px; background: rgba(123,92,255,.08); font-size: .98rem; line-height: 1.65; color: var(--soft); }
-.dx-call.warn { border-color: rgba(251,191,36,.28); border-left-color: #fbbf24; background: rgba(251,191,36,.06); }
+.dx-call { max-width: 46rem; margin: 1.4rem 0 1.6rem; padding: 1.05rem 1.25rem; position: relative; padding-left: 2.5rem; border: 1px solid var(--line2); border-radius: 8px; background: rgba(123,92,255,.08); font-size: .98rem; line-height: 1.65; color: var(--soft); }
+.dx-call.warn { border-color: rgba(251,191,36,.28); background: rgba(251,191,36,.06); }
+.dx-call::before { content: ""; position: absolute; left: 1.15rem; top: 1.5rem; width: 8px; height: 8px; transform: rotate(45deg); background: var(--violet-l); }
+.dx-call.warn::before { background: #fbbf24; }
 .dx-tw { overflow-x: auto; margin: 1.1rem 0 1.8rem; border: 1px solid var(--line2); border-radius: 10px; background: var(--panel); }
 .dx-t { width: 100%; min-width: 34rem; border-collapse: collapse; font-size: .94rem; }
 .dx-t th { padding: .85rem 1.1rem; border-bottom: 1px solid var(--line2); background: rgba(123,92,255,.08); text-align: left; font-size: .72rem; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: var(--violet-l); }
@@ -66,7 +68,7 @@
 
 /* ---------- diagrams ---------- */
 .dx-fig { margin: 1.6rem 0 2rem; overflow-x: auto; border: 1px solid var(--line2); border-radius: 12px;
-  background: linear-gradient(rgba(178,160,255,.05) 1px, transparent 1px) 0 0 / 100% 22px, linear-gradient(90deg, rgba(178,160,255,.05) 1px, transparent 1px) 0 0 / 22px 100%, #0a0718; }
+  background: #0a0718; }
 .dx-fig svg { display: block; width: 100%; min-width: 36rem; height: auto; padding: 1.2rem; }
 .dx-fig figcaption { padding: .9rem 1.2rem; border-top: 1px solid var(--line); font-size: .9rem; line-height: 1.55; color: var(--dim); }
 .dg-box rect { fill: #110d24; stroke: rgba(187,168,255,.6); stroke-width: 1.2; rx: 8px; }

@@ -75,7 +75,10 @@ export function Term({ k, children }: { k: keyof typeof GLOSSARY; children?: Rea
 }
 
 const STATUS_CLASS: Record<Row["status"], string> = { Free: "", Pending: "lock", "Due soon": "warn", Overdue: "bad", Settled: "paid" };
-export const day = (ts: number) => new Date(ts * 1000).toLocaleDateString();
+/** One date style for the whole app: 21 Nov 2026 (fixed locale, so it never follows the browser language). */
+export const fmtDate = (d: Date) => d.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
+export const fmtDay = (d: Date) => d.toLocaleDateString("en-GB", { day: "2-digit", month: "short" });
+export const day = (ts: number) => fmtDate(new Date(ts * 1000));
 
 export function SettleBadge({ r, terms = true }: { r: Row; terms?: boolean }) {
   if (!r.fraction) return <span className="tag">free</span>;
@@ -89,7 +92,7 @@ export function SettleBadge({ r, terms = true }: { r: Row; terms?: boolean }) {
   );
 }
 
-export const pct = (x: number, digits = 1) => `${(x * 100).toLocaleString(undefined, { maximumFractionDigits: digits, minimumFractionDigits: digits })}%`;
+export const pct = (x: number, digits = 1) => `${(x * 100).toLocaleString("en-US", { maximumFractionDigits: digits, minimumFractionDigits: digits })}%`;
 
 /** Live preview of the receipt NFT (same fields the on-chain tokenURI exposes). */
 export function ReceiptArt({ id, kind, note, face, due, supply, stage }: { id?: number; kind: number; note: string; face: string; due: string; supply: string; stage: string }) {

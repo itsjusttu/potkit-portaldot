@@ -271,7 +271,7 @@ export function Trade({ c }: { c: Ctx }) {
               {sellRow && (
                 <dl className="facts compact">
                   <div className="you-pay"><dt>You list</dt><dd className="num">{sellAmt || "0"} KIT{sellRow.id} shares</dd></div>
-                  <div className="you-get"><dt>You receive if all sell</dt><dd className="num">{((Number(sellAmt) || 0) * (Number(sellPrice) || 0)).toLocaleString()} tPOT</dd></div>
+                  <div className="you-get"><dt>You receive if all sell</dt><dd className="num">{((Number(sellAmt) || 0) * (Number(sellPrice) || 0)).toLocaleString("en-US", { maximumFractionDigits: 6 })} tPOT</dd></div>
                   <div><dt>Face / share</dt><dd className="num">{sellFace ? `${sellFace} tPOT` : "no terms"}</dd></div>
                   <div><dt>Discount offered</dt><dd className="num">{sellFace ? pct(1 - (Number(sellPrice) || 0) / sellFace) : "—"}</dd></div>
                 </dl>

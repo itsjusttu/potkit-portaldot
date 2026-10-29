@@ -1,0 +1,110 @@
+/* Ledger layer (app only): receipts read as ledger lines and a maturity strip, not as glow cards. Loaded last. */
+html[data-route="app"] ::selection { background: rgba(123,92,255,.55); color: #fff; }
+html[data-route="app"] { caret-color: #bba8ff; accent-color: #7b5cff; }
+
+/* the per-card icon chip carried no information */
+html[data-route="app"] .nv .nv-card > header > .nv-ico { display: none; }
+
+/* maturity strip: open receipts on one time line, position = due date, label = face value */
+html[data-route="app"] .ms { margin-top: 1.1rem; }
+html[data-route="app"] .ms-track { position: relative; }
+html[data-route="app"] .ms-rail { position: absolute; left: 3%; right: 3%; top: 1.7rem; height: 1px; background: rgba(187,168,255,.3); }
+html[data-route="app"] .ms-today { position: absolute; top: 0; height: 2.6rem; width: 0; border-left: 1px dashed rgba(187,168,255,.55); }
+html[data-route="app"] .ms-today b { position: absolute; top: 0; left: .4rem; font: 600 .66rem/1 var(--n-mono, ui-monospace, monospace); letter-spacing: .1em; text-transform: uppercase; color: #bba8ff; }
+html[data-route="app"] .ms-pin { --c: #7b5cff; position: absolute; top: 1.7rem; width: 0; height: calc(.9rem + (var(--lane) + 1) * 2.35rem); padding: 0; border: 0; background: none; color: inherit; font: inherit; cursor: pointer; }
+html[data-route="app"] .ms-pin[data-status="Pending"] { --c: #6f8bff; }
+html[data-route="app"] .ms-pin[data-status="Due soon"] { --c: #f1b64a; }
+html[data-route="app"] .ms-pin[data-status="Overdue"] { --c: #ff6b72; }
+html[data-route="app"] .ms-pin::before { content: ""; position: absolute; left: 0; top: 0; bottom: 1.4rem; width: 1px; background: var(--c); opacity: .55; }
+html[data-route="app"] .ms-pin > i { position: absolute; left: -6px; top: -6px; width: 12px; height: 12px; border-radius: 50%; background: var(--c); box-shadow: 0 0 0 3px #0c0a1a; }
+html[data-route="app"] .ms-pin > span { position: absolute; left: 0; bottom: 0; transform: translateX(-50%); display: grid; gap: .15rem; white-space: nowrap; text-align: center; }
+html[data-route="app"] .ms-pin[data-edge="l"] > span { transform: none; text-align: left; margin-left: -6px; }
+html[data-route="app"] .ms-pin[data-edge="r"] > span { transform: translateX(-100%); text-align: right; margin-left: 6px; }
+html[data-route="app"] .ms-pin > span b { color: #fff; font-size: .98rem; font-weight: 600; }
+html[data-route="app"] .ms-pin > span small { color: var(--c); font: 600 .66rem/1 var(--n-mono, ui-monospace, monospace); letter-spacing: .06em; text-transform: uppercase; }
+html[data-route="app"] .ms-pin:hover > span b, html[data-route="app"] .ms-pin:focus-visible > span b { text-decoration: underline; text-underline-offset: 3px; }
+html[data-route="app"] .ms-pin:focus-visible { outline: 2px solid #bba8ff; outline-offset: 6px; border-radius: 4px; }
+html[data-route="app"] .ms-ends { display: flex; justify-content: space-between; margin-top: .4rem; padding: .35rem 3% 0; border-top: 1px solid var(--line, rgba(178,160,255,.14)); color: #8f86b4; font-size: .72rem; }
+
+/* ledger lines: date stamp, what, dotted leader, amount */
+html[data-route="app"] .lg { list-style: none; margin: .4rem 0 0; padding: 0; }
+html[data-route="app"] .lg li { display: grid; grid-template-columns: 3.4rem minmax(0, auto) minmax(1rem, 1fr) auto; align-items: baseline; gap: .6rem; padding: .75rem 0; border-top: 1px solid var(--line, rgba(178,160,255,.14)); }
+html[data-route="app"] .lg li:first-child { border-top: 0; }
+html[data-route="app"] .lg-date { color: #bba8ff; font: 600 .74rem/1 var(--n-mono, ui-monospace, monospace); letter-spacing: .08em; text-transform: uppercase; }
+html[data-route="app"] .lg li[data-status="Overdue"] .lg-date { color: #ff8d92; }
+html[data-route="app"] .lg li[data-status="Due soon"] .lg-date { color: #f1b64a; }
+html[data-route="app"] .lg-t { display: grid; gap: .2rem; min-width: 0; }
+html[data-route="app"] .lg-t b { color: #fff; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+html[data-route="app"] .lg-t small { color: #8f86b4; font-size: .76rem; }
+html[data-route="app"] .lg-lead { align-self: end; margin-bottom: .3em; border-bottom: 1px dotted rgba(187,168,255,.32); }
+html[data-route="app"] .lg-v { color: #fff; font: 600 1.02rem/1 var(--n-mono, ui-monospace, monospace); white-space: nowrap; }
+html[data-route="app"] .lg-next { margin: .6rem 0 0; font-size: .82rem; }
+
+@media (max-width: 36rem) {
+  html[data-route="app"] .lg li { grid-template-columns: 3.1rem minmax(0, 1fr) auto; }
+  html[data-route="app"] .lg-lead { display: none; }
+}
+
+
+@media (max-width: 68.75rem) {
+  /* the hamburger glyph sat in an implicit second grid row; centre it in a flex box and hide any other child */
+  html[data-route="app"] .shell .top .mobile-nav-toggle { display: inline-flex; align-items: center; justify-content: center; }
+  html[data-route="app"] .shell .top .mobile-nav-toggle > * { display: none; }
+}
+
+@media (max-width: 52rem) {
+  /* three headline figures read as one ledger block instead of three tall cards */
+  html[data-route="app"] .nv .nv-kpis { display: block; padding: .3rem 1.1rem; border: 1px solid var(--nv-edge, rgba(178,160,255,.18)); border-radius: 22px; background: rgba(12,10,26,.72); }
+  html[data-route="app"] .shell .nv .nv-kpis .nv-kpi { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: baseline; column-gap: .8rem; width: 100%; min-height: 0; padding: .85rem 0; border: 0 !important; border-top: 1px solid var(--line, rgba(178,160,255,.14)) !important; border-radius: 0 !important; background: none !important; box-shadow: none; text-align: left; }
+  html[data-route="app"] .shell .nv .nv-kpis .nv-kpi:first-child { border-top: 0 !important; }
+  html[data-route="app"] .shell .nv .nv-kpis .nv-kpi > b { grid-column: 2; grid-row: 1; justify-self: end; font-size: 1.15rem; font-family: var(--n-mono, ui-monospace, monospace); }
+  html[data-route="app"] .nv .nv-kpis .nv-kpi > small { grid-column: 1 / -1; }
+  html[data-route="app"] .nv .nv-kpis .nv-kpi::before, html[data-route="app"] .nv .nv-kpis .nv-kpi::after { display: none; }
+}
+
+/* Trade rows: price, yield and time to due are the decision facts, so they carry the size */
+@media (min-width: 52.01rem) {
+  html[data-route="app"] .shell .t-trade .trade-row:not(.trade-row-head) :is(.trade-row-price, .trade-row-apr, .trade-row-due) { font-size: 1.05rem; font-weight: 600; }
+  html[data-route="app"] .shell .t-trade .trade-row:not(.trade-row-head) .trade-row-price small { font-size: .72rem; font-weight: 400; color: #8f86b4; }
+  html[data-route="app"] .shell .t-trade .trade-row:not(.trade-row-head) .trade-row-discount { font-size: .92rem; }
+}
+
+@media (max-width: 52rem) {
+  /* stat cells on one baseline: top-packed flex lines, one size for every value */
+  html[data-route="app"] .shell .t-trade .trade-row:not(.trade-row-head) :is(.trade-row-price, .trade-row-discount, .trade-row-apr, .trade-row-due, .trade-row-units) { align-content: flex-start; padding: 0; font-size: 1.05rem; line-height: 1.25; }
+  html[data-route="app"] .shell .t-trade .trade-row:not(.trade-row-head) :is(.trade-row-price, .trade-row-units) { color: #fff; }
+  html[data-route="app"] .shell .t-trade .trade-row:not(.trade-row-head) :is(.trade-row-price, .trade-row-discount, .trade-row-apr, .trade-row-due, .trade-row-units)::before { font-size: .68rem !important; line-height: 1 !important; }
+  html[data-route="app"] .shell .t-trade .trade-market-heading { text-align: left !important; justify-items: start !important; justify-content: flex-start !important; }
+  html[data-route="app"] .shell .t-trade .trade-market-heading * { text-align: left; }
+}
+
+/* Verify: the receipt's money and date are the facts a reader came for */
+html[data-route="app"] .shell .cert-facts > div:nth-child(-n+4) dd { color: #fff; font-size: 1.2rem; font-weight: 600; }
+html[data-route="app"] .shell .cert-facts > div:nth-child(3) dd, html[data-route="app"] .shell .cert-facts > div:nth-child(1) dd { font-family: var(--n-mono, ui-monospace, monospace); }
+
+/* kickers: the heading carries its own weight. Kept only on the receipt artwork, where it is part of the document. */
+html[data-route="app"] .shell .kicker { display: none; }
+html[data-route="app"] .shell .cert .kicker { display: block; }
+
+/* receipt stub (Explore cards): perforation with two notches, dashed rule, face value as the biggest figure */
+html[data-route="app"] .explore-card { border-radius: 12px; }
+html[data-route="app"] .explore-card .explore-icon { display: none; }
+html[data-route="app"] .explore-card-facts { position: relative; border-block: 1px dashed rgba(187,168,255,.3); }
+html[data-route="app"] .explore-card-facts::before, html[data-route="app"] .explore-card-facts::after { content: ""; position: absolute; top: -8px; width: 15px; height: 15px; border-radius: 50%; background: #07050d; border: 1px solid var(--nv-edge, rgba(178,160,255,.18)); }
+html[data-route="app"] .explore-card-facts::before { left: calc(-.95rem - 8px); }
+html[data-route="app"] .explore-card-facts::after { right: calc(-.95rem - 8px); }
+html[data-route="app"] .explore-card-facts small { font-size: .62rem; letter-spacing: .08em; text-transform: uppercase; }
+html[data-route="app"] .explore-card-facts > div:first-child b { color: #fff; font-size: 1.15rem; font-weight: 600; }
+
+/* receipt stub (Portfolio, ready to claim): payout sits on a tear-off end after a dashed perforation */
+@media (min-width: 52.01rem) {
+  html[data-route="app"] .shell .pf2-claim .rtable, html[data-route="app"] .shell .pf2-claim .rtable tbody { display: block; width: 100%; }
+  html[data-route="app"] .shell .pf2-claim .rtable thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+  html[data-route="app"] .shell .pf2-claim .rtable tbody tr { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(0, .6fr) minmax(0, 1fr) auto; align-items: stretch; margin-bottom: .7rem; overflow: hidden; border: 1px solid var(--nv-edge, rgba(178,160,255,.18)); border-radius: 12px; background: rgba(18,14,38,.6); }
+  html[data-route="app"] .shell .pf2-claim .rtable tbody td { display: flex; flex-direction: column; justify-content: center; padding: 1rem 1.1rem; border: 0; }
+  html[data-route="app"] .shell .pf2-claim .rtable tbody td:nth-child(3) { position: relative; border-left: 1px dashed rgba(187,168,255,.35); }
+  html[data-route="app"] .shell .pf2-claim .rtable tbody td:nth-child(3)::before, html[data-route="app"] .shell .pf2-claim .rtable tbody td:nth-child(3)::after { content: ""; position: absolute; left: -8px; width: 15px; height: 15px; border-radius: 50%; background: #07050d; border: 1px solid var(--nv-edge, rgba(178,160,255,.18)); }
+  html[data-route="app"] .shell .pf2-claim .rtable tbody td:nth-child(3)::before { top: -8px; }
+  html[data-route="app"] .shell .pf2-claim .rtable tbody td:nth-child(3)::after { bottom: -8px; }
+  html[data-route="app"] .shell .pf2-claim .rtable tbody td:nth-child(3) b { font-size: 1.15rem; font-family: var(--n-mono, ui-monospace, monospace); }
+}

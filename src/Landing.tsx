@@ -129,8 +129,9 @@ function Fan({ dir = "right", n = 34, className = "" }: { dir?: "right" | "left"
 }
 
 /** Closing-section pattern: slow horizontal bars, like due dates on a timeline. */
-const BARS: [number, number, number, string][] = [[4, 38, 14, "v"], [57, 22, 4, "b"], [86, 9, 18, "g"], [11, 40, 46, "g"], [1, 64, 66, "v"], [68, 24, 60, "b"], [33, 36, 84, "v"], [80, 16, 86, "g"]];
-const Bars = () => <div className="pl-bars" aria-hidden>{BARS.map(([l, w, t, c], k) => <i key={k} className={c} style={{ left: `${l}%`, width: `${w}%`, top: `${t}%`, "--k": k } as React.CSSProperties} />)}</div>;
+/* Footer art: one maturity line (position = due date, colour = status). Illustrative, not live data. */
+const PINS: [number, number, string][] = [[9, 58, "g"], [27, 34, "a"], [45, 70, "b"], [68, 46, "b"], [90, 80, "b"]];
+const Bars = () => <div className="pl-bars" aria-hidden><i className="rail" />{PINS.map(([l, h, c], k) => <i key={k} className={`pin ${c}`} style={{ left: `${l}%`, height: `${h}%` }} />)}<small>Illustrative maturity line · not live data</small></div>;
 
 /* ---------- product mock-ups (illustrative figures only) ---------- */
 const STAGES = [

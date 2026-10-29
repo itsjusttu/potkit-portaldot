@@ -31,7 +31,7 @@ export function Verify({ c }: { c: Ctx }) {
       setRes({ row, name: meta.name, kind: String(meta.attributes[0]?.value ?? ""), at: new Date() });
       lastLookup.current = `${c.addrs.vault}:${n}`;
       const q = new URLSearchParams(location.search); q.set("tab", "verify"); q.set("id", String(n)); history.replaceState(null, "", `${location.pathname}?${q}`);
-    } catch (e) { setMsg(explain(e)); } finally { setLoading(false); }
+    } catch (e) { const m = explain(e); setMsg(/HTTP request failed|fetch failed|Failed to fetch|timed out/i.test(m) ? "Could not reach the Portaldot node. Check your connection and try again." : m); } finally { setLoading(false); }
   }, [c.addrs, c.rows]);
   const lastLookup = useRef("");
   const routeId = c.param("id");
@@ -131,7 +131,7 @@ export function Verify({ c }: { c: Ctx }) {
               <div className="cert-contract"><span>CONTRACT</span><Addr a={c.addrs!.vault} label="PotKit · Portaldot V3" /></div>
               <button className="btn" onClick={() => void copy(link, "proof")}><Ico n={copied === "proof" ? "check" : "link"} /> {copied === "proof" ? "Link copied" : "Share proof"}</button>
             </footer>
-            <p className="cert-disclaimer">Read {res.at.toLocaleString()} from chain 420420777. This proves on-chain state, not the authenticity of off-chain invoice documents.</p>
+            <p className="cert-disclaimer">Read {res.at.toLocaleString("en-GB", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit", second: "2-digit" })} from chain 420420777. This proves on-chain state, not the authenticity of off-chain invoice documents.</p>
           </article>
           <aside className="proof-trail">
             <header><div><h3>On-chain proof trail</h3><p className="muted">Earlier cycles may share this receipt ID and token address. Current status is shown above; events below span the readable history.</p></div><span>{hist.length}<small>events loaded</small></span></header>
@@ -140,7 +140,7 @@ export function Verify({ c }: { c: Ctx }) {
               <li key={step.key} className={step.done ? "done" : "pending"}>
                 <span className="proof-event-icon"><Ico n={step.done ? "check" : "dash"} size={14} /></span>
                 <div className="proof-event-body"><b>{step.title}</b>
-                  {step.event ? <><small>Block {step.event.block.toString()}{step.event.time ? ` · ${step.event.timeApprox ? "~" : ""}${new Date(step.event.time * 1000).toLocaleString()}` : ""}</small><div className="proof-tx-actions"><a className="proof-tx" href={blockUrl(step.event.block)} target="_blank" rel="noreferrer" aria-label={`Open block ${step.event.block} (contains transaction ${step.event.hash}) in the node console`}><code>{short(step.event.hash)}</code><span>Open block ↗</span></a><button type="button" className="proof-tx" title="Copy full transaction hash" onClick={() => void copy(step.event!.hash, step.event!.hash)}>{copied === step.event.hash ? "Copied" : "Copy tx"}</button></div></>
+                  {step.event ? <><small>Block {step.event.block.toString()}{step.event.time ? ` · ${step.event.timeApprox ? "~" : ""}${new Date(step.event.time * 1000).toLocaleString("en-GB", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })}` : ""}</small><div className="proof-tx-actions"><a className="proof-tx" href={blockUrl(step.event.block)} target="_blank" rel="noreferrer" aria-label={`Open block ${step.event.block} (contains transaction ${step.event.hash}) in the node console`}><code>{short(step.event.hash)}</code><span>Open block ↗</span></a><button type="button" className="proof-tx" title="Copy full transaction hash" onClick={() => void copy(step.event!.hash, step.event!.hash)}>{copied === step.event.hash ? "Copied" : "Copy tx"}</button></div></>
                     : <small>{step.done ? step.fallback : c.eventsOk ? step.fallback : "Not found in the readable event range"}</small>}
                 </div>
               </li>

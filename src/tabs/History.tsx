@@ -3,7 +3,7 @@ import { fmt, short, type ChainEvent } from "../lib/chain";
 import { Empty, Ico } from "../AppUi";
 import { type Ctx } from "./ctx";
 import { EV_ICON } from "./Explore";
-import { blockUrl, download } from "./shared";
+import { blockUrl, download, fmtDate, fmtDay } from "./shared";
 import { toCsv } from "./insights";
 
 type Item = { key: string; t: number; block?: bigint; approx?: boolean; icon: string; tone: string; title: string; detail: string; money?: string; hash?: string; src: "chain" | "local" };
@@ -26,7 +26,7 @@ export function History({ c }: { c: Ctx }) {
       if (handled.has(txKey)) continue;
       const terms = c.events.find((candidate) => candidate.kind === "terms" && candidate.id === e.id && candidate.hash === e.hash);
       if (terms) handled.add(txKey);
-      const due = terms?.dueDate ? ` due ${new Date(terms.dueDate * 1000).toLocaleDateString("en-GB", { day: "2-digit", month: "2-digit", year: "numeric" })}` : "";
+      const due = terms?.dueDate ? ` due ${fmtDate(new Date(terms.dueDate * 1000))}` : "";
       chainItems.push({ key: `${e.hash}-${e.logIndex}-lock`, t: e.time * 1000, block: e.block, approx: e.timeApprox, icon: EV_ICON.lock, tone: "lock", title: "Locked", detail: `${e.amount?.toString() ?? "—"} shares${terms?.value ? ` · ${fmt(terms.value, 18)} tPOT${due}` : ""}`, hash: e.hash, src: "chain" });
       continue;
     }
@@ -71,7 +71,7 @@ export function History({ c }: { c: Ctx }) {
         <div className="history-row history-row-head" role="row"><span role="columnheader">Date</span><span role="columnheader">Type</span><span role="columnheader">Activity</span><span role="columnheader">Amount</span><span role="columnheader">Status</span><span role="columnheader">Transaction</span></div>
         {visible.map((it) => (
           <article className="history-row" role="row" key={it.key}>
-            <time className="history-date num" role="cell" dateTime={it.t ? new Date(it.t).toISOString() : undefined}>{it.t ? <>{it.approx ? "~" : ""}{new Date(it.t).toLocaleDateString(undefined, { month: "short", day: "numeric" })}<small>{new Date(it.t).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</small></> : it.block !== undefined ? `Block ${it.block}` : "Recent"}</time>
+            <time className="history-date num" role="cell" dateTime={it.t ? new Date(it.t).toISOString() : undefined}>{it.t ? <>{it.approx ? "~" : ""}{fmtDay(new Date(it.t))}<small>{new Date(it.t).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })}</small></> : it.block !== undefined ? `Block ${it.block}` : "Recent"}</time>
             <span className={`history-type tone-${it.tone}`} role="cell"><Ico n={it.icon} size={14} />{kindLabel[it.tone] ?? "Activity"}</span>
             <span className="history-activity" role="cell"><b>{it.title}</b><small>{it.detail}</small></span>
             <span className={`history-amount num ${it.money?.startsWith("+") ? "positive" : ""} ${it.money?.startsWith("−") ? "negative" : ""}`} role="cell" data-empty={it.money ? undefined : ""}>{it.money ?? "—"}</span>

@@ -2,26 +2,26 @@ import { useState } from "react";
 import { fmt, KINDS, units } from "../lib/chain";
 import { CountUp, Empty, Ico, toast } from "../AppUi";
 import type { Ctx } from "./ctx";
-import { day, SettleBadge, Term } from "./shared";
+import { day, fmtDay, SettleBadge, Term } from "./shared";
 import { withoutRedeemed } from "./receipt-history";
 import { lifecycleSteps } from "./Tour";
 import { EV_ICON } from "./Explore";
-import { cumulative, daily, dueBuckets, periodDelta, settlementSplit } from "./insights";
-import { DotMatrix, Lines, Needle, Spark } from "./charts";
+import { periodDelta, settlementSplit } from "./insights";
+import { Needle } from "./charts";
+import { MaturityStrip } from "./MaturityStrip";
 import { SalePlanner } from "./SalePlanner";
 
 type Scope = "all" | "action" | "market" | "settled";
 type R = Ctx["rows"][number];
 const DAYS = 30;
 const tpot = (v: bigint) => Number(v) / 1e18;
-const ago = (t: number) => { const s = Date.now() / 1000 - t; return s < 3600 ? `${Math.max(1, Math.floor(s / 60))}m ago` : s < 86400 ? `${Math.floor(s / 3600)}h ago` : new Date(t * 1000).toLocaleDateString(undefined, { month: "short", day: "numeric" }); };
+const ago = (t: number) => { const s = Date.now() / 1000 - t; return s < 3600 ? `${Math.max(1, Math.floor(s / 60))}m ago` : s < 86400 ? `${Math.floor(s / 3600)}h ago` : fmtDay(new Date(t * 1000)); };
 
 /** Big figure with the decimals dimmed, e.g. 12<small>.5</small> tPOT. */
 const Big = ({ v }: { v: string }) => { const [i, d] = v.split("."); return <span className="nv-big num"><CountUp v={i!} />{d ? <small>.{d}</small> : null}<em>tPOT</em></span>; };
 
 export function Dashboard({ c }: { c: Ctx }) {
   const [scope, setScope] = useState<Scope>("all");
-  const [view, setView] = useState<"dots" | "lines">("dots");
   const [allSteps, setAllSteps] = useState(false);
   const [planOpen, setPlanOpen] = useState(false);
   const now = Date.now() / 1000;
@@ -61,24 +61,13 @@ export function Dashboard({ c }: { c: Ctx }) {
   const buyEvents = c.events.filter((e) => e.kind === "buy");
   const traded = buyEvents.reduce((s, e) => s + (e.value ?? 0n), 0n);
   const sharesForSale = open.reduce((s, l) => s + l.remaining, 0n);
-  const issuedDaily = daily(c.events, now, DAYS, (e) => (["mint", "lock", "list"].includes(e.kind) ? 1 : null));
-  const paidDaily = daily(c.events, now, DAYS, (e) => (["buy", "settle", "claim"].includes(e.kind) ? 1 : null));
-  const inRange = issuedDaily.reduce((a, b) => a + b, 0) + paidDaily.reduce((a, b) => a + b, 0);
   const anyEvent = (e: { kind: string }) => (["mint", "lock", "list", "buy", "settle", "claim"].includes(e.kind) ? 1 : null);
   const delta = periodDelta(c.events, now, DAYS, anyEvent);
-  const prevTotals = daily(c.events, now - DAYS * 86400, DAYS, anyEvent);
-  const curTotals = issuedDaily.map((n, i) => n + paidDaily[i]!);
-  const dayLabels = Array.from({ length: DAYS }, (_, i) => new Date((now - (DAYS - 1 - i) * 86400) * 1000));
-  const tick = (i: number) => dayLabels[i]!.toLocaleDateString(undefined, { month: "short", day: "numeric" });
-  const listSpark = cumulative(daily(c.events, now, DAYS, (e) => (e.kind === "list" ? 1 : null)));
-  const tradeSpark = cumulative(daily(c.events, now, DAYS, (e) => (e.kind === "buy" ? tpot(e.value ?? 0n) : null)));
-  const settleSpark = cumulative(daily(c.events, now, DAYS, (e) => (e.kind === "settle" ? tpot(e.value ?? 0n) : null)));
   const split = settlementSplit(market, c.events, now);
   const rated = split.onTime + split.late;
-  const due = dueBuckets(market, now);
-  const weeks = Array.from({ length: 12 }, (_, w) => openRows.filter((r) => r.dueDate && r.dueDate > now + w * 7 * 86400 && r.dueDate <= now + (w + 1) * 7 * 86400).length);
-  const histo = [due.overdue, ...weeks], histoMax = Math.max(1, ...histo);
   const nextDue = [...openRows].filter((r) => r.dueDate > now).sort((a, b) => a.dueDate - b.dueDate)[0];
+  const upcoming = [...openRows].filter((r) => r.dueDate).sort((a, b) => a.dueDate - b.dueDate).slice(0, 4);
+  const pins = openRows.filter((r) => r.dueDate).map((r) => ({ id: r.id, due: r.dueDate, face: faceValueOf(r) ? `${fmt(faceValueOf(r), r.settle.decimals)} tPOT` : "Terms pending", status: r.status }));
   const nextDays = nextDue ? Math.ceil((nextDue.dueDate - now) / 86400) : null;
   const latest = [...market].filter((r) => r.fraction).sort((a, b) => b.id - a.id)[0];
   const steps = lifecycleSteps(c);
@@ -92,28 +81,23 @@ export function Dashboard({ c }: { c: Ctx }) {
       <div className="nv-main">
         <article className="nv-card nv-hero" style={{ "--i": 0 } as React.CSSProperties} aria-labelledby="nv-out">
           <header><span className="nv-ico"><Ico n="terms" /></span><h2 id="nv-out"><Term k="face">Outstanding face value</Term></h2>
-            <button className="btn primary sm nv-cta" onClick={() => c.setTab("issue")}>Issue receipt <Ico n="arrow" size={14} /></button><div className="nv-view" role="group" aria-label="Chart style"><button type="button" aria-pressed={view === "dots"} aria-label="Dot matrix" onClick={() => setView("dots")}><Ico n="grid" size={15} /></button><button type="button" aria-pressed={view === "lines"} aria-label="Line chart" onClick={() => setView("lines")}><Ico n="activity" size={15} /></button></div></header>
+            <button className="btn primary sm nv-cta" onClick={() => c.setTab("issue")}>Issue receipt <Ico n="arrow" size={14} /></button></header>
           <div className="nv-hero-fig">{c.loading ? <span className="nv-big">—</span> : <Big v={fmt(outstanding, 18)} />}<span className="nv-chip">{openRows.length} open receipt{openRows.length === 1 ? "" : "s"}</span>{delta.pct !== null && <span className={`nv-chip ${delta.pct >= 0 ? "up" : "down"}`} title={`${delta.cur} on-chain events in the last ${DAYS} days against ${delta.prev} in the ${DAYS} before`}><Ico n="arrow" size={12} />{delta.pct >= 0 ? "+" : ""}{delta.pct}% activity vs previous {DAYS} days</span>}</div>
-          <div className="nv-hero-sub"><p className="muted">What debtors owe on locked, unpaid receipts. Not a guaranteed payout. <button type="button" className="nv-inline" onClick={() => setPlanOpen(true)}>Plan a sale →</button></p><span className="nv-legend" title={c.eventsLoading ? "Reading on-chain events…" : `${inRange} on-chain events in the last ${DAYS} days (scanned range)`}>{view === "dots" ? <><span><i className="k-a" />Issued &amp; listed</span><span><i className="k-b" />Trades &amp; payments</span></> : <><span><i className="k-a" />Last {DAYS} days</span><span><i className="k-p" />Previous {DAYS}</span></>}</span></div>
-                    <div className="nv-swap" key={view}>{view === "dots" ? <DotMatrix a={issuedDaily} b={paidDaily} dates={dayLabels.map((_, i) => tick(i))} /> : <Lines cur={curTotals} prev={prevTotals} />}</div>
-          <div className="nv-axis">{[0, 6, 12, 18, 24, 29].map((i) => <span key={i}>{tick(i)}</span>)}</div>
+          <div className="nv-hero-sub"><p className="muted">What debtors owe on locked, unpaid receipts. Not a guaranteed payout. <button type="button" className="nv-inline" onClick={() => setPlanOpen(true)}>Plan a sale →</button></p></div>
+          <MaturityStrip pins={pins} now={now} onPick={(id) => c.setTab("verify", { id: String(id) })} />
         </article>
 
         <div className="nv-kpis">
-          <button type="button" className="nv-card nv-kpi" style={{ "--i": 7 } as React.CSSProperties} onClick={() => c.setTab("trade")}><span>Open listings</span><b className="num">{c.loading ? "—" : open.length}</b><Spark xs={listSpark} tone="violet" /><small>{units(sharesForSale)} shares for sale</small></button>
-          <button type="button" className="nv-card nv-kpi" style={{ "--i": 8 } as React.CSSProperties} onClick={() => c.setTab("trade")}><span>Traded volume</span><b className="num">{c.eventsOk ? `${fmt(traded, 18)} tPOT` : "—"}</b><Spark xs={tradeSpark} tone="blue" /><small>{buyEvents.length} buy{buyEvents.length === 1 ? "" : "s"} in scanned events</small></button>
-          <button type="button" className="nv-card nv-kpi" style={{ "--i": 9 } as React.CSSProperties} title="Adds up every settlement payment found in the scanned events, including receipts that were redeemed afterwards. 'Paid now' counts receipts that are currently marked Settled." onClick={() => c.setTab("explore")}><span>Settled</span><b className="num">{c.eventsOk ? `${fmt(settledTotal, 18)} tPOT` : "—"}</b><Spark xs={settleSpark} tone="green" /><small>{c.eventsOk ? `${settleEvents.length} payment${settleEvents.length === 1 ? "" : "s"} received · ` : ""}{settledRows.length} receipt{settledRows.length === 1 ? "" : "s"} paid now</small></button>
+          <button type="button" className="nv-card nv-kpi" style={{ "--i": 7 } as React.CSSProperties} onClick={() => c.setTab("trade")}><span>Open listings</span><b className="num">{c.loading ? "—" : open.length}</b><small>{units(sharesForSale)} shares for sale</small></button>
+          <button type="button" className="nv-card nv-kpi" style={{ "--i": 8 } as React.CSSProperties} onClick={() => c.setTab("trade")}><span>Traded volume</span><b className="num">{c.eventsOk ? `${fmt(traded, 18)} tPOT` : "—"}</b><small>{buyEvents.length} buy{buyEvents.length === 1 ? "" : "s"} in scanned events</small></button>
+          <button type="button" className="nv-card nv-kpi" style={{ "--i": 9 } as React.CSSProperties} title="Adds up every settlement payment found in the scanned events, including receipts that were redeemed afterwards. 'Paid now' counts receipts that are currently marked Settled." onClick={() => c.setTab("explore")}><span>Settled</span><b className="num">{c.eventsOk ? `${fmt(settledTotal, 18)} tPOT` : "—"}</b><small>{c.eventsOk ? `${settleEvents.length} payment${settleEvents.length === 1 ? "" : "s"} received · ` : ""}{settledRows.length} receipt{settledRows.length === 1 ? "" : "s"} paid now</small></button>
         </div>
 
         <div className="nv-row">
           <article className="nv-card nv-due" style={{ "--i": 1 } as React.CSSProperties} aria-labelledby="nv-due">
             <header><span className="nv-ico"><Ico n="clock" /></span><h2 id="nv-due">Upcoming payments</h2><button type="button" className="nv-link" onClick={() => c.setTab("explore")}>View receipts <Ico n="arrow" size={14} /></button></header>
-            <div className="nv-due-grid">
-              <div className="nv-sub"><span className="nv-sub-t">By week</span>
-                <div className="nv-histo">{histo.map((n, i) => <i key={i} className={i === 0 ? "past" : ""} style={{ height: `${n ? 18 + (n / histoMax) * 82 : 6}%`, "--k": i } as React.CSSProperties} title={`${i === 0 ? "Past due" : `Week ${i}`}: ${n}`} />)}</div>
-                <div className="nv-histo-axis"><span>Past</span><span>Now</span><span>+12 wk</span></div></div>
-              <div className="nv-sub nv-next"><b className="num">{nextDays === null ? "—" : `${nextDays} day${nextDays === 1 ? "" : "s"}`}</b><span>{nextDue ? `until #${nextDue.id} is due` : "No upcoming due date"}</span></div>
-            </div>
+            {upcoming.length ? <ol className="lg">{upcoming.map((r) => <li key={r.id} data-status={r.status}><time className="lg-date num" dateTime={new Date(r.dueDate * 1000).toISOString().slice(0, 10)}>{fmtDay(new Date(r.dueDate * 1000))}</time><span className="lg-t"><b>{r.note || KINDS[r.kind]}</b><small>#{r.id} · {r.status}</small></span><i className="lg-lead" aria-hidden /><b className="lg-v num">{faceValueOf(r) ? `${fmt(faceValueOf(r), r.settle.decimals)} tPOT` : "—"}</b></li>)}</ol> : <p className="db-none">No upcoming due date.</p>}
+            {nextDays !== null && <p className="lg-next muted">Next due in {nextDays} day{nextDays === 1 ? "" : "s"}: #{nextDue!.id}</p>}
           </article>
           <button type="button" className="nv-card nv-receipt" style={{ "--i": 10 } as React.CSSProperties} onClick={() => latest && c.setTab("verify", { id: String(latest.id) })} disabled={!latest} aria-label={latest ? `Verify latest receipt ${latest.id}` : "No receipt yet"}>
             <header><span className="nv-ico"><Ico n="shield" /></span><h2>Latest receipt</h2>{latest && <Ico n="arrow" size={14} />}</header>
@@ -146,10 +130,10 @@ export function Dashboard({ c }: { c: Ctx }) {
       <aside className="nv-side">
         <article className="nv-card nv-gauge" style={{ "--i": 3 } as React.CSSProperties} aria-labelledby="nv-rec">
           <header><span className="nv-ico"><Ico n="check" /></span><h2 id="nv-rec">Settlement record</h2></header>
-          <b className="nv-gauge-v num">{rated ? `${Math.round((split.onTime / rated) * 100)}%` : "—"}</b>
+          <b className="nv-gauge-v num">{rated ? `${split.onTime} of ${rated}` : "—"}</b>
           <Needle pct={rated ? (split.onTime / rated) * 100 : null} label={`${split.onTime} paid on time, ${split.late} late or unpaid past due, ${split.open} still open`} />
           <footer><span><i className="d-ok" />On time {split.onTime}</span><span><i className="d-late" />Late {split.late}</span><span><i className="d-open" />Open {split.open}</span></footer>
-          <small className="muted">Dated receipts only</small>
+          <small className="muted">paid on time, dated receipts only</small>
         </article>
 
         <article className="nv-card nv-progress" style={{ "--i": 4 } as React.CSSProperties} aria-labelledby="nv-prog">
@@ -157,7 +141,7 @@ export function Dashboard({ c }: { c: Ctx }) {
           <div className="nv-prog-box">
             <p>{stepsDone === steps.length ? "Full lifecycle done on-chain." : <>You are <b>{steps.length - stepsDone} step{steps.length - stepsDone === 1 ? "" : "s"}</b> from a full lifecycle</>}</p>
             <div className="nv-segs" role="progressbar" aria-label="Lifecycle steps done" aria-valuemin={0} aria-valuemax={steps.length} aria-valuenow={stepsDone}>{steps.map((s, k) => <i key={s.t} className={s.done ? "on" : ""} style={{ "--k": k } as React.CSSProperties} />)}</div>
-            {c.account && <div className="nv-prog-meta"><span>Balance <b className="num">{c.native === null ? "—" : `${(Number(c.native) / 1e18).toLocaleString(undefined, { maximumFractionDigits: 3 })} tPOT`}</b></span><span><Term k="claim">Claimable</Term> <b className="num">{fmt(claimTotal, 18)} tPOT</b></span></div>}
+            {c.account && <div className="nv-prog-meta"><span>Balance <b className="num">{c.native === null ? "—" : `${(Number(c.native) / 1e18).toLocaleString("en-US", { maximumFractionDigits: 3 })} tPOT`}</b></span><span><Term k="claim">Claimable</Term> <b className="num">{fmt(claimTotal, 18)} tPOT</b></span></div>}
           </div>
           {nextStep && <button type="button" className="nv-next" onClick={() => nextStep.go?.[1] === "dashboard" && !c.account ? c.connect() : nextStep.go ? c.setTab(nextStep.go[1], nextStep.go[2] ?? {}) : setAllSteps(true)}><Ico n="arrow" size={14} /> Next: {nextStep.t}</button>}
           {nextStep && !nextStep.go && !nextStep.extra && <p className="nv-hint" role="note">{nextStep.d}</p>}
@@ -174,7 +158,7 @@ export function Dashboard({ c }: { c: Ctx }) {
         <article className="nv-card nv-activity" style={{ "--i": 6 } as React.CSSProperties} aria-labelledby="nv-act">
           <header><span className="nv-ico"><Ico n="clock" /></span><h2 id="nv-act">Recent activity</h2></header>
           {!recent.length ? <p className="db-none">{c.eventsLoading ? "Reading on-chain activity…" : c.eventsOk ? "No activity in the scanned range." : "Event history unavailable."}</p> : <ul>{recent.map((e) => (
-            <li key={`${e.hash}-${e.logIndex}-${e.kind}`}><span className="nv-ev-ico"><Ico n={EV_ICON[e.kind]} size={16} /></span><span className="nv-ev-t"><b>{e.text}</b><small>{e.time ? `${e.timeApprox ? "~" : ""}${new Date(e.time * 1000).toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" })}` : `Block ${e.block}`}</small></span>{e.value !== undefined && ["buy", "settle", "claim"].includes(e.kind) && <span className={`nv-ev-v num ${e.kind === "claim" ? "pos" : ""}`}>{fmt(e.value, 18)} tPOT</span>}</li>
+            <li key={`${e.hash}-${e.logIndex}-${e.kind}`}><span className="nv-ev-ico"><Ico n={EV_ICON[e.kind]} size={16} /></span><span className="nv-ev-t"><b>{e.text}</b><small>{e.time ? `${e.timeApprox ? "~" : ""}${new Date(e.time * 1000).toLocaleString("en-GB", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })}` : `Block ${e.block}`}</small></span>{e.value !== undefined && ["buy", "settle", "claim"].includes(e.kind) && <span className={`nv-ev-v num ${e.kind === "claim" ? "pos" : ""}`}>{fmt(e.value, 18)} tPOT</span>}</li>
           ))}</ul>}
           <button type="button" className="nv-link nv-foot" onClick={() => c.setTab(c.account ? "history" : "explore")}>View full activity <Ico n="arrow" size={14} /></button>
         </article>

@@ -7,7 +7,7 @@ import { Needle } from "./charts";
 import { salePlan, trimNum } from "./insights";
 
 const PCTS = [25, 50, 75, 100];
-const tp = (n: number) => (n >= 1 ? n.toLocaleString(undefined, { maximumFractionDigits: 4 }) : trimNum(n, 6));
+const tp = (n: number) => (n >= 1 ? n.toLocaleString("en-US", { maximumFractionDigits: 4 }) : trimNum(n, 6));
 
 /** "Cash-now planner": a calculator for selling shares of a receipt you hold. It sends nothing; "Open in Trade" carries
     the amount and price into the normal Sell panel, where every check and the wallet confirmation still apply. */

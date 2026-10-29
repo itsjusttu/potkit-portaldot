@@ -3,7 +3,7 @@ import { parseUnits } from "viem";
 import { deployKit, fmt, fractionalize, KINDS, mint, PAY_SYMBOL, short, units } from "../lib/chain";
 import { Addr, Empty, Ico } from "../AppUi";
 import { type Ctx } from "./ctx";
-import { day, SettleBadge, Term } from "./shared";
+import { day, fmtDate, SettleBadge, Term } from "./shared";
 import { readReceiptHistory } from "./receipt-history";
 
 const WKEY = "potkit.v17.wizard";
@@ -93,7 +93,7 @@ export function Issue({ c }: { c: Ctx }) {
                 <div><label htmlFor="w-due">Due date</label><input id="w-due" type="date" value={due} aria-invalid={!dueOk} aria-describedby={!dueOk ? "w-due-error" : undefined} onChange={(e) => setDue(e.target.value)} />{!dueOk && <small id="w-due-error" className="field-error" role="alert">Choose a future due date, or leave it blank.</small>}</div>
                 <div><span className="lbl"><label htmlFor="w-sup">Shares to issue</label><Term k="share" /></span><input id="w-sup" inputMode="numeric" value={supply} aria-invalid={!supplyOk} aria-describedby={!supplyOk ? "w-sup-error" : undefined} onChange={(e) => setSupply(e.target.value)} />{!supplyOk && <small id="w-sup-error" className="field-error" role="alert">Use a whole number from 1 to 1,000,000,000,000.</small>}</div>
               </div>
-              <dl className="issue-summary"><div><dt>Face value</dt><dd>{faceOk ? `${face} ${PAY_SYMBOL}` : "—"}</dd></div><div><dt>Shares</dt><dd>{supplyOk ? supply : "—"}</dd></div><div><dt>Due</dt><dd>{dueOk && due ? new Date(`${due}T12:00:00`).toLocaleDateString() : "—"}</dd></div></dl>
+              <dl className="issue-summary"><div><dt>Face value</dt><dd>{faceOk ? `${face} ${PAY_SYMBOL}` : "—"}</dd></div><div><dt>Shares</dt><dd>{supplyOk ? supply : "—"}</dd></div><div><dt>Due</dt><dd>{dueOk && due ? fmtDate(new Date(`${due}T12:00:00`)) : "—"}</dd></div></dl>
               <div className="wiz-nav"><button className="btn" onClick={restart}>Start over</button>
                 <span className={termsOk ? "issue-ready-mint" : "field-error"} role="status">{termsOk ? <><i />Terms look good</> : termsError}</span>
                 <button className="btn primary" disabled={!termsOk} title={!termsOk ? termsError : undefined} onClick={() => setReviewed(true)}>Continue <Ico n="arrow" /></button></div>
@@ -104,7 +104,7 @@ export function Issue({ c }: { c: Ctx }) {
               <h2>3 · Lock &amp; issue shares</h2>
               <p className="muted">Receipt #{row.id} moves into PotKit, its payment terms are fixed (face value in {PAY_SYMBOL}, optional due date) and {supply || "N"} ERC-20 shares (KIT{row.id}) are minted to you. One transaction, no approval needed. With terms set, anyone can settle by paying at least the face value.</p>
               <p className="irreversible" role="note"><b>Check before you lock.</b> After this transaction the face value, due date and share count cannot be changed. To take the receipt back out of PotKit you must hold every share and redeem.</p>
-              <dl className="issue-summary"><div><dt>Face value</dt><dd>{faceOk ? `${face} ${PAY_SYMBOL}` : "—"}</dd></div><div><dt>Shares</dt><dd>{supplyOk ? supply : "—"}</dd></div><div><dt>Due</dt><dd>{dueOk && due ? new Date(`${due}T12:00:00`).toLocaleDateString() : "—"}</dd></div></dl>
+              <dl className="issue-summary"><div><dt>Face value</dt><dd>{faceOk ? `${face} ${PAY_SYMBOL}` : "—"}</dd></div><div><dt>Shares</dt><dd>{supplyOk ? supply : "—"}</dd></div><div><dt>Due</dt><dd>{dueOk && due ? fmtDate(new Date(`${due}T12:00:00`)) : "—"}</dd></div></dl>
               <div className="wiz-nav"><button className="btn" onClick={() => setReviewed(false)}>Back</button>
                 <span className={termsOk ? "issue-ready-mint" : "field-error"} role="status">{termsOk ? <><i />Ready to issue</> : termsError}</span>
                 <button className="btn primary" disabled={Boolean(c.busy) || !termsOk} title={!termsOk ? termsError : c.account ? (c.gated ? connectReason : undefined) : undefined} onClick={() => { if (!c.account) { c.connect(); return; } if (c.gated) { c.switchNetwork(); return; } void c.run("frac", async () => {
@@ -112,7 +112,7 @@ export function Issue({ c }: { c: Ctx }) {
                   const v = face.trim(); if (!/^\d+(\.\d+)?$/.test(v) || Number(v) <= 0) throw new Error("Enter a positive face value.");
                   const d = due ? new Date(`${due}T23:59:59`) : undefined; if (d && d.getTime() <= Date.now()) throw new Error("Due date must be in the future.");
                   const f = await fractionalize(c.ready(), c.addrs!, row.id, s, v, d);
-                  c.note("Fractionalized", `#${row.id} → ${s} KIT${row.id} · ${v} ${PAY_SYMBOL}${d ? ` due ${d.toLocaleDateString()}` : ""}${f.token ? ` · ${short(f.token)}` : ""}`, f.hash);
+                  c.note("Fractionalized", `#${row.id} → ${s} KIT${row.id} · ${v} ${PAY_SYMBOL}${d ? ` due ${fmtDate(d)}` : ""}${f.token ? ` · ${short(f.token)}` : ""}`, f.hash);
                 }); }}>{c.busy === "frac" ? "Confirm in wallet…" : !c.account ? "Connect wallet" : c.gated ? "Switch network" : "Lock & issue shares"}</button></div>
             </div>
           )}
@@ -137,7 +137,7 @@ export function Issue({ c }: { c: Ctx }) {
             <h3>{row?.note || note || "Your invoice title"}</h3>
             <p className="ir-sub">Issuer-provided invoice record · Portaldot V3</p>
             <div className="ir-face"><strong>{row?.settle.faceValue ? fmt(row.settle.faceValue, row.settle.decimals) : face || "—"}<i> tPOT</i></strong><small>FACE VALUE</small></div>
-            <dl className="ir-facts"><div><dt>DUE DATE</dt><dd>{row?.dueDate ? day(row.dueDate) : due ? new Date(due + "T12:00:00").toLocaleDateString() : "—"}</dd></div><div><dt>SHARES</dt><dd>{row?.supply ? units(row.supply) : supply || "—"}</dd></div></dl>
+            <dl className="ir-facts"><div><dt>DUE DATE</dt><dd>{row?.dueDate ? day(row.dueDate) : due ? fmtDate(new Date(due + "T12:00:00")) : "—"}</dd></div><div><dt>SHARES</dt><dd>{row?.supply ? units(row.supply) : supply || "—"}</dd></div></dl>
             <div className="ir-foot"><span>{row?.depositor || row?.owner || c.account ? short(row?.depositor || row?.owner || c.account) : "ISSUER WALLET NOT CONNECTED"}</span><span className="ir-state"><i />{row?.settle.settled ? "SETTLED" : cur >= 3 ? "LIVE · TERMS ON-CHAIN" : cur >= 2 ? "MINTED" : "READY TO MINT"}</span></div>
           </div>
           {cur >= 2 && <p className="wiz-minted-note"><Ico n="check" /> Mint confirmed. The receipt can now be locked and split into shares.</p>}
