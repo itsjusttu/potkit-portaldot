@@ -204,7 +204,7 @@ export function Trade({ c }: { c: Ctx }) {
                   })}
                 </div>}
               </div>
-              <section className="card trade-charts"><header><div><p className="kicker">Market activity</p><h3>Last trades</h3></div><small>On-chain price · tPOT / share</small></header><div className="trade-chart-grid">{[...new Map(marketEvents.filter((e) => e.kind === "buy").map((e) => [e.id, e])).values()].slice(0, 5).map((e) => { const values = tradesByReceipt.get(e.id) ?? []; const last = values.at(-1); return <article key={e.id}><div><b>KIT#{e.id}</b><small>{last === undefined ? "—" : `${num(last)} tPOT`}</small></div><Sparkline values={values} /></article>; })}{!marketEvents.some((e) => e.kind === "buy") && <p className="muted">No on-chain buy trades to chart yet.</p>}</div></section>
+              <section className="card trade-charts"><header><div><p className="kicker">Market activity</p><h3>Last trades</h3></div><small>On-chain price · tPOT / share</small></header><div className="trade-chart-grid">{[...new Map(marketEvents.filter((e) => e.kind === "buy").map((e) => [e.id, e])).values()].slice(0, 5).map((e) => { const values = tradesByReceipt.get(e.id) ?? []; const last = values.at(-1); return <article key={e.id}><div><b>KIT#{e.id}</b><small>{last === undefined ? "—" : `${num(last)} tPOT`}</small></div>{values.length > 1 ? <Sparkline values={values} /> : <small className="muted">1 trade so far, no price history yet</small>}</article>; })}{!marketEvents.some((e) => e.kind === "buy") && <p className="muted">No on-chain buy trades to chart yet.</p>}</div></section>
               </>
             )}
         </section>

@@ -46,7 +46,7 @@ export function Dashboard({ c }: { c: Ctx }) {
   const claimTotal = [...c.claims.values()].reduce((s, v) => s + v, 0n);
   const pending = active.filter(needsAction).length;
   const attention = [
-    ...active.filter((r) => r.settle.settled && (c.claims.get(r.id) ?? 0n) > 0n).map((r) => ({ r, why: `Paid — ${fmt(c.claims.get(r.id) ?? 0n, 18)} tPOT ready for you`, label: "Claim payout", go: () => c.setTab("portfolio") })),
+    ...market.filter((r) => r.settle.settled && (c.claims.get(r.id) ?? 0n) > 0n).map((r) => ({ r, why: `Paid — ${fmt(c.claims.get(r.id) ?? 0n, 18)} tPOT ready for you`, label: "Claim payout", go: () => c.setTab("portfolio") })),
     ...active.filter((r) => !r.fraction).map((r) => ({ r, why: "Minted but not locked: add terms to issue shares", label: "Add terms", go: () => c.setTab("issue", { id: String(r.id) }) })),
     ...active.filter((r) => r.status === "Overdue").map((r) => ({ r, why: "Past due and unpaid; nothing is collected automatically", label: "View proof", go: () => c.setTab("verify", { id: String(r.id) }) })),
   ].slice(0, 4);
@@ -60,6 +60,7 @@ export function Dashboard({ c }: { c: Ctx }) {
   const settledTotal = settleEvents.reduce((s, e) => s + (e.value ?? 0n), 0n);
   const buyEvents = c.events.filter((e) => e.kind === "buy");
   const traded = buyEvents.reduce((s, e) => s + (e.value ?? 0n), 0n);
+  const closedListings = open.filter((l) => { const r = c.rows.find((x) => x.id === l.receiptId); return !r || r.status === "Overdue" || r.settle.settled; }).length;
   const sharesForSale = open.reduce((s, l) => s + l.remaining, 0n);
   const anyEvent = (e: { kind: string }) => (["mint", "lock", "list", "buy", "settle", "claim"].includes(e.kind) ? 1 : null);
   const delta = periodDelta(c.events, now, DAYS, anyEvent);
@@ -88,7 +89,7 @@ export function Dashboard({ c }: { c: Ctx }) {
         </article>
 
         <div className="nv-kpis">
-          <button type="button" className="nv-card nv-kpi" style={{ "--i": 7 } as React.CSSProperties} onClick={() => c.setTab("trade")}><span>Open listings</span><b className="num">{c.loading ? "—" : open.length}</b><small>{units(sharesForSale)} shares for sale</small></button>
+          <button type="button" className="nv-card nv-kpi" style={{ "--i": 7 } as React.CSSProperties} onClick={() => c.setTab("trade")}><span>Open listings</span><b className="num">{c.loading ? "—" : open.length}</b><small>{units(sharesForSale)} shares listed{closedListings ? ` · ${closedListings} closed, past due` : ""}</small></button>
           <button type="button" className="nv-card nv-kpi" style={{ "--i": 8 } as React.CSSProperties} onClick={() => c.setTab("trade")}><span>Traded volume</span><b className="num">{c.eventsOk ? `${fmt(traded, 18)} tPOT` : "—"}</b><small>{buyEvents.length} buy{buyEvents.length === 1 ? "" : "s"} in scanned events</small></button>
           <button type="button" className="nv-card nv-kpi" style={{ "--i": 9 } as React.CSSProperties} title="Adds up every settlement payment found in the scanned events, including receipts that were redeemed afterwards. 'Paid now' counts receipts that are currently marked Settled." onClick={() => c.setTab("explore")}><span>Settled</span><b className="num">{c.eventsOk ? `${fmt(settledTotal, 18)} tPOT` : "—"}</b><small>{c.eventsOk ? `${settleEvents.length} payment${settleEvents.length === 1 ? "" : "s"} received · ` : ""}{settledRows.length} receipt{settledRows.length === 1 ? "" : "s"} paid now</small></button>
         </div>

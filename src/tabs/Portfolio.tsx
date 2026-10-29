@@ -62,8 +62,9 @@ export function Portfolio({ c }: { c: Ctx }) {
 
   if (!c.account) return <div className="portfolio">{head}<Empty icon="◉" title="Connect a wallet to view your portfolio" body="Your receipts, share positions, listings and claimable payouts are tied to the connected wallet."><button className="btn primary" onClick={c.connect}>Connect wallet</button></Empty></div>;
   if (c.loading) return <div className="portfolio">{head}<section className="card" aria-busy="true"><SkelRows n={4} cols={5} /></section></div>;
+  const lastClaim = c.events.find((e) => e.kind === "claim" && e.actors.some((x) => x.toLowerCase() === c.account.toLowerCase())); // newest first
   if (!holdings.length && !receipts.length && !myListings.length && !claimable.length)
-    return <div className="portfolio">{head}<Empty icon="▤" title="Nothing in your portfolio yet" body="Issue an invoice and lock it into shares, or buy discounted shares on Trade. Positions and payouts appear here, read from the chain."><div className="row"><button className="btn sm primary" onClick={() => c.setTab("trade")}>Browse Trade</button><button className="btn sm" onClick={() => c.setTab("issue")}>Issue an invoice</button></div></Empty></div>;
+    return <div className="portfolio">{head}<Empty icon="▤" title="Nothing in your portfolio yet" body="Issue an invoice and lock it into shares, or buy discounted shares on Trade. Positions and payouts appear here, read from the chain.">{lastClaim && <p className="muted small">Last claim: {fmt(lastClaim.value ?? 0n, dec)} tPOT paid to your wallet{lastClaim.time ? ` on ${day(lastClaim.time)}` : ""}. <button type="button" className="nv-link" onClick={() => c.setTab("history")}>See History</button></p>}<div className="row"><button className="btn sm primary" onClick={() => c.setTab("trade")}>Browse Trade</button><button className="btn sm" onClick={() => c.setTab("issue")}>Issue an invoice</button></div></Empty></div>;
 
   const holdingStep = (r: Row) => {
     const cl = c.claims.get(r.id) ?? 0n;
