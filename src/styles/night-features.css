@@ -12,7 +12,7 @@ html[data-route="app"] .shell :is(.rd-summary strong, .pf2-balances strong, .kpi
 html[data-route="app"] .shell :is(.explore-intro, .trade-intro, .issue-intro, .verify-intro, .history-intro) > div > .kicker,
 html[data-route="app"] .shell :is(.issue-chain-pill, .verify-network, .explore-live, .trade-intro-stats, .page-head-status),
 html[data-route="app"] .shell .issue-intro > div > p:not(.kicker),
-html[data-route="app"] .shell .wizard-2 .wiz-pane > h2 { display: none !important; }
+html[data-route="app"] .shell .wizard-2 .wiz-pane:not(.wiz-done) > h2 { display: none !important; } /* the step header already names the step; the "live" pane has no other title */
 
 /* ---------- watch star ---------- */
 html[data-route="app"] .shell .watch-btn { position: relative; display: inline-grid; place-items: center; flex: none; width: 32px; height: 32px; min-height: 0; padding: 0; border: 0; border-radius: 6px; background: none; color: #7e79a0; cursor: pointer; transition: color .15s, background-color .15s; }
@@ -23,7 +23,7 @@ html[data-route="app"] .shell .ex-rid { display: inline-flex; align-items: cente
 html[data-route="app"] .shell .trade-issuer { display: block; color: #a9a4c4; }
 
 /* ---------- lifecycle tour ---------- */
-html[data-route="app"] .tour { margin: 0 0 1.5rem; border: 1px solid rgba(157,134,255,.35); border-radius: 10px; background: var(--pk-surface); }
+html[data-route="app"] .tour { margin: 0 0 1.5rem; border: 1px solid rgba(143,114,255,.35); border-radius: 10px; background: var(--pk-surface); }
 html[data-route="app"] .tour > header { display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; padding: 1rem 1.1rem .7rem; }
 html[data-route="app"] .tour > header h2 { margin: 0 0 .2rem; }
 html[data-route="app"] .tour > header p { margin: 0; font-size: .85rem; }
@@ -38,8 +38,8 @@ html[data-route="app"] .tour-t { display: grid; gap: .1rem; }
 html[data-route="app"] .tour-t b { color: #d8d4ec; font-weight: 600; font-size: .9rem; }
 html[data-route="app"] .tour-t small { font-size: .78rem; }
 html[data-route="app"] .tour li.done .tour-n { border-color: var(--pk-success); color: var(--pk-success); }
-html[data-route="app"] .tour li.next { background: rgba(157,134,255,.08); }
-html[data-route="app"] .tour li.next .tour-n { background: #fff; color: #0b0918; border-color: #fff; }
+html[data-route="app"] .tour li.next { background: rgba(143,114,255,.08); }
+html[data-route="app"] .tour li.next .tour-n { background: var(--n-violet); color: #fff; border-color: var(--n-violet); }
 html[data-route="app"] .tour li.next b { color: #fff; }
 html[data-route="app"] .shell .tour-reopen { display: inline-flex; align-items: center; gap: .4rem; min-height: 44px; margin: 0 0 1rem; padding: 0; border: 0; background: none; color: var(--n-violet-l); font: 500 .85rem var(--n-sans); cursor: pointer; }
 

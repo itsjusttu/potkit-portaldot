@@ -249,7 +249,7 @@ export function Trade({ c }: { c: Ctx }) {
             });
           }}>{!c.market ? "Market not configured" : !c.account ? "Connect wallet" : c.gated ? "Switch network" : c.busy === "quick-buy" ? "Confirm in wallet…" : !quote.length ? "No affordable listings" : `Buy ${units(quoteShares)} shares`}</button>
           <Why text={!c.market ? "Deploy PotKit from Issue before buying shares." : !c.account || c.gated ? "" : !quote.length ? "No affordable open listing at this spend amount." : c.native !== null && quoteCost > c.usdRaw ? "Your tPOT balance is lower than this quote." : c.busy ? "Another transaction is waiting for your wallet." : ""} />
-          <p className="apr-note" role="note"><Term k="apr">APR</Term> and payout figures are estimates that assume the debtor pays in full and on time. Payment is not guaranteed.</p>
+          <p className="apr-note" role="note">APR (annualised return) and payout figures are estimates that assume the debtor pays in full and on time. Payment is not guaranteed.</p>
         </section>}
         {c.market && panel === "sell" && <section className="card sell-panel" id="sell" role="tabpanel" aria-labelledby="tab-sell" aria-label="Sell shares">
           <h2><Ico n="tag" /> Sell shares</h2>

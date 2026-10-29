@@ -116,8 +116,8 @@
 .help-contact h3 { margin: .4rem 0; font-family: var(--display); font-weight: 400; font-size: 1.7rem; letter-spacing: -.015em; color: #fff; }
 .dx-sec .help-contact p { max-width: 36rem; margin: 0; font-size: .98rem; }
 .help-contact-actions { display: flex; flex-wrap: wrap; gap: .75rem; }
-.pl-doc .help-contact-link { display: inline-flex; align-items: center; gap: .5rem; min-height: 46px; padding: 0 1.3rem; border-radius: 4px; background: #fff; font-size: .95rem; font-weight: 600; color: #12102a; transition: transform .25s var(--ease); }
-.help-contact-link:hover { transform: translateY(-2px); }
+.pl-doc .help-contact-link { display: inline-flex; align-items: center; gap: .5rem; min-height: 46px; padding: 0 1.3rem; border: 1px solid rgba(187,168,255,.45); border-radius: 4px; background: linear-gradient(135deg, #5b3df5 0%, #3f36c0 100%); font-size: .95rem; font-weight: 600; color: #fff; transition: transform .25s var(--ease); }
+.help-contact-link:hover { background: linear-gradient(135deg, #6b50ff 0%, #4a41d4 100%); transform: translateY(-2px); }
 .help-contact-link svg { width: 16px; height: 16px; }
 
 /* ---------- small screens ---------- */

@@ -1,4 +1,5 @@
 import { useEffect, useId, useRef, useState, type ReactNode } from "react";
+import { createPortal } from "react-dom";
 import { fmt, KINDS, type Row } from "../lib/chain";
 
 /** Node console page of a block. The console is Substrate-based and cannot resolve an EVM transaction hash, so every
@@ -45,7 +46,8 @@ export const GLOSSARY = {
   discount: ["Discount", "How far the share price is below face value per share. A bigger discount is a lower price, not a safer claim."],
 } as const;
 
-/** A term with a small "?" that opens its definition. The popover is fixed-positioned so table scrollers cannot clip it. */
+/** A term with a small "?" that opens its definition. The popover is fixed-positioned and rendered under .shell: a tab body is
+    transformed for its page transition, which would otherwise make "fixed" relative to the panel and push the popover off screen. */
 export function Term({ k, children }: { k: keyof typeof GLOSSARY; children?: ReactNode }) {
   const [pos, setPos] = useState<{ top: number; left: number } | null>(null);
   const btn = useRef<HTMLButtonElement>(null);
@@ -67,7 +69,7 @@ export function Term({ k, children }: { k: keyof typeof GLOSSARY; children?: Rea
     <span className="term">
       {children}
       <button ref={btn} type="button" className="term-q" aria-label={`What is ${name.toLowerCase()}?`} aria-expanded={Boolean(pos)} aria-controls={pos ? id : undefined} onClick={toggle}>?</button>
-      {pos && <span id={id} role="note" className="term-pop" style={{ top: pos.top, left: pos.left }}><b>{name}</b>{text}</span>}
+      {pos && createPortal(<span id={id} role="note" className="term-pop" style={{ top: pos.top, left: pos.left }}><b>{name}</b>{text}</span>, document.querySelector(".shell") ?? document.body)}
     </span>
   );
 }

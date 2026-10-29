@@ -78,12 +78,12 @@ html[data-route="app"] .t-explore .ex-view-controls .view-toggle { grid-column: 
 html[data-route="app"] .t-explore .ex-head .tb-search { grid-column: 1 / -1; grid-row: 2; }
 html[data-route="app"] .t-explore .ex-view-controls .ex-stage-filters { grid-column: 1 / -1; grid-row: 3; flex-wrap: wrap; }
 html[data-route="app"] .t-explore .ex-head .tb-search input { min-width: 0; }
-html[data-route="app"] .t-explore .chip.on { background: #fff; color: #000; border-color: #fff; }
+html[data-route="app"] .t-explore .chip.on { background: var(--n-violet); color: #fff; border-color: var(--n-violet); }
 html[data-route="app"] .t-explore .chip { min-height: 32px; }
 html[data-route="app"] .explore-card, html[data-route="app"] .explore-card[class*="ex-"] { background: var(--surface); border: 1px solid var(--line); border-radius: 2px; box-shadow: none; transform: none; --ex: #fff; }
 html[data-route="app"] .explore-card::before, html[data-route="app"] .explore-card::after { display: none; }
 html[data-route="app"] .explore-card:hover { transform: none; border-color: var(--line-strong); box-shadow: none; }
-html[data-route="app"] .explore-meter i, html[data-route="app"] .ex-redeemed .explore-meter i { background: #fff; box-shadow: none; }
+html[data-route="app"] .explore-meter i, html[data-route="app"] .ex-redeemed .explore-meter i { background: var(--n-violet-l); box-shadow: none; }
 html[data-route="app"] .explore-meter { border-radius: 0; background: var(--ink-3, #1d1d1d); }
 html[data-route="app"] .explore-icon { border-radius: 2px; background: transparent; color: #fff; border: 1px solid var(--line-strong); }
 html[data-route="app"] .explore-card .ex-id, html[data-route="app"] .explore-meter-label b, html[data-route="app"] .explore-card-foot > b { color: #fff; }
@@ -121,7 +121,7 @@ html[data-route="app"] .t-trade .trade-bar { border-radius: 2px; background: var
 html[data-route="app"] .t-trade .trade-row-closed { opacity: .72; }
 html[data-route="app"] .t-trade .trade-row > span:nth-child(n+2):nth-child(-n+6) { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
 html[data-route="app"] .t-trade .trade-row .trade-buy { border-radius: 999px; background: transparent; border: 1px solid var(--line-strong); color: #fff; }
-html[data-route="app"] .t-trade .trade-row .trade-buy:hover:not(:disabled) { background: #fff; color: #000; }
+html[data-route="app"] .t-trade .trade-row .trade-buy:hover:not(:disabled) { background: var(--n-violet); color: #fff; }
 html[data-route="app"] .t-trade .trade-side-column { gap: 0; }
 html[data-route="app"] .t-trade .trade-side-column .trade-selection-panel { margin-bottom: 1rem; }
 html[data-route="app"] .trade-panel-tabs { display: flex; border: 1px solid var(--line); border-bottom: 0; background: var(--surface); }
@@ -173,7 +173,7 @@ html[data-route="app"] .portfolio .pf-hero-metrics > div.claim > span, html[data
 html[data-route="app"] .portfolio .pf-hero-metrics b { font-variant-numeric: tabular-nums; }
 html[data-route="app"] .portfolio .pf-value-note, html[data-route="app"] .portfolio .pf-value-note * { color: var(--grey-1); }
 html[data-route="app"] .portfolio .pf-hero-metrics > div > span { font-size: .75rem; }
-html[data-route="app"] .portfolio .pf-tabs button.on, html[data-route="app"] .portfolio .pf-receipt-filter button.on { background: #fff; color: #000; box-shadow: none; }
+html[data-route="app"] .portfolio .pf-tabs button.on, html[data-route="app"] .portfolio .pf-receipt-filter button.on { background: var(--n-violet); color: #fff; box-shadow: none; }
 html[data-route="app"] .prc { color: #fff; filter: none; transform: none !important; }
 html[data-route="app"] .prc-paper { background: var(--bg); background-image: none; -webkit-mask: none; mask: none; border: 1px solid var(--line); border-radius: 2px; padding: 1rem; }
 html[data-route="app"] .prc-foil, html[data-route="app"] .prc-bar, html[data-route="app"] .prc-stamp { display: none; }
@@ -183,7 +183,7 @@ html[data-route="app"] .prc-kind, html[data-route="app"] .prc dt { color: var(--
 html[data-route="app"] .prc dd { color: #fff; }
 html[data-route="app"] .prc hr { border-top: 1px solid var(--line); }
 html[data-route="app"] .prc-pos, html[data-route="app"] .prc-neg { color: #fff; }
-html[data-route="app"] .prc-sold { background: var(--ink-3, #1d1d1d); } html[data-route="app"] .prc-sold i { background: #fff; }
+html[data-route="app"] .prc-sold { background: var(--ink-3, #1d1d1d); } html[data-route="app"] .prc-sold i { background: var(--n-violet-l); }
 
 /* ---------- Verify ---------- */
 html[data-route="app"] .verify .verify-result .cert { border-radius: 2px; border-color: var(--line); background: var(--surface); }
@@ -212,7 +212,7 @@ html[data-route="app"] .shell .tag.bad { color: var(--bad); border-color: var(--
 html[data-route="app"] .portfolio .pf-hero-metrics > div b, html[data-route="app"] .portfolio .pf-hero-metrics > div b small { color: #fff !important; }
 html[data-route="app"] .portfolio .pf-value-note, html[data-route="app"] .portfolio .pf-value-note * { color: var(--grey-1) !important; }
 html[data-route="app"] .prc .btn, html[data-route="app"] .prc-acts .btn { background: transparent; color: #fff; border: 1px solid var(--line-strong); }
-html[data-route="app"] .prc .btn:hover { background: #fff; color: #000; }
+html[data-route="app"] .prc .btn:hover { background: var(--n-violet); color: #fff; }
 html[data-route="app"] .history-row { grid-template-columns: 6.5rem 6.5rem minmax(12rem, 1fr) 7.5rem 5.5rem minmax(12rem, 13.5rem); }
 html[data-route="app"] .history-tx { display: flex; align-items: center; gap: .4rem; min-width: 0; flex-wrap: wrap; }
 
@@ -253,7 +253,7 @@ html[data-route="app"] .sell-panel .row.fields > div { min-width: 0; flex: none;
 html[data-route="app"] .sell-panel .row.fields label { display: flex; flex-wrap: wrap; justify-content: space-between; gap: .1rem .75rem; margin: 0 0 .4rem; }
 html[data-route="app"] .sell-panel .trade-amount-presets { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .5rem; margin-top: .5rem; }
 html[data-route="app"] .sell-panel .trade-amount-presets button { min-width: 0; width: 100%; min-height: 2.5rem; padding: 0 .5rem; border-radius: 2px; background: transparent; border: 1px solid var(--line-strong); color: #fff; }
-html[data-route="app"] .sell-panel .trade-amount-presets button:hover { background: #fff; color: #000; border-color: #fff; }
+html[data-route="app"] .sell-panel .trade-amount-presets button:hover { background: var(--n-violet); color: #fff; border-color: var(--n-violet); }
 html[data-route="app"] .sell-panel .facts.compact { grid-template-columns: minmax(0, 1fr); margin: .9rem 0 0; border-top: 1px solid var(--line); }
 html[data-route="app"] .sell-panel .facts.compact > div { display: grid; grid-template-columns: minmax(0, auto) minmax(0, 1fr); align-items: baseline; gap: .25rem 1rem; padding: .7rem 0; border-bottom: 1px solid var(--line); }
 html[data-route="app"] .sell-panel .facts.compact dt { color: var(--grey-1); white-space: nowrap; }

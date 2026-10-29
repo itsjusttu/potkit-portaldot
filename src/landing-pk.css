@@ -48,8 +48,8 @@ html[data-route="landing"] { scroll-behavior: smooth; }
 /* ---------- buttons & links ---------- */
 .pl-btn { display: inline-flex; align-items: center; justify-content: center; gap: .6rem; min-height: 46px; padding: 0 1.4rem; border: 1px solid transparent; border-radius: 4px; font-family: var(--sans); font-size: .95rem; font-weight: 500; white-space: nowrap; cursor: pointer; transition: transform .25s var(--ease), box-shadow .35s var(--ease), border-color .25s, background-color .25s, color .25s; }
 .pl-btn.lg { min-height: 54px; padding: 0 1.7rem; font-size: 1rem; }
-.pl-btn.primary { background: #fff; color: #0b0918; border-color: #fff; box-shadow: 0 0 0 0 rgba(123,92,255,0); }
-.pl-btn.primary:hover { transform: translateY(-2px); box-shadow: 0 10px 34px -8px rgba(123,92,255,.85), 0 0 0 4px rgba(123,92,255,.18); }
+.pl-btn.primary { background: linear-gradient(135deg, #5b3df5 0%, #3f36c0 100%); color: #fff; border-color: rgba(187,168,255,.45); box-shadow: 0 0 0 0 rgba(123,92,255,0); }
+.pl-btn.primary:hover { background: linear-gradient(135deg, #6b50ff 0%, #4a41d4 100%); transform: translateY(-2px); box-shadow: 0 10px 34px -8px rgba(123,92,255,.85), 0 0 0 4px rgba(123,92,255,.18); }
 .pl-btn.ghost { background: transparent; color: var(--text); border-color: rgba(255,255,255,.32); }
 .pl-btn.ghost:hover { border-color: var(--violet-l); background: rgba(123,92,255,.12); transform: translateY(-2px); }
 .pl-btn:active { transform: translateY(0) scale(.98); }
