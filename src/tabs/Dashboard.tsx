@@ -56,7 +56,8 @@ export function Dashboard({ c }: { c: Ctx }) {
   const openRows = market.filter((r) => r.fraction && !r.settle.settled);
   const outstanding = openRows.reduce((s, r) => s + faceValueOf(r), 0n);
   const settledRows = market.filter((r) => r.settle.settled);
-  const settledTotal = c.events.filter((e) => e.kind === "settle").reduce((s, e) => s + (e.value ?? 0n), 0n);
+  const settleEvents = c.events.filter((e) => e.kind === "settle");
+  const settledTotal = settleEvents.reduce((s, e) => s + (e.value ?? 0n), 0n);
   const buyEvents = c.events.filter((e) => e.kind === "buy");
   const traded = buyEvents.reduce((s, e) => s + (e.value ?? 0n), 0n);
   const sharesForSale = open.reduce((s, l) => s + l.remaining, 0n);
@@ -101,7 +102,7 @@ export function Dashboard({ c }: { c: Ctx }) {
         <div className="nv-kpis">
           <button type="button" className="nv-card nv-kpi" style={{ "--i": 7 } as React.CSSProperties} onClick={() => c.setTab("trade")}><span>Open listings</span><b className="num">{c.loading ? "—" : open.length}</b><Spark xs={listSpark} tone="violet" /><small>{units(sharesForSale)} shares for sale</small></button>
           <button type="button" className="nv-card nv-kpi" style={{ "--i": 8 } as React.CSSProperties} onClick={() => c.setTab("trade")}><span>Traded volume</span><b className="num">{c.eventsOk ? `${fmt(traded, 18)} tPOT` : "—"}</b><Spark xs={tradeSpark} tone="blue" /><small>{buyEvents.length} buy{buyEvents.length === 1 ? "" : "s"} in scanned events</small></button>
-          <button type="button" className="nv-card nv-kpi" style={{ "--i": 9 } as React.CSSProperties} onClick={() => c.setTab("explore")}><span>Settled</span><b className="num">{c.eventsOk ? `${fmt(settledTotal, 18)} tPOT` : "—"}</b><Spark xs={settleSpark} tone="green" /><small>{settledRows.length} receipt{settledRows.length === 1 ? "" : "s"} paid</small></button>
+          <button type="button" className="nv-card nv-kpi" style={{ "--i": 9 } as React.CSSProperties} title="Adds up every settlement payment found in the scanned events, including receipts that were redeemed afterwards. 'Paid now' counts receipts that are currently marked Settled." onClick={() => c.setTab("explore")}><span>Settled</span><b className="num">{c.eventsOk ? `${fmt(settledTotal, 18)} tPOT` : "—"}</b><Spark xs={settleSpark} tone="green" /><small>{c.eventsOk ? `${settleEvents.length} payment${settleEvents.length === 1 ? "" : "s"} received · ` : ""}{settledRows.length} receipt{settledRows.length === 1 ? "" : "s"} paid now</small></button>
         </div>
 
         <div className="nv-row">

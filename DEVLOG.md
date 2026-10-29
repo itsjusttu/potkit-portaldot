@@ -6,7 +6,7 @@ This log lists what the repository history and the chain can show. Commit times 
 
 ## Team
 
-Solo project. Display name used in the deck: Tu - Builder, PotKit. The author confirms that the Git author names `itsjusttu` (28 commits) and `Tu` (1 commit, a README edit) are the same person.
+Solo project. Display name used in the deck: Tu - Builder, PotKit. The author confirms that the Git author names `itsjusttu` (33 commits) and `Tu` (1 commit, a README edit) are the same person.
 
 ## On-chain milestones (checked against the Portaldot V3 RPC)
 
@@ -25,26 +25,28 @@ As of 2026-10-29 the kit has 15 state-changing transactions after the deployment
 | What | When | Notes |
 |---|---|---|
 | Smart contract (`PotKit.yul`) | 2026-10-19 03:15:12 UTC (10:15 UTC+7) | One deployment, immutable. This is the only contract date that matters for the evidence above. |
-| Web frontend (Vercel, production), current build | commit `f03a5ea` "Improve Trade sell panel layout" | Current production deployment, per the highlighted (blue) Production badge in the Vercel list supplied by the author ("21h ago") and because the live site's code matches `f03a5ea`; `app.potkit.pro` and `potkit.pro` serve one build (identical ETag and Last-Modified). The live static files carry `Last-Modified: 2026-10-28 02:39:06 GMT` (09:39 UTC+7); that is when the served files were last modified, not a confirmed deployment time. Deployment time and time zone: not verified. |
+| Web frontend (Vercel, production), current build | commit `e549ee5` "Add set-minter admin script and tests" (29 Oct, 07:04 UTC+7), deployed by hand with `vercel --prod` | The author's terminal output: Ready in 54s, aliased to `potkit.pro`. The live site agrees: `app.potkit.pro` and `potkit.pro` serve one build (identical ETag) with `Last-Modified: 2026-10-29 00:09:39 GMT` (07:09 UTC+7), which is when the served files were last modified, not a confirmed deployment time. Its code chunks match the local build of that commit; the only difference found in the app chunk is `VITE_KIT`, which Vercel bakes in at build time. Deployment time and time zone: not verified. |
+| Web frontend, previous production deployment | commit `f03a5ea` "Improve Trade sell panel layout" (28 Oct) | Had the highlighted (blue) Production badge in the Vercel list supplied by the author ("21h ago"); the live files then carried `Last-Modified: 2026-10-28 02:39:06 GMT` (09:39 UTC+7). Replaced by the 29 Oct deployment above. |
 
 ### Vercel deployment list (screenshots supplied by the author)
 
-Vercel shows a day or a relative age for each deployment. Time and time zone of each deployment: not verified. A deployment's time is not inferred from its commit's time. Every deployment in the list is Ready except one Error. Total: 51 deployments.
+Vercel shows a day or a relative age for each deployment. Time and time zone of each deployment: not verified. A deployment's time is not inferred from its commit's time. Every deployment in the list is Ready except one Error. Total: 51 deployments in the screenshots, which were taken before the 29 Oct deployment.
 
 | Day shown in Vercel (time and time zone not verified) | Source | Deployments | Commits or notes |
 |---|---|---|---|
 | 14 Oct | `vercel deploy` (command line), no commit | 15 | no commit is attached, so the content is not known |
 | 17 Oct | `vercel deploy` | 1 | no commit |
 | 19 Oct | `vercel deploy` | 12 | one failed (Error, 3 s) and two "Redeploy of" entries; no commit |
-| 20 Oct | Git, branch `main` | 4 | `13562f2`, `f0fe654`, `446b8ba`, `943b8ec` |
-| 21 Oct | Git | 2 | `696dd23`, `df57413` |
-| 22 Oct | Git | 2 | `452285a`, `23aecc0` |
-| 23 Oct | Git | 1 | `6ab2c24` |
-| 24 Oct | Git | 10 | `98698f3`, `8b91c0e`, `885dcfc`, `effd878`, `04dd84b`, `44c77fe`, `e28a5d7`, `e4a2767`, `a24068f`, `c240551` |
-| 28 Oct (shown as "1d ago", "22h ago", "21h ago") | Git | 4 | `a04bc2c`, `0304387`, `1ea619e`, `f03a5ea` |
+| 20 Oct | `vercel deploy` from the git checkout (commit and branch `main` shown) | 4 | `13562f2`, `f0fe654`, `446b8ba`, `943b8ec` |
+| 21 Oct | same | 2 | `696dd23`, `df57413` |
+| 22 Oct | same | 2 | `452285a`, `23aecc0` |
+| 23 Oct | same | 1 | `6ab2c24` |
+| 24 Oct | same | 10 | `98698f3`, `8b91c0e`, `885dcfc`, `effd878`, `04dd84b`, `44c77fe`, `e28a5d7`, `e4a2767`, `a24068f`, `c240551` |
+| 28 Oct (shown as "1d ago", "22h ago", "21h ago") | same | 4 | `a04bc2c`, `0304387`, `1ea619e`, `f03a5ea` |
+| 29 Oct | `vercel --prod` (from the author's terminal output, not in the screenshots) | 1 | `e549ee5` |
 
-- All 23 commit hashes in the list exist in `git log`, with the same messages. Commit `696dd23` (21 Oct) is not the latest production deployment; `f03a5ea` is.
-- Six commits have no row in the list: `04cfd1c`, `522cf05`, `86d61da`, `71f9f0b`, `0269a44`, `d907a3c`. The page does not say why (a skipped build, or removal under the project's Deployment Retention setting, which deletes some deployments after a set period). Older deployments may also be missing for that reason.
+- All 23 commit hashes in the list exist in `git log`, with the same messages. Commit `696dd23` (21 Oct) was not the latest production deployment when the screenshots were taken; `f03a5ea` was, until `e549ee5` was deployed on 29 Oct.
+- Six commits have no row in the list: `04cfd1c`, `522cf05`, `86d61da`, `71f9f0b`, `0269a44`, `d907a3c`. Deployments are made by hand: the project is not connected to Git (the Vercel CLI offers `vercel git connect` after each deploy), so only commits the author chose to deploy have a row. The reason for each missing commit is not recorded. Older deployments may also have been removed under the project's Deployment Retention setting.
 - The list cannot be ordered against the contract deployment inside 19 Oct, because no clock time is shown. The contract date (19 Oct 03:15:12 UTC) is a separate fact from every date above.
 - Time and time zone of each deployment are not verified and are not needed for this log.
 
@@ -57,7 +59,7 @@ Vercel shows a day or a relative age for each deployment. Time and time zone of 
 
 ## Commit timeline (from `git log`)
 
-29 commits between 19 and 28 Oct 2026, all on `main`. Subjects are quoted as committed.
+34 commits between 19 and 29 Oct 2026, all on `main`. Subjects are quoted as committed.
 
 **19 Oct**
 - `04cfd1c` 23:22 Prepare PotKit hackathon submission (contracts, API, tests, app, README)
@@ -102,9 +104,18 @@ Vercel shows a day or a relative age for each deployment. Time and time zone of 
 - `1ea619e` 07:56 Redesign PotKit app with ledger workspace
 - `f03a5ea` 09:15 Improve Trade sell panel layout
 
+**29 Oct**
+- `e935bf3` 07:03 Docs: evidence tables, devlog, deck outline, judge quick start
+- `fb0e9a9` 07:03 Redesign landing page
+- `89afa37` 07:03 Add night design system layers for the app
+- `43e0daf` 07:04 App: dashboard, portfolio, pay page, tour, sale planner, block links, scan start
+- `e549ee5` 07:04 Add set-minter admin script and tests
+
+The five commits of 29 Oct were made within about a minute. They group changes that had been sitting uncommitted in the working tree, so their times show when the changes were grouped, not when each one was written.
+
 The contract, API and script files first appear in `04cfd1c`; `contracts/` and `api/` have not changed since. The GitHub repository was created on 2026-10-19 at 16:18:56 UTC (23:18 UTC+7), four minutes before the first commit, and the contract was deployed about 13 hours earlier (03:15:12 UTC). Before that, the only dated evidence of work is Vercel: 28 command-line deployments, 15 on 14 Oct, 1 on 17 Oct and 12 on 19 Oct (see Deployments). They carry no commit, so what they contained is not known, and the retention setting may have removed older ones. The deployer wallet sent no transaction before the contract deploy, and the files' modified times on disk are not evidence of authorship. **TODO:** any dated notes or drafts from 14–19 Oct that show what was built; otherwise the earlier work stays undocumented.
 
-## Work in progress (not committed when this draft was written)
+## What the 29 Oct commits contain
 
 - Landing page redesign (dark violet system, receipt → shares → settlement illustration, lifecycle walkthrough, evidence strip)
 - App visual system ("night" layers), top-bar navigation, rebuilt Dashboard with market figures read from the chain and an 8-step lifecycle tracker
@@ -113,8 +124,15 @@ The contract, API and script files first appear in `04cfd1c`; `contracts/` and `
 - Profile page re-layout
 - Plain-language term explanations, reasons shown next to disabled buttons, and a clearer closed-listing explanation
 - Transaction links now point at the block (the node console cannot resolve EVM transaction hashes)
-- `scripts/set-minter.mjs` (issuer approves a minter; dry run by default), "Judge quick start" in the README
-- Tests for the new pure logic (`test/insights.test.mjs`) alongside the existing suite
+- `scripts/set-minter.mjs` (issuer approves a minter; dry run by default; checks the network, the kit and the issuer's balance; estimates the cost), "Judge quick start" and the minter guide in the README
+- The event scan starts at the shared kit's deploy block (97421) when `VITE_FROM_BLOCK` is not set, so a clone sees the kit's whole history
+- Tests for the new pure logic (`test/insights.test.mjs`) and for the `set-minter` script (`test/setminter.test.mjs`, local Ganache) alongside the existing suite
+
+## Not yet committed
+
+- Dashboard *Settled* card wording: "1 payment received · 0 receipts paid now" (the tPOT figure adds every settle event; "paid now" counts receipts currently marked Settled), with an explanation on hover
+- Removal of the unused `src/landing-xero.css`
+- This DEVLOG update
 
 ## How the work is checked
 
