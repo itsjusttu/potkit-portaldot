@@ -43,6 +43,9 @@ export default defineConfig({
     rollupOptions: {
       output: {
         manualChunks(id) {
+          // Vite's dynamic-import helper is used by the entry itself. Left to Rollup it ends up inside the viem chunk, and then
+          // index.html preloads ~290 KB of viem on the landing and doc pages, which never use it.
+          if (id.includes("vite/preload-helper") || id.includes("vite/modulepreload-polyfill")) return "preload";
           if (id.includes("/node_modules/viem/") || id.includes("/node_modules/ox/") || id.includes("/node_modules/@noble/")) return "evm-vendor";
         },
       },
