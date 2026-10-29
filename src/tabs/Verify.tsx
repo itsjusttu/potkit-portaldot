@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState, type ReactNode } from "react"
 import { explain, fmt, KINDS, loadRows, PAY_SYMBOL, readTokenUri, short, units, type ChainEvent, type Row } from "../lib/chain";
 import { Addr, Ico } from "../AppUi";
 import { type Ctx } from "./ctx";
-import { day } from "./shared";
+import { blockUrl, day } from "./shared";
 import { readReceiptHistory } from "./receipt-history";
 
 type Check = { ok: boolean | null; k: string; v: ReactNode };
@@ -140,7 +140,7 @@ export function Verify({ c }: { c: Ctx }) {
               <li key={step.key} className={step.done ? "done" : "pending"}>
                 <span className="proof-event-icon"><Ico n={step.done ? "check" : "dash"} size={14} /></span>
                 <div className="proof-event-body"><b>{step.title}</b>
-                  {step.event ? <><small>Block {step.event.block.toString()}{step.event.time ? ` · ${step.event.timeApprox ? "~" : ""}${new Date(step.event.time * 1000).toLocaleString()}` : ""}</small><div className="proof-tx-actions"><a className="proof-tx" href={`https://node-console.portaldot.dev/?rpc=wss%3A%2F%2Ftest-node-v3.portaldot.dev#/explorer/query/${step.event.hash}`} target="_blank" rel="noreferrer" aria-label={`Open transaction ${step.event.hash} in explorer`}><code>{short(step.event.hash)}</code><span>Open tx ↗</span></a><button type="button" className="proof-tx" title="Copy full transaction hash" onClick={() => void copy(step.event!.hash, step.event!.hash)}>{copied === step.event.hash ? "Copied" : "Copy tx"}</button></div></>
+                  {step.event ? <><small>Block {step.event.block.toString()}{step.event.time ? ` · ${step.event.timeApprox ? "~" : ""}${new Date(step.event.time * 1000).toLocaleString()}` : ""}</small><div className="proof-tx-actions"><a className="proof-tx" href={blockUrl(step.event.block)} target="_blank" rel="noreferrer" aria-label={`Open block ${step.event.block} (contains transaction ${step.event.hash}) in the node console`}><code>{short(step.event.hash)}</code><span>Open block ↗</span></a><button type="button" className="proof-tx" title="Copy full transaction hash" onClick={() => void copy(step.event!.hash, step.event!.hash)}>{copied === step.event.hash ? "Copied" : "Copy tx"}</button></div></>
                     : <small>{step.done ? step.fallback : c.eventsOk ? step.fallback : "Not found in the readable event range"}</small>}
                 </div>
               </li>

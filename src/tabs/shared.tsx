@@ -1,5 +1,76 @@
-import { useRef, type ReactNode } from "react";
+import { useEffect, useId, useRef, useState, type ReactNode } from "react";
 import { fmt, KINDS, type Row } from "../lib/chain";
+
+/** Node console page of a block. The console is Substrate-based and cannot resolve an EVM transaction hash, so every
+    "open in explorer" link points at the block that contains the transaction (the block number is the same on both sides). */
+export const blockUrl = (block: bigint | number) => `https://node-console.portaldot.dev/?rpc=wss%3A%2F%2Ftest-node-v3.portaldot.dev#/explorer/query/${block}`;
+
+/** Why a wallet action cannot run right now ("" when it can). Shown as text next to the disabled button. */
+export function txBlock(c: { account: string; gated: boolean; busy: string }) {
+  if (!c.account) return "Connect a wallet first.";
+  if (c.gated) return "Switch your wallet to Portaldot V3 first.";
+  if (c.busy) return "Another transaction is waiting for your wallet.";
+  return "";
+}
+/** Receipts the visitor follows; kept in this browser only and shared by Explore and Trade. */
+const WATCH = "potkit.watch";
+const readWatch = () => { try { return new Set<number>((JSON.parse(localStorage.getItem(WATCH) ?? "[]") as number[]).filter(Number.isInteger)); } catch { return new Set<number>(); } };
+export function useWatch() {
+  const [ids, setIds] = useState(readWatch);
+  const toggle = (id: number) => setIds((prev) => { const next = new Set(prev); if (next.has(id)) next.delete(id); else next.add(id); try { localStorage.setItem(WATCH, JSON.stringify([...next])); } catch { /* storage blocked */ } return next; });
+  return { ids, has: (id: number) => ids.has(id), toggle };
+}
+export const WatchBtn = ({ on, id, onToggle }: { on: boolean; id: number; onToggle: () => void }) => (
+  <button type="button" className={`watch-btn ${on ? "on" : ""}`} aria-pressed={on} aria-label={on ? `Stop watching receipt ${id}` : `Watch receipt ${id}`} title={on ? "Watching" : "Watch"} onClick={(e) => { e.stopPropagation(); onToggle(); }}>
+    <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden><path d="M12 3.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.9l-5.2 2.7 1-5.8-4.3-4.1 5.9-.9z" fill={on ? "currentColor" : "none"} stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" /></svg>
+  </button>
+);
+
+/** Save generated text (CSV, calendar) as a file in the browser. */
+export function download(name: string, text: string, type: string) {
+  const url = URL.createObjectURL(new Blob([text], { type }));
+  const a = document.createElement("a"); a.href = url; a.download = name; document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+export const Why =({ text }: { text: string }) => (text ? <small className="why" role="note">{text}</small> : null);
+
+/** Plain-language definitions shown next to the terms a new user meets first. */
+export const GLOSSARY = {
+  receipt: ["Receipt", "An ERC-721 token that records one issuer-provided claim: kind, note and terms. PotKit does not verify the invoice behind it."],
+  face: ["Face value", "The amount the debtor is expected to pay, in tPOT. Settling requires paying at least this amount."],
+  share: ["Share", "One of a fixed number of ERC-20 tokens created when a receipt is locked. Every share gets an equal part of the settlement."],
+  settle: ["Settle", "Paying the receipt in tPOT. Anyone can settle; the payment goes into a pool for share holders and cannot be undone."],
+  claim: ["Claim", "Withdrawing your pro-rata part of a settled receipt's pool to your wallet."],
+  apr: ["Est. APR", "An annualised estimate from price, face value and due date, assuming full payment on time. It is not a promised return."],
+  discount: ["Discount", "How far the share price is below face value per share. A bigger discount is a lower price, not a safer claim."],
+} as const;
+
+/** A term with a small "?" that opens its definition. The popover is fixed-positioned so table scrollers cannot clip it. */
+export function Term({ k, children }: { k: keyof typeof GLOSSARY; children?: ReactNode }) {
+  const [pos, setPos] = useState<{ top: number; left: number } | null>(null);
+  const btn = useRef<HTMLButtonElement>(null);
+  const id = useId();
+  const [name, text] = GLOSSARY[k];
+  useEffect(() => {
+    if (!pos) return;
+    const close = (e: Event) => { if (e.type === "keydown" && (e as KeyboardEvent).key !== "Escape") return; if (e.type === "pointerdown" && btn.current?.contains(e.target as Node)) return; setPos(null); };
+    addEventListener("pointerdown", close); addEventListener("keydown", close); addEventListener("scroll", close, true); addEventListener("resize", close);
+    return () => { removeEventListener("pointerdown", close); removeEventListener("keydown", close); removeEventListener("scroll", close, true); removeEventListener("resize", close); };
+  }, [pos]);
+  const toggle = (e: React.MouseEvent) => {
+    e.stopPropagation(); e.preventDefault();
+    if (pos) { setPos(null); return; }
+    const b = btn.current!.getBoundingClientRect(), w = Math.min(280, innerWidth - 24);
+    setPos({ top: b.bottom + 8, left: Math.max(12, Math.min(b.left - w / 2 + b.width / 2, innerWidth - w - 12)) });
+  };
+  return (
+    <span className="term">
+      {children}
+      <button ref={btn} type="button" className="term-q" aria-label={`What is ${name.toLowerCase()}?`} aria-expanded={Boolean(pos)} aria-controls={pos ? id : undefined} onClick={toggle}>?</button>
+      {pos && <span id={id} role="note" className="term-pop" style={{ top: pos.top, left: pos.left }}><b>{name}</b>{text}</span>}
+    </span>
+  );
+}
 
 const STATUS_CLASS: Record<Row["status"], string> = { Free: "", Pending: "lock", "Due soon": "warn", Overdue: "bad", Settled: "paid" };
 export const day = (ts: number) => new Date(ts * 1000).toLocaleDateString();

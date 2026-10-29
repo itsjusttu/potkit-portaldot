@@ -15,7 +15,8 @@ import {
   loadListings, loadMeta, loadRows, nativeBalance, ENV_FROM_BLOCK, isNoCode, NATIVE, NO_CODE, PAY_SYMBOL, receiptCount, type DeployStep, portaldot, settle, short, switchToPortaldot, units, type Addrs, type ChainEvent, type Listing, type Row,
 } from "./lib/chain";
 import { TABS, type Ctx, type Log, type Tab } from "./tabs/ctx";
-import { SettleBadge } from "./tabs/shared";
+import { SettleBadge, Term } from "./tabs/shared";
+import { QuickVerify } from "./tabs/QuickVerify";
 const Dashboard = lazy(() => import("./tabs/Dashboard").then((m) => ({ default: m.Dashboard })));
 const Issue = lazy(() => import("./tabs/Issue").then((m) => ({ default: m.Issue })));
 const Trade = lazy(() => import("./tabs/Trade").then((m) => ({ default: m.Trade })));
@@ -24,9 +25,17 @@ const Explore = lazy(() => import("./tabs/Explore").then((m) => ({ default: m.Ex
 const Verify = lazy(() => import("./tabs/Verify").then((m) => ({ default: m.Verify })));
 const History = lazy(() => import("./tabs/History").then((m) => ({ default: m.History })));
 const Profile = lazy(() => import("./tabs/Profile").then((m) => ({ default: m.Profile })));
+const Pay = lazy(() => import("./tabs/Pay").then((m) => ({ default: m.Pay })));
 
+/* app text faces: one sans for content, mono for addresses, hashes and figures; the fallbacks stay readable */
+if (typeof document !== "undefined" && !document.getElementById("pl-fonts")) {
+  const l = document.createElement("link");
+  l.id = "pl-fonts"; l.rel = "stylesheet";
+  l.href = "https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600&family=IBM+Plex+Mono:wght@400&display=swap";
+  document.head.appendChild(l);
+}
 const ALIAS: Record<string, Tab> = { desk: "issue", market: "trade", board: "explore", log: "history", activity: "history" };
-const ALL: Tab[] = [...TABS, "profile"];
+const ALL: Tab[] = [...TABS, "profile", "pay"];
 const protocolPage = (path: string) => isAppHost() ? `${window.location.protocol}//${window.location.hostname.slice(4)}${path}` : path;
 function initialTab(): Tab {
   const t = (new URLSearchParams(location.search).get("tab") ?? "").toLowerCase();
@@ -47,6 +56,9 @@ const TAB_KEEP = ["kit", "receipt", "vault", "usd", "market"];
 // `.fp` = fingerprint of the .env defaults this storage belongs to.
 const SAVED_KEYS = [STORE, `${STORE}.block`];
 const ENV_FP = [DEFAULTS.kit, ENV_FROM_BLOCK].map((x) => x.trim().toLowerCase()).join("|");
+// Deploy block of the shared testnet kit (README → Testnet evidence). Without it a clone that has no VITE_FROM_BLOCK would scan only
+// the last 50,000 blocks and miss the kit's lifecycle events (Settled 0, empty History, "No activity in the scanned range").
+const PUBLIC_KIT_BLOCK: Record<string, bigint> = { "0x3c26351ad8b9dc7bb4f837c5b921879c35e20fb7": 97421n };
 export function clearSavedDeployment() { SAVED_KEYS.forEach((k) => localStorage.removeItem(k)); }
 /** When the baked-in .env deployment changes (you redeployed), stale browser-saved addresses must not win. */
 (function syncEnvFingerprint() {
@@ -82,12 +94,13 @@ const TITLES: Record<Tab, [string, string]> = {
   verify: ["Verify", "An independent, shareable proof of a receipt's backing, terms and settlement."],
   history: ["History", "Your transactions as a timeline, straight from on-chain events."],
   profile: ["Profile", "Your wallet identity, balances and footprint on PotKit."],
+  pay: ["Pay invoice", "Review one invoice, acknowledge it and pay it in tPOT."],
 };
 const TAB_PATHS: Record<Tab, string> = {
   dashboard: "M3 3h8v8H3zM13 3h8v5h-8zM13 10h8v11h-8zM3 13h8v8H3z",
   issue: "M12 4v16M4 12h16", trade: "M7 7h12l-3-3M17 17H5l3 3", portfolio: "M4 8h16v11H4zM9 8V5h6v3M4 13h16",
   explore: "M11 18a7 7 0 1 0 0-14 7 7 0 0 0 0 14zM20 20l-4-4", verify: "M12 3l7 3v6c0 4-3 7.5-7 9-4-1.5-7-5-7-9V6zM8.5 12l2.5 2.5 4.5-5",
-  history: "M12 7v5l3 2M3.5 12a8.5 8.5 0 1 0 2.5-6M3 4v4h4", profile: "M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM4 21c0-4 3.6-6 8-6s8 2 8 6",
+  history: "M12 7v5l3 2M3.5 12a8.5 8.5 0 1 0 2.5-6M3 4v4h4", pay: "M4 7h16v11H4zM4 11h16M8 15h3", profile: "M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM4 21c0-4 3.6-6 8-6s8 2 8 6",
 };
 const TabIco = ({ t }: { t: Tab }) => <svg className="ico" width="18" height="18" viewBox="0 0 24 24" aria-hidden fill="none" stroke="currentColor" strokeWidth={1.7} strokeLinecap="round" strokeLinejoin="round"><path d={TAB_PATHS[t]} /></svg>;
 
@@ -97,7 +110,17 @@ export function App() {
   const [shared, setShared] = useState(init.shared);
   const [tab, setTabState] = useState<Tab>(initialTab);
   const [supportOpen, setSupportOpen] = useState(false);
+  const [helpOpen, setHelpOpen] = useState(false);
+  const [qvOpen, setQvOpen] = useState(false);
+  useEffect(() => {
+    if (!helpOpen) return;
+    const close = (e: Event) => { if (e.type === "keydown" && (e as KeyboardEvent).key !== "Escape") return; if (e.type === "pointerdown" && (e.target as Element).closest?.(".top-help")) return; setHelpOpen(false); };
+    window.addEventListener("pointerdown", close); window.addEventListener("keydown", close);
+    return () => { window.removeEventListener("pointerdown", close); window.removeEventListener("keydown", close); };
+  }, [helpOpen]);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
+  const [sideSmall, setSideSmall] = useState(() => { try { return localStorage.getItem("potkit.side") === "small"; } catch { return false; } });
+  const toggleSide = () => setSideSmall((v) => { try { localStorage.setItem("potkit.side", v ? "full" : "small"); } catch { /* storage blocked */ } return !v; });
   useEffect(() => {
     if (!mobileNavOpen) return;
     const close = (event: KeyboardEvent) => { if (event.key === "Escape") setMobileNavOpen(false); };
@@ -194,7 +217,7 @@ export function App() {
       if (account) void refreshNative();
       setEventsLoading(true);
       const sameAsEnv = addrs.receipt.toLowerCase() === DEFAULTS.receipt.trim().toLowerCase();
-      const from = savedBlock() ?? (sameAsEnv && /^\d+$/.test(ENV_FROM_BLOCK) ? BigInt(ENV_FROM_BLOCK) : undefined);
+      const from = savedBlock() ?? (sameAsEnv && /^\d+$/.test(ENV_FROM_BLOCK) ? BigInt(ENV_FROM_BLOCK) : undefined) ?? PUBLIC_KIT_BLOCK[addrs.receipt.toLowerCase()];
       const ev = await loadEvents(addrs, market, ls, from).catch(() => ({ events: [] as ChainEvent[], ok: false }));
       if (stale()) return;
       setEvents(ev.events); setEventsOk(ev.ok); setEventsLoading(false);
@@ -260,9 +283,9 @@ export function App() {
   const payNeedsAck = needsAck(payResult, payAck);
 
   const publicProfile = tab === "profile" && /^0x[0-9a-fA-F]{40}$/.test(params.profile ?? "");
-  const needsWallet = tab !== "dashboard" && tab !== "issue" && tab !== "trade" && tab !== "explore" && tab !== "verify" && !publicProfile;
+  const needsWallet = tab !== "dashboard" && tab !== "issue" && tab !== "trade" && tab !== "explore" && tab !== "verify" && tab !== "pay" && !publicProfile;
   return (
-    <div className="shell" data-phase={phase} data-wallet={wallet.status}>
+    <div className={`shell ${sideSmall ? "side-collapsed" : ""}`} data-phase={phase} data-wallet={wallet.status}>
       {mobileNavOpen && <button type="button" className="mobile-nav-backdrop" aria-label="Close sections" onClick={() => setMobileNavOpen(false)} />}
       <aside className={`side ${mobileNavOpen ? "mobile-open" : ""}`}>
         <div className="side-mobile-head"><span>All sections</span><button type="button" onClick={() => setMobileNavOpen(false)} aria-label="Close navigation"><Ico n="x" /></button></div>
@@ -270,6 +293,7 @@ export function App() {
           <img src="/potkit-p-circle-black.svg" alt="" width={34} height={34} aria-hidden />
           <span><b>Pot<span className="grad">Kit</span></b><small>Invoice protocol</small></span>
         </a>
+        <button type="button" className="side-collapse" aria-pressed={sideSmall} aria-label={sideSmall ? "Expand sidebar" : "Collapse sidebar"} title={sideSmall ? "Expand sidebar" : "Collapse sidebar"} onClick={toggleSide}><svg viewBox="0 0 24 24" width="16" height="16" aria-hidden fill="none" stroke="currentColor" strokeWidth="1.6"><rect x="3.5" y="4.5" width="17" height="15" rx="2" /><path d="M9 4.5v15" /></svg></button>
         <button className="side-new" title="New invoice" onClick={() => setTab("issue")}><TabIco t="issue" /><span>New invoice</span></button>
         <nav id="app-sections" className="side-nav" aria-label="Sections">
           {([
@@ -295,6 +319,12 @@ export function App() {
       </aside>
       <main>
         <header className="top">
+          <a className="top-brand" href={homeUrl()} aria-label="PotKit home"><img src="/potkit-p-circle-black.svg" alt="" width={30} height={30} aria-hidden /><b>PotKit</b></a>
+          <nav className="top-tabs" aria-label="Sections">
+            {(["dashboard", "issue", "trade", "explore", "portfolio"] as Tab[]).map((t) => (
+              <button key={t} type="button" className={tab === t ? "on" : ""} aria-current={tab === t ? "page" : undefined} onClick={() => setTab(t)}><TabIco t={t} /><span>{TITLES[t][0]}</span></button>
+            ))}
+          </nav>
           <div className="crumb">
             <a className="icon-btn" href={homeUrl()} aria-label="Go to PotKit home" data-tip="Home">
               <svg viewBox="0 0 24 24" aria-hidden><path d="M3 11.5 12 4l9 7.5" /><path d="M5.5 10v9.5h13V10" /><path d="M10 19.5v-5h4v5" /></svg>
@@ -302,7 +332,21 @@ export function App() {
             <span className="muted crumb-root">PotKit /</span> <b>{TITLES[tab][0]}</b>
             <button type="button" className="mobile-nav-toggle" aria-expanded={mobileNavOpen} aria-controls="app-sections" onClick={() => setMobileNavOpen((open) => !open)}>{mobileNavOpen ? "Close" : "Sections"}<span aria-hidden>{mobileNavOpen ? "−" : "+"}</span></button>
           </div>
-          <nav>
+          <nav className="top-right">
+            <div className="top-verify-wrap">
+            <button type="button" className={`top-verify ${tab === "verify" || qvOpen ? "on" : ""}`} aria-current={tab === "verify" ? "page" : undefined} aria-expanded={qvOpen} aria-haspopup="dialog" onClick={() => setQvOpen((v) => !v)}><TabIco t="verify" /><span>Verify a receipt</span><svg viewBox="0 0 24 24" width="14" height="14" aria-hidden fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M9 6l6 6-6 6" /></svg></button>
+            <QuickVerify open={qvOpen} onClose={() => setQvOpen(false)} rows={rows} onGo={(id) => { setQvOpen(false); setTab("verify", { id: String(id) }); }} onFull={() => { setQvOpen(false); setTab("verify"); }} />
+            </div>
+            <button type="button" className={`top-icon ${tab === "history" ? "on" : ""}`} aria-label="History" aria-current={tab === "history" ? "page" : undefined} title="History" onClick={() => setTab("history")}><TabIco t="history" /></button>
+            <div className="top-help">
+              <button type="button" className="top-icon" aria-label="Help and support" aria-expanded={helpOpen} aria-haspopup="menu" title="Help and support" onClick={() => setHelpOpen((v) => !v)}><svg className="ico" viewBox="0 0 24 24" width="17" height="17" aria-hidden fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="9" /><path d="M9.5 9.5a2.5 2.5 0 0 1 4.9.7c0 1.7-2.4 2.1-2.4 3.6M12 17h.01" /></svg></button>
+              {helpOpen && <div className="top-help-pop" role="menu">
+                <a role="menuitem" href={protocolPage("/help")}><Ico n="life" /> Help Center</a>
+                <button type="button" role="menuitem" onClick={() => { setHelpOpen(false); setSupportOpen(true); }}><Ico n="mail" /> Contact Support</button>
+              </div>}
+            </div>
+            <span className={`top-net ${!account ? "" : chainOk ? "ok" : chainOk === false ? "bad" : ""}`} title={`Portaldot V3 Testnet · chain ${portaldot.id}`}><i aria-hidden />{!account ? "Portaldot V3 · read-only" : chainOk ? "Portaldot V3" : chainOk === false ? "Wrong network" : "Checking network…"}</span>
+            {phase !== "idle" && <span className={`top-tx tx-${phase}`} role="status" aria-live="polite"><i aria-hidden />{phase === "signing" ? "Confirm in your wallet…" : phase === "pending" ? "Transaction pending…" : phase === "success" ? "Transaction confirmed" : "Transaction not completed"}</span>}
             <WalletButton account={account} label={short(account)} net={chainOk ? "ok" : chainOk === false ? "wrong" : "unknown"}
               onConnect={connectWallet} onProfile={() => setTab("profile")} onCopy={copyAddr} onExplore={() => setTab("explore", { addr: account })}
               onDisconnect={() => void disconnect()} onSwitchNet={switchNet} />
@@ -362,6 +406,7 @@ export function App() {
               {tab === "verify" && <Verify c={c} />}
               {tab === "history" && <History c={c} />}
               {tab === "profile" && (account || publicProfile) && <Profile c={c} />}
+              {tab === "pay" && <Pay c={c} />}
               </Suspense>
             </div>
           </>
@@ -375,8 +420,8 @@ export function App() {
             <p className="muted">Anyone can pay. The minimum is the face value; the receipt is then marked settled and every share becomes a pro-rata payout ticket. Any extra goes to the pool for share holders and is not refunded. Payment is final.</p>
             <dl className="facts">
               <div><dt>Kind</dt><dd>{KINDS[payRow.kind]}</dd></div>
-              <div><dt>Face value</dt><dd className="num">{`${fmt(payRow.settle.faceValue, payRow.settle.decimals)} ${payRow.settle.symbol}`}</dd></div>
-              <div><dt>Shares</dt><dd className="num">{units(payRow.supply)}</dd></div>
+              <div><dt><Term k="face">Face value</Term></dt><dd className="num">{`${fmt(payRow.settle.faceValue, payRow.settle.decimals)} ${payRow.settle.symbol}`}</dd></div>
+              <div><dt><Term k="share">Shares</Term></dt><dd className="num">{units(payRow.supply)}</dd></div>
               <div><dt>Paid in</dt><dd>{PAY_SYMBOL} (native)</dd></div>
             </dl>
             <label htmlFor="pay-amt">Amount ({PAY_SYMBOL})</label>

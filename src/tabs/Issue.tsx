@@ -3,7 +3,7 @@ import { parseUnits } from "viem";
 import { deployKit, fmt, fractionalize, KINDS, mint, PAY_SYMBOL, short, units } from "../lib/chain";
 import { Addr, Empty, Ico } from "../AppUi";
 import { type Ctx } from "./ctx";
-import { day, SettleBadge } from "./shared";
+import { day, SettleBadge, Term } from "./shared";
 import { readReceiptHistory } from "./receipt-history";
 
 const WKEY = "potkit.v17.wizard";
@@ -51,7 +51,7 @@ export function Issue({ c }: { c: Ctx }) {
 
   return (
     <div className="issue">
-      <section className="issue-intro"><div><p className="kicker">Stage 01 · Create</p><h1>ISSUE AN INVOICE</h1><p>Create the receipt, then lock it and issue shares in three guided steps.</p></div><span className="issue-chain-pill"><i /> Portaldot V3 · ERC-721</span></section>
+      <section className="issue-intro"><div><p className="kicker">Stage 01 · Create</p><h1>Issue an invoice</h1><p>Create the receipt, then lock it and issue shares in three guided steps.</p></div><span className="issue-chain-pill"><i /> Portaldot V3 · ERC-721</span></section>
       {needSetup && (
         <section className="card setup-card">
           <h2>Set up the contract</h2>
@@ -65,13 +65,8 @@ export function Issue({ c }: { c: Ctx }) {
         </section>
       )}
 
-      <section className="wizard" id="wizard">
-        <aside className="issue-rail" aria-label="Issue guidance">
-          <p className="kicker">Safe issue flow</p>
-          <h3>One receipt. Three decisions.</h3>
-          <ol>{([["Receipt", "Kind, note and mint"], ["Terms", "Face value, due date, shares"], ["Lock", "Lock and issue shares"]] as const).map(([t, d], i) => <li key={t} className={i === stepIdx ? "active" : i < stepIdx ? "done" : ""} aria-current={i === stepIdx ? "step" : undefined}><b>{t}</b><span>{d}</span></li>)}</ol>
-          <p className="muted small">The preview updates as you work. Nothing is signed until you press the primary action.</p>
-        </aside>
+      <ol className="issue-steps" aria-label="Issue steps">{([["Receipt", "Kind and public note · 1 transaction"], ["Terms", "Face value, due date, shares · no signing"], ["Lock", "Lock and issue shares · 1 transaction"]] as const).map(([t, d], i) => <li key={t} className={i === stepIdx ? "active" : i < stepIdx ? "done" : ""} aria-current={i === stepIdx ? "step" : undefined}><span className="issue-step-n">{i < stepIdx ? <Ico n="check" size={14} /> : i + 1}</span><span><b>{t}</b><small>{d}</small></span></li>)}</ol>
+      <section className="wizard wizard-2" id="wizard">
         <div className="card wiz-main">
           {cur === 0 && (
             <div className="wiz-pane">
@@ -82,7 +77,7 @@ export function Issue({ c }: { c: Ctx }) {
                 <div><label htmlFor="w-kind">Kind</label><select id="w-kind" value={kind} onChange={(e) => setKind(Number(e.target.value))}>{KINDS.map((k, i) => <option key={k} value={i}>{k}</option>)}</select></div>
                 <div className="field-grow"><label htmlFor="w-note">Note (1–140 chars)</label><input id="w-note" maxLength={140} value={note} aria-invalid={!noteOk} aria-describedby={!noteOk ? "w-note-error" : undefined} onChange={(e) => setNote(e.target.value)} />{!noteOk && <small id="w-note-error" className="field-error" role="alert">Enter a short public note (1–140 characters).</small>}</div>
               </div>
-              <div className="wiz-nav"><span className={c.canMint ? "issue-ready-mint" : "muted"}>{c.canMint ? <><i />Ready to mint</> : "Only the issuer or approved minters can mint."}</span>
+              <div className="wiz-nav"><span className={c.addrs && c.canMint ? "issue-ready-mint" : "muted"}>{!c.addrs ? "Set up a PotKit deployment first." : c.canMint ? <><i />Ready to mint</> : c.account ? "This wallet cannot mint: only the issuer or an approved minter can." : "Connect the issuer wallet to mint."}</span>
                 <button className="btn primary" disabled={!noteOk || Boolean(c.busy) || (Boolean(c.account) && (!c.addrs || !c.canMint))} title={!noteOk ? "Enter a public note." : c.account ? (!c.addrs ? "Deploy PotKit first." : !c.canMint ? "Only the issuer or an approved minter can mint." : undefined) : undefined} onClick={() => { if (!c.account) { c.connect(); return; } if (c.gated) { c.switchNetwork(); return; } void c.run("mint", async () => {
                   const m = await mint(c.ready(), c.addrs!.receipt, kind, note.trim());
                   setWizId(m.id); c.note("Receipt minted", `#${m.id} · ${KINDS[kind]}`, m.hash);
@@ -94,9 +89,9 @@ export function Issue({ c }: { c: Ctx }) {
               <h2>2 · Terms</h2>
               <p className="muted">Receipt #{row.id} is minted. Set its payment terms: face value in {PAY_SYMBOL}, an optional due date and the number of ERC-20 shares to issue. Nothing is signed in this step.</p>
               <div className="row fields">
-                <div><label htmlFor="w-face">Face value ({PAY_SYMBOL})</label><input id="w-face" inputMode="decimal" value={face} aria-invalid={!faceOk} aria-describedby={!faceOk ? "w-face-error" : undefined} onChange={(e) => setFace(e.target.value)} />{!faceOk && <small id="w-face-error" className="field-error" role="alert">Enter a positive face value in tPOT, with at most 18 decimal places.</small>}</div>
+                <div><span className="lbl"><label htmlFor="w-face">Face value ({PAY_SYMBOL})</label><Term k="face" /></span><input id="w-face" inputMode="decimal" value={face} aria-invalid={!faceOk} aria-describedby={!faceOk ? "w-face-error" : undefined} onChange={(e) => setFace(e.target.value)} />{!faceOk && <small id="w-face-error" className="field-error" role="alert">Enter a positive face value in tPOT, with at most 18 decimal places.</small>}</div>
                 <div><label htmlFor="w-due">Due date</label><input id="w-due" type="date" value={due} aria-invalid={!dueOk} aria-describedby={!dueOk ? "w-due-error" : undefined} onChange={(e) => setDue(e.target.value)} />{!dueOk && <small id="w-due-error" className="field-error" role="alert">Choose a future due date, or leave it blank.</small>}</div>
-                <div><label htmlFor="w-sup">Shares to issue</label><input id="w-sup" inputMode="numeric" value={supply} aria-invalid={!supplyOk} aria-describedby={!supplyOk ? "w-sup-error" : undefined} onChange={(e) => setSupply(e.target.value)} />{!supplyOk && <small id="w-sup-error" className="field-error" role="alert">Use a whole number from 1 to 1,000,000,000,000.</small>}</div>
+                <div><span className="lbl"><label htmlFor="w-sup">Shares to issue</label><Term k="share" /></span><input id="w-sup" inputMode="numeric" value={supply} aria-invalid={!supplyOk} aria-describedby={!supplyOk ? "w-sup-error" : undefined} onChange={(e) => setSupply(e.target.value)} />{!supplyOk && <small id="w-sup-error" className="field-error" role="alert">Use a whole number from 1 to 1,000,000,000,000.</small>}</div>
               </div>
               <dl className="issue-summary"><div><dt>Face value</dt><dd>{faceOk ? `${face} ${PAY_SYMBOL}` : "—"}</dd></div><div><dt>Shares</dt><dd>{supplyOk ? supply : "—"}</dd></div><div><dt>Due</dt><dd>{dueOk && due ? new Date(`${due}T12:00:00`).toLocaleDateString() : "—"}</dd></div></dl>
               <div className="wiz-nav"><button className="btn" onClick={restart}>Start over</button>
@@ -108,6 +103,7 @@ export function Issue({ c }: { c: Ctx }) {
             <div className="wiz-pane">
               <h2>3 · Lock &amp; issue shares</h2>
               <p className="muted">Receipt #{row.id} moves into PotKit, its payment terms are fixed (face value in {PAY_SYMBOL}, optional due date) and {supply || "N"} ERC-20 shares (KIT{row.id}) are minted to you. One transaction, no approval needed. With terms set, anyone can settle by paying at least the face value.</p>
+              <p className="irreversible" role="note"><b>Check before you lock.</b> After this transaction the face value, due date and share count cannot be changed. To take the receipt back out of PotKit you must hold every share and redeem.</p>
               <dl className="issue-summary"><div><dt>Face value</dt><dd>{faceOk ? `${face} ${PAY_SYMBOL}` : "—"}</dd></div><div><dt>Shares</dt><dd>{supplyOk ? supply : "—"}</dd></div><div><dt>Due</dt><dd>{dueOk && due ? new Date(`${due}T12:00:00`).toLocaleDateString() : "—"}</dd></div></dl>
               <div className="wiz-nav"><button className="btn" onClick={() => setReviewed(false)}>Back</button>
                 <span className={termsOk ? "issue-ready-mint" : "field-error"} role="status">{termsOk ? <><i />Ready to issue</> : termsError}</span>

@@ -55,40 +55,6 @@ export function Toasts() {
   );
 }
 
-// ---------------- getting started ----------------
-export type Step = { label: string; done: boolean; action?: ReactNode; go?: () => void };
-export function Checklist({ steps, storeKey, title = "Getting started", doneText = "All set — you're ready to demo", dismissible = true }: { steps: Step[]; storeKey: string; title?: string; doneText?: string; dismissible?: boolean }) {
-  const [hidden, setHidden] = useState(() => localStorage.getItem(storeKey) === "hidden");
-  const [open, setOpen] = useState(true);
-  const done = steps.filter((s) => s.done).length;
-  if (hidden) return null;
-  const next = steps.findIndex((s) => !s.done);
-  return (
-    <section className={`check ${open ? "" : "closed"}`}>
-      <header>
-        <button className="check-toggle" onClick={() => setOpen(!open)} aria-expanded={open}>
-          <span className="kicker">{title}</span>
-          <b>{done === steps.length ? doneText : next >= 0 ? `Next: ${steps[next].label} · ${done}/${steps.length}` : ""}</b>
-          <span className="check-bar"><i style={{ width: `${(done / steps.length) * 100}%` }} /></span>
-          <span className="chev" aria-hidden>{open ? "–" : "+"}</span>
-        </button>
-        {dismissible && <button className="t-x" aria-label="Dismiss checklist" onClick={() => { localStorage.setItem(storeKey, "hidden"); setHidden(true); }}><Ico n="x" /></button>}
-      </header>
-      {open && (
-        <ol>
-          {steps.map((s, i) => (
-            <li key={s.label} className={s.done ? "done" : i === next ? "next" : ""} aria-current={i === next ? "step" : undefined}>
-              <span className="box" aria-hidden>{s.done ? <Ico n="check" /> : i + 1}</span>
-              {s.go ? <button className="lbl link" onClick={s.go}>{s.label}<span className="sr-only">{s.done ? " (done)" : ""}</span></button> : <span className="lbl">{s.label}</span>}
-              {!s.done && i === next && (s.action ?? (s.go && <button className="btn sm primary" onClick={s.go}>Go <Ico n="arrow" /></button>))}
-            </li>
-          ))}
-        </ol>
-      )}
-    </section>
-  );
-}
-
 // ---------------- empty / error states ----------------
 export function Empty({ icon, title, body, children, tone = "" }: { icon: string; title: string; body: ReactNode; children?: ReactNode; tone?: "" | "warn" | "err" }) {
   return (
@@ -122,7 +88,7 @@ export function StatusBars({ rows, loading = false }: { rows: Row[]; loading?: b
 
 // ---------------- icons (inline SVG, no glyph fallbacks) ----------------
 const PATHS: Record<string, string> = {
-  wallet: "M3 6.5h18v13H3zM3 9h18M16 14h2", activity: "M3 12h4l3-8 4 16 3-8h4",
+  wallet: "M3 6.5h18v13H3zM3 9h18M16 14h2", grid: "M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h6v6h-6z", clock: "M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18zM12 7v5l3 2", activity: "M3 12h4l3-8 4 16 3-8h4",
   bolt: "M13 2 4 14h7l-1 8 9-12h-7z",
   copy: "M9 9h10v10H9zM5 15V5h10", check: "M5 12.5 10 17l9-10", arrow: "M5 12h13M13 6l6 6-6 6", swap: "M7 7h12l-3-3M17 17H5l3 3",
   power: "M12 3v8M6.3 6.8a8 8 0 1 0 11.4 0", x: "M6 6l12 12M18 6 6 18", dash: "M6 12h12", info: "M12 11v6M12 7.5v.5", ext: "M14 4h6v6M20 4l-9 9M18 14v6H4V6h6",

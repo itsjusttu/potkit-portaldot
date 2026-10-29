@@ -2,7 +2,7 @@ import type { Address, Hash } from "viem";
 import type { TxPhase } from "../hooks/useTx";
 import type { Addrs, ChainEvent, DeployStep, Listing, Row } from "../lib/chain";
 
-export type Tab = "dashboard" | "issue" | "trade" | "portfolio" | "explore" | "verify" | "history" | "profile";
+export type Tab = "dashboard" | "issue" | "trade" | "portfolio" | "explore" | "verify" | "history" | "profile" | "pay";
 export const TABS: Tab[] = ["dashboard", "issue", "trade", "portfolio", "explore", "verify", "history"];
 export type Log = { at: string; action: string; detail: string; hash?: Hash };
 

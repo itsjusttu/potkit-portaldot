@@ -3,6 +3,8 @@ import { fmt, short, type ChainEvent } from "../lib/chain";
 import { Empty, Ico } from "../AppUi";
 import { type Ctx } from "./ctx";
 import { EV_ICON } from "./Explore";
+import { blockUrl, download } from "./shared";
+import { toCsv } from "./insights";
 
 type Item = { key: string; t: number; block?: bigint; approx?: boolean; icon: string; tone: string; title: string; detail: string; money?: string; hash?: string; src: "chain" | "local" };
 const LOCAL_ICON: Record<string, string> = { Faucet: "faucet", "Contracts deployed": "deploy", "Contract deployed": "deploy", "PotKit deployed": "deploy", "Shares sent": "send" };
@@ -56,14 +58,14 @@ export function History({ c }: { c: Ctx }) {
   const visible = all.filter(matches);
   const unavailable = !c.eventsOk && !c.eventsLoading;
   if (!all.length && c.eventsLoading) return <div className="history" role="status"><p>Reading your on-chain history…</p></div>;
-  if (!all.length && unavailable) return <Empty icon="◷" title="History unavailable" tone="warn" body="The RPC could not read the full event range. Try refreshing later; this is not proof that no transactions occurred." />;
-  if (!all.length) return <Empty icon="◷" title="No activity found" body="No wallet activity was found in the scanned range. Earlier transactions may be outside that range." />;
+  if (!all.length && unavailable) return <><header className="tab-title"><h1>History</h1></header><Empty icon="◷" title="History unavailable" tone="warn" body="The RPC could not read the full event range. Try refreshing later; this is not proof that no transactions occurred." /></>;
+  if (!all.length) return <><header className="tab-title"><h1>History</h1></header><Empty icon="◷" title="No activity found" body="No wallet activity was found in the scanned range. Earlier transactions may be outside that range." /></>;
   const kindLabel: Record<string, string> = { mint: "Issue", lock: "Lock", terms: "Terms", due: "Due date", settle: "Settle", claim: "Claim", redeem: "Redeem", list: "List", buy: "Trade", cancel: "Cancel", other: "Wallet" };
   return (
     <div className="history">
       <section className="history-intro"><div><p className="kicker">Wallet activity · Portaldot V3</p><h1>History</h1><p>Chain events found in the scanned range and actions saved in this browser, newest first.</p></div><div className="chips" role="group" aria-label="Filter activity">{([["all", "All"], ["mint", "Mint"], ["trade", "Trade"], ["settle", "Settle"], ["claim", "Claim"]] as const).map(([key, label]) => <button key={key} className={`chip ${filter === key ? "on" : ""}`} aria-pressed={filter === key} onClick={() => setFilter(key)}>{label}</button>)}</div></section>
       {unavailable && <p className="banner" role="status">History unavailable for part of the block range — the RPC refused some event queries, so this list may be incomplete.</p>}
-      <div className="history-tools"><div><b>{chainItems.length} on-chain events</b><p className="muted small">For {short(me)} in the scanned range{c.eventsLoading ? " · updating…" : ""}</p></div><div className="row"><button type="button" className="btn sm primary" onClick={() => c.setTab("verify")}>Look up a receipt</button><button type="button" className="btn sm" onClick={() => c.setTab("explore")}>Explore receipts</button></div></div>
+      <div className="history-tools"><div><b>{chainItems.length} on-chain events</b><p className="muted small">For {short(me)} in the scanned range{c.eventsLoading ? " · updating…" : ""}</p></div><div className="row"><button type="button" className="btn sm" onClick={() => download(`potkit-history-${me.slice(0, 8)}.csv`, toCsv(["date", "type", "activity", "detail", "amount", "status", "transaction"], visible.map((it) => [it.t ? new Date(it.t).toISOString() : "", kindLabel[it.tone] ?? "Activity", it.title, it.detail, it.money ?? "", it.src === "chain" ? "Confirmed" : "Local", it.hash ?? ""])), "text/csv")}><Ico n="copy" /> Export CSV</button><button type="button" className="btn sm" onClick={() => c.setTab("verify")}>Look up a receipt</button></div></div>
       {!visible.length && <Empty icon="◷" title="No events in this filter" body="Choose another activity type to see more of this wallet's timeline." />}
       {!!visible.length && <section className="history-table" role="table" aria-label="Wallet activity">
         <div className="history-row history-row-head" role="row"><span role="columnheader">Date</span><span role="columnheader">Type</span><span role="columnheader">Activity</span><span role="columnheader">Amount</span><span role="columnheader">Status</span><span role="columnheader">Transaction</span></div>
@@ -77,7 +79,7 @@ export function History({ c }: { c: Ctx }) {
             <span className="history-tx" role="cell">
               {it.hash ? <>
                 <span className="mono">{short(it.hash)}</span>
-                {it.src === "chain" ? <a href={`https://node-console.portaldot.dev/?rpc=wss%3A%2F%2Ftest-node-v3.portaldot.dev#/explorer/query/${it.hash}`} target="_blank" rel="noreferrer" aria-label={`Open transaction ${it.hash}`} title="Open transaction"><Ico n="ext" size={14} /></a> : <span className="tag">Local</span>}
+                {it.src === "chain" ? (it.block !== undefined ? <a href={blockUrl(it.block)} target="_blank" rel="noreferrer" aria-label={`Open block ${it.block} (contains this transaction) in the node console`} title={`Open block ${it.block} in the node console`}><Ico n="ext" size={14} /></a> : null) : <span className="tag">Local</span>}
                 <button className="wp-copy" aria-label={`Copy transaction hash ${it.hash}`} title={copied === it.key ? "Copied" : "Copy transaction hash"} onClick={() => void navigator.clipboard?.writeText(it.hash!).then(() => { setCopied(it.key); setTimeout(() => setCopied(""), 1300); })}><Ico n={copied === it.key ? "check" : "copy"} size={14} /></button>
               </> : <span className="muted">—</span>}
             </span>

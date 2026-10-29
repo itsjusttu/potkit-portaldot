@@ -1,6 +1,7 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState, type ReactNode } from "react";
 import { mappedAddress, portaldot } from "./lib/chain";
 import { Ico } from "./AppUi";
+import { L } from "./docs/Chrome";
 
 /** Response shapes of /api/faucet (see api/_faucet-core.ts). */
 type Status = { ok: boolean; enabled: boolean; address?: string; balance?: string; amount?: string; empty?: boolean; reason?: string; error?: string; message?: string;
@@ -45,8 +46,10 @@ export function FaucetButton({ account, onFunded, compact = false, hideManualAdd
   };
 
   const copy = () => void navigator.clipboard?.writeText(mapped).then(() => { setCopied(true); setTimeout(() => setCopied(false), 1300); });
-  const manual = (_why: string) => (
+  const closed = <>The PotKit faucet is not active on this deployment. Test tPOT is handed out by the Portaldot team to hackathon participants: ask on the <a href={L.discord} target="_blank" rel="noreferrer">Portaldot Discord</a> and give them your mapped Portaldot account (the address starting with 5).</>;
+  const manual = (why: ReactNode) => (
     <div className={`faucet off ${compact ? "compact" : ""}`}>
+      {why ? <p className="muted small">{why}</p> : null}
       {!hideManualAddress && <p className="muted small">Mapped Portaldot account for manual gas funding:</p>}
       {mapped && !hideManualAddress && <p className="tl-hash"><span className="mono">{mapped}</span>
         <button className="wp-copy" aria-label="Copy mapped gas account" onClick={copy}><Ico n={copied ? "check" : "copy"} size={14} />{copied ? "Copied" : "Copy"}</button></p>}
@@ -54,9 +57,9 @@ export function FaucetButton({ account, onFunded, compact = false, hideManualAdd
   );
 
   if (st === undefined) return <div className={`faucet ${compact ? "compact" : ""}`}><button className="btn sm" disabled><span className="spin" aria-hidden /> Checking faucet…</button></div>;
-  if (st === null) return manual("Manual funding available.");
-  if (!st.enabled) return manual("Manual funding available.");
-  if (!st.ok) return manual(st.message ?? "The gas faucet can't be reached right now.");
+  if (st === null) return manual(closed);
+  if (!st.enabled) return manual(closed);
+  if (!st.ok) return manual(st.message ?? "The gas faucet can't be reached right now. You can still fund the mapped account manually.");
 
   const enough = st.recipient ? !st.recipient.eligible : false;
   const disabled = ph.s === "pending" || ph.s === "ok" || enough || Boolean(st.empty);
