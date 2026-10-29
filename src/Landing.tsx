@@ -1,69 +1,13 @@
 import { useCallback, useEffect, useId, useLayoutEffect, useRef, useState, type FormEvent, type KeyboardEvent, type ReactNode } from "react";
-import "./theme-tokens.css";
-import "./landing-pk.css";
 import { L, app, ext, page } from "./docs/Chrome";
+import { Arr, Footer, Header, REPO, Rv, TestnetBar, reducedMotion, usePageMotion, useScrolled } from "./plShell";
 
 /* PotKit landing (potkit.pro). One visual idea runs through the page: a receivable is recorded as a receipt, the receipt
    is locked and split into shares, and a settlement flows back to every holder. The hero, the lifecycle walkthrough and
    the closing call to action all draw that same violet-to-blue "split and converge" line. Every figure inside a mock-up
    is illustrative, never live data, and no customer, partner or usage claim is made anywhere. */
 
-const REPO = "https://github.com/itsjusttu/potkit-portaldot";
-const X = "https://x.com/potkitpro";
-type Item = { label: string; href: string; note?: string; internal?: boolean };
-const RESOURCES: Item[] = [
-  { label: "Help Center", href: page("/help"), note: "Guides and contact", internal: true },
-  { label: "Security model", href: page("/security"), note: "What is and is not enforced", internal: true },
-  { label: "Portaldot whitepaper", href: L.whitepaper, note: "Network design" },
-  { label: "Developer docs", href: L.docs, note: "Build on Portaldot" },
-  { label: "V3 testnet guide", href: L.guide, note: "Map account, get gas" },
-];
-const COMMUNITY: Item[] = [
-  { label: "PotKit on X", href: X },
-  { label: "PotKit on GitHub", href: REPO },
-  { label: "Portaldot Discord", href: L.discord },
-  { label: "Hacker House 2026 · DoraHacks", href: L.hackathon },
-];
-
-/* landing-only display, body and code faces (the app keeps its own); the page stays readable with the fallbacks */
-if (typeof document !== "undefined" && !document.getElementById("pl-fonts")) {
-  const l = document.createElement("link");
-  l.id = "pl-fonts"; l.rel = "stylesheet";
-  l.href = "https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,300;6..72,400&family=Hanken+Grotesk:wght@400;500;600&family=IBM+Plex+Mono:wght@400&display=swap";
-  document.head.appendChild(l);
-}
-
 /* ---------- hooks ---------- */
-const reducedMotion = () => typeof matchMedia === "function" && matchMedia("(prefers-reduced-motion: reduce)").matches;
-
-/** Reveal-on-scroll (data-rv gains .is-in) and off-screen pausing (data-live gains .is-idle). Content is only hidden once
-    .pl-js is set, and reduced motion shows everything at once. */
-function usePageMotion(root: React.RefObject<HTMLElement | null>) {
-  useLayoutEffect(() => { root.current?.classList.add("pl-js"); return () => root.current?.classList.remove("pl-js"); }, [root]);
-  useEffect(() => {
-    const el = root.current; if (!el) return;
-    const nodes = [...el.querySelectorAll<HTMLElement>("[data-rv]")];
-    if (reducedMotion() || typeof IntersectionObserver === "undefined") { nodes.forEach((n) => n.classList.add("is-in")); return; }
-    const io = new IntersectionObserver((es) => es.forEach((e) => { if (e.isIntersecting) { e.target.classList.add("is-in"); io.unobserve(e.target); } }), { rootMargin: "0px 0px -8% 0px", threshold: 0.08 });
-    nodes.forEach((n) => io.observe(n));
-    const live = new IntersectionObserver((es) => es.forEach((e) => e.target.classList.toggle("is-idle", !e.isIntersecting)), { rootMargin: "120px 0px" });
-    el.querySelectorAll("[data-live]").forEach((n) => live.observe(n));
-    return () => { io.disconnect(); live.disconnect(); };
-  }, [root]);
-}
-
-function useScrolled() {
-  const [s, setS] = useState(false);
-  useEffect(() => {
-    let raf = 0;
-    const run = () => { raf = 0; setS(scrollY > 16); };
-    const on = () => { if (!raf) raf = requestAnimationFrame(run); };
-    run(); addEventListener("scroll", on, { passive: true });
-    return () => { removeEventListener("scroll", on); if (raf) cancelAnimationFrame(raf); };
-  }, []);
-  return s;
-}
-
 /** true while the element is on screen (defaults to true so nothing waits on the observer) */
 function useInView(ref: React.RefObject<HTMLElement | null>) {
   const [v, setV] = useState(true);
@@ -87,12 +31,6 @@ function useCycle(len: number, ms: number, active = true) {
 }
 
 /* ---------- primitives ---------- */
-const Arr = () => <svg className="pl-arr" viewBox="0 0 16 16" aria-hidden><path d="M4 12 12 4M6 4h6v6" fill="none" stroke="currentColor" strokeWidth="1.4" /></svg>;
-const Rv = ({ as: Tag = "div", kind = "up", delay = 0, className = "", children }: { as?: "div" | "li" | "article"; kind?: "up" | "left" | "right" | "scale"; delay?: number; className?: string; children: ReactNode }) => {
-  const T = Tag as "div";
-  return <T data-rv={kind} className={className} style={{ "--d": `${delay}ms` } as React.CSSProperties}>{children}</T>;
-};
-
 const I = {
   receipt: <path d="M6 3h12v18l-3-2-3 2-3-2-3 2zM9 8h6M9 12h6" />,
   wallet: <path d="M4 7h15v12H4zM4 7l2-3h11l2 3M15 13h3" />,
@@ -123,53 +61,6 @@ function Tabs<T extends string>({ id, label, tabs, value, onChange, vertical = f
       ))}
       <i className="pl-tabs-ind" aria-hidden />
     </div>
-  );
-}
-
-function Menu({ label, items }: { label: string; items: Item[] }) {
-  const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    if (!open) return;
-    const off = (e: Event) => { if (!ref.current?.contains(e.target as Node)) setOpen(false); };
-    const esc = (e: globalThis.KeyboardEvent) => { if (e.key === "Escape") { setOpen(false); ref.current?.querySelector<HTMLElement>("button")?.focus(); } };
-    document.addEventListener("pointerdown", off); document.addEventListener("keydown", esc);
-    return () => { document.removeEventListener("pointerdown", off); document.removeEventListener("keydown", esc); };
-  }, [open]);
-  return (
-    <div className={`pl-menu ${open ? "open" : ""}`} ref={ref} onMouseEnter={() => matchMedia("(hover: hover)").matches && setOpen(true)} onMouseLeave={() => setOpen(false)} onBlur={(e) => { if (!ref.current?.contains(e.relatedTarget as Node)) setOpen(false); }}>
-      <button type="button" aria-expanded={open} aria-haspopup="true" onClick={() => setOpen(!open)}>{label}<svg className="pl-chev" viewBox="0 0 12 12" aria-hidden><path d="M2 4.5 6 8l4-3.5" fill="none" stroke="currentColor" strokeWidth="1.3" /></svg></button>
-      <div className="pl-pop">
-        {items.map((i) => <a key={i.label} href={i.href} {...(i.internal ? {} : ext)}><b>{i.label}</b>{i.note && <small>{i.note}</small>}<Arr /></a>)}
-      </div>
-    </div>
-  );
-}
-
-function Header({ scrolled, launch, demo }: { scrolled: boolean; launch: string; demo: boolean }) {
-  const [open, setOpen] = useState(false);
-  useEffect(() => {
-    if (!open) return;
-    const esc = (e: globalThis.KeyboardEvent) => { if (e.key === "Escape") setOpen(false); };
-    document.addEventListener("keydown", esc); return () => document.removeEventListener("keydown", esc);
-  }, [open]);
-  const close = () => setOpen(false);
-  const label = demo ? "Open demo" : "Launch App";
-  return (
-    <header className={`pl-head ${scrolled ? "scrolled" : ""} ${open ? "menu-open" : ""}`}>
-      <div className="pl-wrap pl-head-in">
-        <a className="pl-logo" href={page("/")} aria-label="PotKit home"><img src="/potkit-p-circle-white.svg" alt="" width={28} height={28} />PotKit</a>
-        <nav id="pl-nav" className="pl-nav" aria-label="Main">
-          <a href={page("/how-it-works")} onClick={close}>How it works</a>
-          <a href={page("/protocol")} onClick={close}>Protocol</a>
-          <Menu label="Resources" items={RESOURCES} />
-          <Menu label="Community" items={COMMUNITY} />
-          <a className="pl-btn primary pl-nav-cta" href={launch} onClick={close}>{label}</a>
-        </nav>
-        <a className="pl-btn primary pl-head-cta" href={launch}>{label} <Arr /></a>
-        <button type="button" className="pl-burger" aria-label={open ? "Close menu" : "Open menu"} aria-expanded={open} aria-controls="pl-nav" onClick={() => setOpen(!open)}><i /><i /><i /></button>
-      </div>
-    </header>
   );
 }
 
@@ -259,7 +150,7 @@ function IssueVisual() {
       <Illustrative />
       <ol className="pl-ui-steps">{["Receipt", "Terms", "Lock"].map((n, k) => <li key={n} className={k < i ? "done" : k === i ? "on" : ""}><span>{k < i ? "✓" : k + 1}</span>{n}</li>)}</ol>
       <div className="pl-fields" key={i}>
-        {i === 0 && <><div><small>Kind</small><b>Invoice</b></div><div className="wide"><small>Note</small><b>Invoice 042 — content delivery</b></div></>}
+        {i === 0 && <><div><small>Kind</small><b>Invoice</b></div><div className="wide"><small>Note</small><b>Invoice 042, content delivery</b></div></>}
         {i === 1 && <><div><small>Face value</small><b>1 tPOT</b></div><div><small>Due date</small><b>In 60 days</b></div><div><small>Shares to issue</small><b>100</b></div></>}
         {i === 2 && <><div className="wide"><small>One transaction</small><b>Receipt moves into PotKit · 100 shares minted to you</b></div><div className="wide"><small>Then</small><b>Anyone can settle by paying at least the face value</b></div></>}
       </div>
@@ -363,13 +254,102 @@ const STEPS = [
   { t: "Trade", d: "Shares are listed at a fixed tPOT price and held in escrow. Buyers pay the exact cost; the seller is paid in the same transaction." },
   { t: "Settle & claim", d: "Anyone can pay at least the face value. Holders then claim their pro-rata part of the pool in tPOT. Redeeming returns the NFT once everything is claimed." },
 ] as const;
-const EXPLORE: { t: string; k: string; d: string; href: string; art: number }[] = [
-  { t: "Invoice", k: "Receipt kind", d: "A receivable for work already delivered, recorded as an issuer-provided receipt.", href: "?tab=issue", art: 0 },
-  { t: "Content right", k: "Receipt kind", d: "A claim on content revenue, with the same terms, shares and settlement rules.", href: "?tab=issue", art: 1 },
-  { t: "Equipment", k: "Receipt kind", d: "An equipment-related receivable that follows the same lifecycle.", href: "?tab=issue", art: 2 },
-  { t: "Issuers", k: "Role", d: "Mint, lock and offer shares at a discount.", href: "?tab=issue", art: 1 },
-  { t: "Investors", k: "Role", d: "Compare discount, APR and due date, then buy shares.", href: "?tab=trade", art: 2 },
-  { t: "Debtors & judges", k: "Role", d: "Settle once and share a read-only proof.", href: "?tab=verify", art: 0 },
+/** Decorative line art for the explore cards: one drawing per card, pure SVG, no data. Styles: .pl-xart in landing-pk.css */
+function XArt({ n }: { n: string }) {
+  const v = { viewBox: "0 0 280 150", focusable: "false" as const };
+  switch (n) {
+    case "Invoice": return (
+      <svg {...v}>
+        <rect className="f soft" x="66" y="26" width="104" height="112" rx="6" />
+        <rect className="f" x="78" y="14" width="104" height="116" rx="6" />
+        <rect className="a" x="90" y="28" width="38" height="7" rx="2" />
+        <path className="s" d="M90 52h78M90 63h62M90 74h70M90 85h50M90 100h80" />
+        <rect className="s" x="128" y="108" width="42" height="12" rx="3" />
+        <rect className="a" x="133" y="112" width="20" height="4" rx="2" />
+        <circle className="f" cx="226" cy="42" r="20" />
+        <path className="s" d="M226 30v12l8 6" />
+        <path className="s dash" d="M226 66v26" />
+        <circle className="f" cx="226" cy="108" r="14" />
+        <circle className="a" cx="226" cy="108" r="4" />
+      </svg>);
+    case "Content right": return (
+      <svg {...v}>
+        <rect className="f" x="40" y="26" width="150" height="96" rx="9" />
+        <path className="a" d="M104 62l34 18-34 18z" />
+        <path className="s" d="M56 108h118" />
+        <circle className="a" cx="96" cy="108" r="4" />
+        <rect className="f" x="208" y="86" width="10" height="38" rx="2" />
+        <rect className="f" x="222" y="66" width="10" height="58" rx="2" />
+        <rect className="f" x="236" y="76" width="10" height="48" rx="2" />
+        <rect className="a" x="250" y="46" width="10" height="78" rx="2" />
+        <circle className="f" cx="228" cy="38" r="11" />
+        <circle className="a" cx="228" cy="38" r="3" />
+      </svg>);
+    case "Equipment": return (
+      <svg {...v}>
+        <path className="s" d="M92 50l9-14h42l9 14" />
+        <rect className="f" x="60" y="50" width="140" height="80" rx="10" />
+        <circle className="f" cx="130" cy="90" r="28" />
+        <circle className="s" cx="130" cy="90" r="17" />
+        <circle className="a" cx="130" cy="90" r="6" />
+        <rect className="s" x="172" y="58" width="18" height="8" rx="2" />
+        <rect className="a" x="150" y="32" width="18" height="6" rx="3" />
+        <path className="f" d="M222 58h26a8 8 0 0 1 8 8v52a8 8 0 0 1-8 8h-26a8 8 0 0 1-8-8V66a8 8 0 0 1 8-8z" />
+        <circle className="s" cx="235" cy="70" r="4" />
+        <path className="s" d="M224 88h22M224 98h22M224 108h14" />
+        <path className="s dash" d="M231 68C225 54 212 54 200 66" />
+      </svg>);
+    case "Issuers": return (
+      <svg {...v}>
+        <rect className="f" x="32" y="34" width="62" height="84" rx="6" />
+        <rect className="a" x="42" y="44" width="22" height="6" rx="2" />
+        <path className="s" d="M42 64h42M42 74h34M42 84h40M42 94h24" />
+        <path className="s dash" d="M102 76h32" />
+        <path className="s" d="M128 70l8 6-8 6" />
+        <circle className="f" cx="168" cy="44" r="13" />
+        <circle className="a" cx="168" cy="44" r="4" />
+        <circle className="f" cx="202" cy="44" r="13" />
+        <circle className="f" cx="236" cy="44" r="13" />
+        <circle className="f" cx="185" cy="78" r="13" />
+        <circle className="f" cx="219" cy="78" r="13" />
+        <path className="f" d="M160 106h58l10 12-10 12h-58a6 6 0 0 1-6-6v-12a6 6 0 0 1 6-6z" />
+        <circle className="s" cx="176" cy="114" r="2.6" />
+        <circle className="s" cx="196" cy="123" r="2.6" />
+        <path className="s" d="M174 125l24-14" />
+      </svg>);
+    case "Investors": return (
+      <svg {...v}>
+        <path className="s dash" d="M36 36h210" />
+        <path className="s" d="M36 126h216" />
+        <path className="area" d="M36 114C78 110 108 98 140 82S206 52 242 40V126H36z" />
+        <path className="ab" d="M36 114C78 110 108 98 140 82S206 52 242 40" />
+        <circle className="a" cx="242" cy="40" r="5" />
+        <path className="s" d="M254 36V16" />
+        <path className="a" d="M254 16l14 5-14 5z" />
+        <circle className="f" cx="60" cy="70" r="14" />
+        <circle className="s" cx="55" cy="65" r="2.4" />
+        <circle className="s" cx="65" cy="75" r="2.4" />
+        <path className="s" d="M54 76l12-12" />
+      </svg>);
+    default: return (
+      <svg {...v}>
+        <rect className="f soft" x="30" y="44" width="54" height="72" rx="5" />
+        <path className="s" d="M40 60h34M40 71h26M40 82h32M40 93h20" />
+        <path className="f" d="M140 22l40 14v34c0 22-17 38-40 48-23-10-40-26-40-48V36z" />
+        <path className="ab thick" d="M120 72l14 14 26-30" />
+        <path className="s dash" d="M214 64L184 74" />
+        <circle className="f" cx="232" cy="58" r="16" />
+        <circle className="a" cx="232" cy="58" r="4" />
+      </svg>);
+  }
+}
+const EXPLORE: { t: string; k: string; d: string; href: string }[] = [
+  { t: "Invoice", k: "Receipt kind", d: "A receivable for work already delivered, recorded as an issuer-provided receipt.", href: "?tab=issue" },
+  { t: "Content right", k: "Receipt kind", d: "A claim on content revenue, with the same terms, shares and settlement rules.", href: "?tab=issue" },
+  { t: "Equipment", k: "Receipt kind", d: "An equipment-related receivable that follows the same lifecycle.", href: "?tab=issue" },
+  { t: "Issuers", k: "Role", d: "Mint, lock and offer shares at a discount.", href: "?tab=issue" },
+  { t: "Investors", k: "Role", d: "Compare discount, APR and due date, then buy shares.", href: "?tab=trade" },
+  { t: "Debtors & judges", k: "Role", d: "Settle once and share a read-only proof.", href: "?tab=verify" },
 ];
 const LEARN: { t: string; d: string; m: string; h: string; internal?: boolean }[] = [
   { t: "How it works", d: "One invoice, four contract moves: mint, lock, trade, settle.", m: "Lifecycle", h: page("/how-it-works"), internal: true },
@@ -441,7 +421,7 @@ export function Landing() {
   return (
     <div className="pl" ref={root}>
       <a className="pl-skip" href="#pl-main">Skip to content</a>
-      <div className="pl-bar"><div className="pl-wrap"><span><i className="pl-pulse" aria-hidden />Portaldot V3 testnet demo · no real value</span><a href={launch}>Launch the demo <Arr /></a></div></div>
+      <TestnetBar launch={launch} />
       <Header scrolled={scrolled} launch={launch} demo={hasJudge} />
       <main id="pl-main">
         {/* 1 · asymmetric hero: message left, the receipt → shares → settlement motif right */}
@@ -451,7 +431,7 @@ export function Landing() {
             <div className="pl-hero-copy">
               <p className="pl-kicker pl-in" style={{ "--d": "60ms" } as React.CSSProperties}>On-chain receivables · Portaldot V3</p>
               <h1 className="pl-in" style={{ "--d": "140ms" } as React.CSSProperties}>Split an unpaid invoice into shares. <em>Settle it once, for every holder.</em></h1>
-              <p className="pl-lede pl-in" style={{ "--d": "260ms" } as React.CSSProperties}>PotKit turns an unpaid invoice into a locked receipt and tradeable shares—so issuers can access liquidity and holders can claim pro-rata when the debtor settles.</p>
+              <p className="pl-lede pl-in" style={{ "--d": "260ms" } as React.CSSProperties}>PotKit turns an unpaid invoice into a locked receipt and tradeable shares. Issuers can get cash sooner, and holders claim their share when the debtor settles.</p>
               <div className="pl-cta pl-in" style={{ "--d": "380ms" } as React.CSSProperties}>
                 <a className="pl-btn primary lg" href={launch}>Launch App <Arr /></a>
                 <a className="pl-btn ghost lg" href={page("/how-it-works")}>See how it works</a>
@@ -591,7 +571,7 @@ export function Landing() {
             <div className="pl-slider" ref={slider} onScroll={onSlide} tabIndex={0} role="region" aria-label="Receipt kinds and roles">
               {EXPLORE.map((c) => (
                 <a key={c.t} className="pl-xcard" href={tabHref(c.href)}>
-                  <span className={`pl-xart a${c.art}`} aria-hidden><i /><i /><i /><i /></span>
+                  <span className="pl-xart" aria-hidden><XArt n={c.t} /></span>
                   <small>{c.k}</small><b>{c.t}</b><span className="pl-xdesc">{c.d}</span><span className="pl-xgo">Open in app <Arr /></span>
                 </a>
               ))}
@@ -621,17 +601,7 @@ export function Landing() {
         </section>
       </main>
 
-      <footer className="pl-foot">
-        <div className="pl-wrap">
-          <div className="pl-foot-cols">
-            <nav aria-label="Product"><h4>Product</h4><a href={launch}>Launch app</a><a href={app("?tab=issue")}>Issue an invoice</a><a href={app("?tab=trade")}>Trade shares</a><a href={app("?tab=verify")}>Verify a receipt</a></nav>
-            <nav aria-label="Learn"><h4>Learn</h4><a href={page("/how-it-works")}>How it works</a><a href={page("/protocol")}>Protocol reference</a><a href={page("/security")}>Security model</a><a href={page("/help")}>Help Center</a></nav>
-            <nav aria-label="Resources"><h4>Resources</h4>{RESOURCES.filter((x) => !x.internal).map((x) => <a key={x.label} href={x.href} {...ext}>{x.label}</a>)}<a href={L.repo} {...ext}>Portaldot node repo</a></nav>
-            <nav aria-label="Community"><h4>Community</h4>{COMMUNITY.map((x) => <a key={x.label} href={x.href} {...ext}>{x.label}</a>)}</nav>
-          </div>
-          <div className="pl-foot-base"><span className="pl-logo sm"><img src="/potkit-p-circle-white.svg" alt="" width={24} height={24} />PotKit</span><span>© 2026 PotKit · Not affiliated with Portaldot · Testnet only</span></div>
-        </div>
-      </footer>
+      <Footer launch={launch} />
     </div>
   );
 }

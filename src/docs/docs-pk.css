@@ -1,0 +1,141 @@
+/* PotKit doc pages (help, how it works, protocol, security): the landing's marketing system applied to reading pages.
+   Everything is scoped to .pl-doc (the page root also carries .pl, which supplies the palette and type), so nothing here
+   reaches the app. Hero, table of contents, sections, callouts, function cards, diagrams and the help center live here. */
+
+/* ---------- hero ---------- */
+.pl-dhero { position: relative; overflow: hidden; padding-block: clamp(3.2rem, 7vw, 5.5rem) clamp(2.4rem, 5vw, 3.6rem); border-bottom: 1px solid var(--line);
+  background: radial-gradient(55% 90% at 88% -20%, rgba(123,92,255,.30), transparent 70%), radial-gradient(40% 70% at 0% 110%, rgba(79,107,255,.14), transparent 70%), var(--night); }
+.pl-dhero h1 { margin-top: 1.1rem; max-width: 18ch; }
+.pl-dhero .pl-dlede { margin-top: 1.4rem; max-width: 46rem; color: var(--soft); font-size: clamp(1.05rem, 1.5vw, 1.22rem); line-height: 1.65; }
+.dx-facts { display: flex; flex-wrap: wrap; gap: .6rem; margin-top: 1.8rem; }
+.dx-facts span { display: inline-flex; align-items: center; gap: .55rem; min-height: 32px; padding: 0 .9rem; border: 1px solid var(--line2); border-radius: 999px; background: rgba(123,92,255,.08); font-size: .84rem; color: var(--soft); }
+.dx-facts span::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--violet-l); box-shadow: 0 0 8px var(--violet); }
+
+/* the header marks the current page: an underline on the link, or on Resources when the page lives in that menu */
+.pl-doc .pl-nav > a[aria-current="page"]::after, .pl-doc .pl-menu.cur > button::after { transform: scaleX(1); }
+.pl-doc .pl-pop a[aria-current="page"] { background: rgba(123,92,255,.14); }
+
+/* ---------- layout, table of contents ---------- */
+.pl-doc .dx-wrap { display: grid; grid-template-columns: 15rem minmax(0, 1fr); gap: clamp(2rem, 5vw, 4.5rem); align-items: start; padding-block: 2.5rem 5rem; }
+.dx-toc { position: sticky; top: 5.2rem; display: grid; gap: .15rem; max-height: calc(100vh - 6.5rem); overflow-y: auto; padding: 1rem .7rem; border: 1px solid var(--line2); border-radius: 10px; background: var(--panel); scrollbar-width: thin; }
+.dx-toc small { padding: 0 .7rem .6rem; font-size: .72rem; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; color: var(--violet-l); }
+.dx-toc a { position: relative; padding: .5rem .7rem .5rem 1rem; border-radius: 6px; font-size: .92rem; line-height: 1.35; color: var(--dim); transition: color .2s, background-color .2s; }
+.dx-toc a::before { content: ""; position: absolute; left: 0; top: .45rem; bottom: .45rem; width: 2px; border-radius: 2px; background: transparent; transition: background-color .2s; }
+.dx-toc a:hover { color: #fff; }
+.dx-toc a.on { color: #fff; background: rgba(123,92,255,.14); }
+.dx-toc a.on::before { background: var(--violet-l); box-shadow: 0 0 10px var(--violet); }
+.dx-toc .dx-toc-app { display: inline-flex; align-items: center; gap: .5rem; margin-top: .8rem; padding: .7rem 1rem; border: 1px solid var(--line2); color: var(--violet-l); font-weight: 600; justify-self: start; }
+.dx-toc .dx-toc-app::before { display: none; }
+.dx-toc-sel-wrap { display: none; }
+
+/* ---------- reading column ---------- */
+.dx-body { min-width: 0; max-width: 50rem; }
+.dx-sec { padding-block: clamp(2rem, 4vw, 3rem); border-bottom: 1px solid var(--line); scroll-margin-top: 6rem; }
+.dx-sec:first-of-type { padding-top: .4rem; }
+.dx-sec h2 { display: flex; align-items: center; gap: .9rem; margin-bottom: 1.3rem; font-size: clamp(1.7rem, 3vw, 2.35rem); line-height: 1.12; }
+.dx-n { flex: none; display: inline-grid; place-items: center; width: 2.4rem; height: 2.4rem; border: 1px solid var(--line2); border-radius: 50%; background: rgba(123,92,255,.14); font: 500 1rem var(--sans); color: var(--violet-l); }
+.dx-sec p, .dx-sec li { color: var(--soft); font-size: 1.04rem; line-height: 1.75; }
+.dx-sec p { max-width: 46rem; margin: 0 0 1.05rem; }
+.dx-sec b { color: #fff; font-weight: 600; }
+.dx-sec h3 { margin: 1.8rem 0 .7rem; font-family: var(--sans); font-size: 1.05rem; font-weight: 600; letter-spacing: 0; color: #fff; }
+.dx-sec h4 { margin: 1.8rem 0 .7rem; font-size: .76rem; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; color: var(--violet-l); }
+.dx-ul { margin: 0 0 1.3rem; padding-left: 1.3rem; list-style: disc; }
+.dx-ul li { margin-bottom: .6rem; } .dx-ul li::marker { color: var(--violet-l); }
+.dx-c, .dx-sec code { padding: .08em .42em; border: 1px solid var(--line2); border-radius: 5px; background: rgba(123,92,255,.12); font: .86em var(--mono); color: #e6dfff; overflow-wrap: anywhere; }
+.dx-fn-h code { padding: 0; border: 0; background: none; }
+.pl-doc .dx-a { color: var(--violet-l); border-bottom: 1px solid rgba(187,168,255,.4); }
+.dx-sart { float: right; width: 13.5rem; height: 8.4rem; margin: 0 0 1rem 1.6rem; border: 1px solid var(--line2); }
+.dx-sec::after { content: ""; display: table; clear: both; }
+
+/* callouts, tables, function cards */
+.dx-call { max-width: 46rem; margin: 1.4rem 0 1.6rem; padding: 1.05rem 1.25rem; border: 1px solid var(--line2); border-left: 3px solid var(--violet-l); border-radius: 8px; background: rgba(123,92,255,.08); font-size: .98rem; line-height: 1.65; color: var(--soft); }
+.dx-call.warn { border-color: rgba(251,191,36,.28); border-left-color: #fbbf24; background: rgba(251,191,36,.06); }
+.dx-tw { overflow-x: auto; margin: 1.1rem 0 1.8rem; border: 1px solid var(--line2); border-radius: 10px; background: var(--panel); }
+.dx-t { width: 100%; min-width: 34rem; border-collapse: collapse; font-size: .94rem; }
+.dx-t th { padding: .85rem 1.1rem; border-bottom: 1px solid var(--line2); background: rgba(123,92,255,.08); text-align: left; font-size: .72rem; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: var(--violet-l); }
+.dx-t td { padding: .85rem 1.1rem; border-bottom: 1px solid var(--line); vertical-align: top; line-height: 1.55; color: var(--soft); }
+.dx-t tr:last-child td { border-bottom: 0; }
+.dx-t tbody tr:hover td { background: rgba(123,92,255,.05); }
+.dx-fn { margin: 0 0 .9rem; overflow: hidden; border: 1px solid var(--line2); border-radius: 10px; background: var(--panel); }
+.dx-fn-h { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .6rem 1rem; padding: .8rem 1.1rem; border-bottom: 1px solid var(--line); background: rgba(123,92,255,.08); }
+.dx-fn-h code { font: .86rem/1.45 var(--mono); color: #e6dfff; overflow-wrap: anywhere; }
+.dx-fn-h span { padding: .15rem .65rem; border: 1px solid var(--line2); border-radius: 999px; font-size: .7rem; letter-spacing: .1em; text-transform: uppercase; color: var(--violet-l); }
+.dx-sec .dx-fn p { max-width: none; margin: 0; padding: .85rem 1.1rem 1rem; font-size: .96rem; }
+.dx-ev { margin: 1.2rem 0 0; font-size: .95rem; line-height: 1.65; color: var(--soft); }
+.dx-ev b { margin-right: .6rem; font-size: .72rem; letter-spacing: .12em; text-transform: uppercase; color: var(--violet-l); }
+
+/* ---------- diagrams ---------- */
+.dx-fig { margin: 1.6rem 0 2rem; overflow-x: auto; border: 1px solid var(--line2); border-radius: 12px;
+  background: linear-gradient(rgba(178,160,255,.05) 1px, transparent 1px) 0 0 / 100% 22px, linear-gradient(90deg, rgba(178,160,255,.05) 1px, transparent 1px) 0 0 / 22px 100%, #0a0718; }
+.dx-fig svg { display: block; width: 100%; min-width: 36rem; height: auto; padding: 1.2rem; }
+.dx-fig figcaption { padding: .9rem 1.2rem; border-top: 1px solid var(--line); font-size: .9rem; line-height: 1.55; color: var(--dim); }
+.dg-box rect { fill: #110d24; stroke: rgba(187,168,255,.6); stroke-width: 1.2; rx: 8px; }
+.dg-box.m rect { stroke: var(--blue-l); } .dg-box.n rect { stroke: rgba(201,196,222,.35); stroke-dasharray: 4 3; }
+.dg-t { fill: #fff; font: 500 15px var(--sans); text-anchor: middle; }
+.dg-s { fill: var(--dim); font: 11px var(--mono); text-anchor: middle; }
+.dg-ar path { fill: none; stroke: rgba(187,168,255,.7); stroke-width: 1.3; stroke-dasharray: 5 4; animation: dxFlow 2.4s linear infinite; }
+.dg-head { fill: var(--violet-l); stroke: none !important; animation: none !important; }
+.dg-l { fill: var(--soft); font: 11px var(--mono); text-anchor: middle; }
+@keyframes dxFlow { to { stroke-dashoffset: -18; } }
+
+/* ---------- next page ---------- */
+.dx-next { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: .2rem 1rem; margin-top: 2.6rem; padding: 1.5rem 1.7rem; border: 1px solid var(--line2); border-radius: 12px; background: var(--panel); transition: transform .35s var(--ease), border-color .3s, box-shadow .35s var(--ease); }
+.dx-next:hover, .dx-next:focus-visible { transform: translateY(-3px); border-color: rgba(187,168,255,.55); box-shadow: 0 24px 60px -34px rgba(123,92,255,.95); }
+.dx-next small { font-size: .72rem; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; color: var(--violet-l); }
+.dx-next b { grid-column: 1; font-family: var(--display); font-weight: 300; font-size: 1.9rem; letter-spacing: -.02em; line-height: 1.1; }
+.dx-next .pl-arr { grid-row: 1 / span 2; grid-column: 2; width: 1.4rem; height: 1.4rem; color: var(--violet-l); }
+
+/* ---------- help center ---------- */
+.pl-help .dx-wrap { grid-template-columns: 13.5rem minmax(0, 1fr); }
+.pl-help .dx-body { max-width: 58rem; }
+.help-browse { display: grid; gap: 1.3rem; }
+.help-search { display: flex; align-items: center; gap: .8rem; min-height: 3.6rem; padding: .4rem 1rem; border: 1px solid var(--line2); border-radius: 12px; background: var(--panel); transition: border-color .2s, box-shadow .2s; }
+.help-search:focus-within { border-color: var(--violet-l); box-shadow: 0 0 0 3px rgba(123,92,255,.25); }
+.help-search > span { color: var(--violet-l); font-size: 1.3rem; line-height: 1; }
+.pl-doc .help-search input { width: 100%; min-width: 0; height: auto; padding: 0; border: 0; outline: 0; background: transparent; font-size: 1rem; color: var(--text); }
+.pl-doc .help-search input::placeholder { color: var(--dim); }
+.help-search kbd { flex: none; padding: .2rem .5rem; border: 1px solid var(--line2); border-radius: 5px; font: .7rem var(--mono); color: var(--dim); }
+.help-browse h3 { margin: .8rem 0 -.2rem; font: 600 .76rem var(--sans); letter-spacing: .12em; text-transform: uppercase; color: var(--violet-l); }
+.help-cards { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .9rem; }
+.help-card { position: relative; display: grid; align-content: start; gap: .5rem; min-height: 10rem; padding: 1.15rem 2.8rem 1.15rem 1.15rem; border: 1px solid var(--line2); border-radius: 10px; background: var(--panel); transition: transform .35s var(--ease), border-color .3s, box-shadow .35s var(--ease); }
+.help-card:hover, .help-card:focus-visible { transform: translateY(-3px); border-color: rgba(187,168,255,.55); box-shadow: 0 24px 60px -34px rgba(123,92,255,.95); }
+.help-ico { width: 2.5rem; height: 2.5rem; padding: .55rem; border: 1px solid var(--line2); border-radius: 8px; background: rgba(123,92,255,.14); color: var(--violet-l); }
+.help-card small, .help-contact small { font-size: .72rem; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: var(--violet-l); }
+.help-card b { font-family: var(--display); font-weight: 400; font-size: 1.35rem; line-height: 1.15; color: #fff; }
+.help-card > span { font-size: .92rem; line-height: 1.55; color: var(--dim); }
+.help-card i { position: absolute; top: 1rem; right: 1rem; font-style: normal; color: var(--violet-l); }
+.help-faq { border-top: 1px solid var(--line2); }
+.help-faq details { border-bottom: 1px solid var(--line2); }
+.help-faq summary { display: flex; align-items: center; justify-content: space-between; gap: 1rem; min-height: 3.8rem; cursor: pointer; list-style: none; font-weight: 500; color: #fff; }
+.help-faq summary::-webkit-details-marker { display: none; }
+.help-faq summary span { font-size: 1.35rem; color: var(--violet-l); transition: transform .2s; }
+.help-faq details[open] summary span { transform: rotate(45deg); }
+.dx-sec .help-faq p { max-width: 48rem; margin: 0 2rem 1.2rem 0; font-size: .98rem; }
+.help-empty { margin: 0; padding: 1.25rem; border: 1px dashed var(--line2); border-radius: 10px; color: var(--dim); }
+.help-contact { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 1.5rem; padding: 1.6rem; border: 1px solid var(--line2); border-radius: 12px; background: linear-gradient(130deg, rgba(123,92,255,.2), rgba(79,107,255,.06)), var(--panel); }
+.help-contact h3 { margin: .4rem 0; font-family: var(--display); font-weight: 400; font-size: 1.7rem; letter-spacing: -.015em; color: #fff; }
+.dx-sec .help-contact p { max-width: 36rem; margin: 0; font-size: .98rem; }
+.help-contact-actions { display: flex; flex-wrap: wrap; gap: .75rem; }
+.pl-doc .help-contact-link { display: inline-flex; align-items: center; gap: .5rem; min-height: 46px; padding: 0 1.3rem; border-radius: 4px; background: #fff; font-size: .95rem; font-weight: 600; color: #12102a; transition: transform .25s var(--ease); }
+.help-contact-link:hover { transform: translateY(-2px); }
+.help-contact-link svg { width: 16px; height: 16px; }
+
+/* ---------- small screens ---------- */
+@media (max-width: 60rem) {
+  .pl-doc .dx-wrap, .pl-help .dx-wrap { grid-template-columns: minmax(0, 1fr); gap: 0; }
+  .dx-toc { display: none; }
+  .dx-toc-sel-wrap { display: block; margin: 0 0 .5rem; }
+  .pl-doc .dx-toc-sel { position: sticky; top: 4.4rem; z-index: 20; display: block; width: 100%; height: auto; margin: 0; padding: .85rem 1rem; border: 1px solid var(--line2); border-radius: 8px; background: #110d24; font: 500 .95rem var(--sans); color: var(--text); }
+  .dx-body, .pl-help .dx-body { max-width: none; }
+}
+@media (max-width: 40rem) {
+  .help-cards { grid-template-columns: minmax(0, 1fr); }
+  .dx-sart { float: none; width: 100%; height: 9rem; margin: 0 0 1.2rem; }
+  .dx-sec h2 { gap: .7rem; } .dx-n { width: 2rem; height: 2rem; font-size: .9rem; }
+  .dx-next b { font-size: 1.5rem; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .dg-ar path { animation: none; }
+  .dx-next, .help-card, .help-faq summary span, .help-contact-link, .dx-toc a { transition: none; }
+  .dx-next:hover, .help-card:hover, .help-contact-link:hover { transform: none; }
+}

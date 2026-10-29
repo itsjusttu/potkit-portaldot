@@ -19,7 +19,7 @@ do not touch contracts/, api/, src/lib/chain.ts, VITE_* variable names or the tr
   for lines, nodes, soft glows and interactive states (kept controlled, never a neon page). No orange/beige as main colours
   and no large cream areas; cool-white or pale-lavender surfaces only inside product mock-up frames. A light serif display face
   with a clean sans body, loaded for the landing only. Monospace stays for code, addresses and hashes.
-- All landing styles live in `src/landing-pk.css`, scoped under `.pl`; nothing there may leak into the app or docs pages.
+- The doc pages (/help, /how-it-works, /protocol, /security) use this same marketing system, not the app's. Landing styles live in `src/landing-pk.css` and doc-only styles in `src/docs/docs-pk.css`, both scoped under `.pl`; the shared top bar, header and footer are in `src/plShell.tsx`. Nothing there may leak into the app.
 - Never invent evidence: no customer logos, testimonials, usage numbers or partner claims. Proof must be checkable in the
   repo or in project links. Every product mock-up is labelled as an illustrative example, never live data.
 - Copy must state PotKit's limits: issuer-provided information is not verified, and payment is not guaranteed.

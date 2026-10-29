@@ -1,65 +1,100 @@
-// Custom line-art for PotKit. Paths use pathLength=1 so CSS can "draw" them on hover (.lx-draw).
+// Line art for the doc pages. Same drawing language as the landing's explore cards (classes .s .f .a .ab .dash live in
+// landing-pk.css under .pl-xart): violet outlines, one accent fill, no data. Always rendered inside <div className="pl-xart">.
+const V = { viewBox: "0 0 280 150", focusable: "false" as const };
 
-/** Receipt: invoice ticket with torn bottom edge, barcode and an NFT hex mark. */
+/** Receipt: invoice ticket with a torn edge, barcode and an NFT hexagon. */
 export const ReceiptArt = () => (
-  <svg viewBox="0 0 200 140" className="lx-logo-art" aria-hidden>
-    <g className="ga">
-      <path pathLength={1} className="lx-draw c" d="M64 18h72v86l-6 6-6-6-6 6-6-6-6 6-6-6-6 6-6-6-6 6-6-6-6 6-6-6z" />
-      <path pathLength={1} className="lx-draw dim" d="M76 34h34M76 44h48M76 54h26" />
-      {[0, 3, 5, 9, 11, 14, 18, 20, 23, 27, 30, 32, 36, 39, 42, 45].map((x, i) => <path key={i} className="lx-bar" d={`M${78 + x} 70v${i % 3 ? 16 : 20}`} />)}
-    </g>
-    <g className="gb">
-      <path pathLength={1} className="lx-draw m" d="M150 40l14 8v16l-14 8-14-8V48z" />
-      <text x="150" y="60" className="lx-nft">NFT</text>
-    </g>
+  <svg {...V} aria-hidden>
+    <path className="f" d="M84 14h96v108l-8 8-8-8-8 8-8-8-8 8-8-8-8 8-8-8-8 8-8-8-8 8-8-8z" />
+    <rect className="a" x="96" y="28" width="34" height="7" rx="2" />
+    <path className="s" d="M96 48h66M96 60h48M96 72h58" />
+    <path className="s" d="M96 90v18M102 90v18M108 90v18M116 90v18M122 90v18M126 90v18M134 90v18M140 90v18M148 90v18M156 90v18M162 90v18" />
+    <path className="f" d="M226 36l22 12v26l-22 12-22-12V48z" />
+    <path className="s dash" d="M182 56l18-4" />
+    <path className="ab" d="M216 62l7 7 13-14" />
   </svg>
 );
 
-/** Vault: round vault door with lock dial, surrounded by share slices. */
-export const VaultArt = () => {
-  const slices = Array.from({ length: 8 }, (_, i) => {
-    const a0 = (i / 8) * Math.PI * 2 + 0.06, a1 = ((i + 1) / 8) * Math.PI * 2 - 0.06, r0 = 46, r1 = 58;
-    const p = (r: number, a: number) => `${100 + Math.cos(a) * r} ${70 + Math.sin(a) * r}`;
-    return `M${p(r0, a0)} L${p(r1, a0)} A${r1} ${r1} 0 0 1 ${p(r1, a1)} L${p(r0, a1)} A${r0} ${r0} 0 0 0 ${p(r0, a0)}z`;
-  });
-  return (
-    <svg viewBox="0 0 200 140" className="lx-logo-art" aria-hidden>
-      <g className="lx-slices">{slices.map((d, i) => <path key={i} pathLength={1} className={`lx-draw ${i % 2 ? "m" : "c"} sl`} d={d} style={{ transitionDelay: `${i * 40}ms` }} />)}</g>
-      <circle pathLength={1} cx="100" cy="70" r="38" className="lx-draw c" />
-      <g className="lx-dial">
-        <circle pathLength={1} cx="100" cy="70" r="16" className="lx-draw dim" />
-        <path pathLength={1} className="lx-draw c" d="M100 50v8M100 82v8M80 70h8M112 70h8" />
-        <path className="lx-draw m" pathLength={1} d="M100 70l9-9" />
-      </g>
-      <rect x="60" y="62" width="4" height="16" className="lx-hinge" />
-    </svg>
-  );
-};
+/** Vault: a round vault door ringed by share dots. */
+export const VaultArt = () => (
+  <svg {...V} aria-hidden>
+    <circle className="f" cx="140" cy="75" r="46" />
+    <circle className="s" cx="140" cy="75" r="31" />
+    <circle className="a" cx="140" cy="75" r="7" />
+    <path className="s" d="M140 46v9M140 95v9M111 75h9M160 75h9" />
+    <path className="ab" d="M140 75l15-15" />
+    <circle className="f" cx="140" cy="14" r="5" /><circle className="a" cx="181" cy="31" r="5" /><circle className="f" cx="198" cy="75" r="5" /><circle className="f" cx="181" cy="119" r="5" />
+    <circle className="a" cx="140" cy="136" r="5" /><circle className="f" cx="99" cy="119" r="5" /><circle className="f" cx="82" cy="75" r="5" /><circle className="f" cx="99" cy="31" r="5" />
+  </svg>
+);
 
-/** Market: order book (bids/asks) with exchange arrows between them. */
+/** Market: an order book on each side of an exchange arrow, with a price line underneath. */
 export const MarketArt = () => (
-  <svg viewBox="0 0 200 140" className="lx-logo-art" aria-hidden>
-    <g>
-      {[40, 30, 22, 14].map((w, i) => <rect key={`a${i}`} x={74 - w} y={30 + i * 11} width={w} height="6" className="lx-ask" style={{ animationDelay: `${i * -0.7}s` }} />)}
-      {[16, 26, 34, 44].map((w, i) => <rect key={`b${i}`} x="126" y={30 + i * 11} width={w} height="6" className="lx-bid" style={{ animationDelay: `${i * -0.6}s` }} />)}
-    </g>
-    <path pathLength={1} className="lx-draw c" d="M84 56h32l-8-8M116 56" />
-    <path pathLength={1} className="lx-draw m" d="M116 74H84l8 8" />
-    <path pathLength={1} className="lx-draw dim" d="M30 108h140M100 22v96" />
-    <path pathLength={1} className="lx-draw c spark" d="M34 104l18-10 14 4 18-14 16 6 18-12 16 4 18-10 16 2" />
+  <svg {...V} aria-hidden>
+    <rect className="f" x="54" y="26" width="46" height="9" rx="2" /><rect className="f" x="66" y="40" width="34" height="9" rx="2" /><rect className="f" x="74" y="54" width="26" height="9" rx="2" /><rect className="f" x="82" y="68" width="18" height="9" rx="2" />
+    <rect className="f" x="180" y="26" width="18" height="9" rx="2" /><rect className="f" x="180" y="40" width="30" height="9" rx="2" /><rect className="a" x="180" y="54" width="40" height="9" rx="2" /><rect className="f" x="180" y="68" width="52" height="9" rx="2" />
+    <path className="s" d="M116 46h48l-9-9M164 62h-48l9 9" />
+    <path className="s" d="M40 126h200" />
+    <path className="ab" d="M44 120l24-12 18 4 24-16 22 6 24-14 22 4 24-12 22 2" />
   </svg>
 );
 
-/** Small 24px line icons for steps and security items. */
-const I: Record<string, string> = {
-  mint: "M7 3h10v18l-2.5-2-2.5 2-2.5-2L7 21zM10 8h4M10 12h4",
-  lock: "M6 11h12v9H6zM8.5 11V8a3.5 3.5 0 0 1 7 0v3M12 14.5v2.5",
-  trade: "M4 8h13l-3-3M20 16H7l3 3",
-  settle: "M12 3v18M16.5 7.5c-.8-1.3-2.4-2-4.5-2-2.5 0-4 1.2-4 3s1.6 2.6 4 3 4 1.3 4 3.2-1.7 3.3-4.3 3.3c-2.1 0-3.7-.8-4.5-2.2",
-  escrow: "M4 7l8-4 8 4v6c0 4-3.4 7-8 8-4.6-1-8-4-8-8z M9 12h6",
-  guard: "M12 3l8 3v6c0 4.5-3.4 8-8 9-4.6-1-8-4.5-8-9V6zM8.5 12l2.5 2.5 4.5-5",
-  tests: "M9 3h6M10 3v6l-5 9a2 2 0 0 0 1.8 3h10.4a2 2 0 0 0 1.8-3l-5-9V3M7.5 15h9",
-};
-export const Ico = ({ n }: { n: keyof typeof I | string }) => (
-  <svg viewBox="0 0 24 24" className="lx-i" aria-hidden><path d={I[n]} /></svg>
-);
+/** One drawing per lifecycle step of the How it works page. */
+export function StepArt({ n }: { n: string }) {
+  switch (n) {
+    case "mint": return (
+      <svg {...V} aria-hidden>
+        <rect className="f soft" x="78" y="26" width="92" height="104" rx="6" />
+        <rect className="f" x="88" y="14" width="92" height="104" rx="6" />
+        <rect className="a" x="99" y="27" width="34" height="7" rx="2" />
+        <path className="s" d="M99 50h68M99 61h54M99 72h62M99 83h40" />
+        <circle className="f" cx="218" cy="48" r="20" />
+        <path className="ab" d="M218 38v20M208 48h20" />
+      </svg>);
+    case "lock": return (
+      <svg {...V} aria-hidden>
+        <path className="s" d="M112 68V52a28 28 0 0 1 56 0v16" />
+        <rect className="f" x="100" y="68" width="80" height="58" rx="9" />
+        <circle className="a" cx="140" cy="92" r="6" />
+        <path className="s" d="M140 98v12" />
+        <circle className="f" cx="208" cy="38" r="12" /><circle className="f" cx="226" cy="74" r="12" /><circle className="f" cx="208" cy="110" r="12" />
+        <path className="s dash" d="M182 80l16-34M184 96l16 8M184 74l28 0" />
+      </svg>);
+    case "trade": return (
+      <svg {...V} aria-hidden>
+        <rect className="f" x="36" y="44" width="74" height="62" rx="8" />
+        <rect className="a" x="46" y="54" width="26" height="6" rx="2" />
+        <path className="s" d="M46 74h54M46 86h40" />
+        <rect className="f" x="170" y="44" width="74" height="62" rx="8" />
+        <circle className="a" cx="207" cy="75" r="9" />
+        <path className="s" d="M120 62h40l-9-9M160 88h-40l9 9" />
+      </svg>);
+    case "settle": return (
+      <svg {...V} aria-hidden>
+        <circle className="f" cx="140" cy="36" r="20" />
+        <circle className="a" cx="140" cy="36" r="6" />
+        <path className="s dash" d="M140 58v32" />
+        <path className="s" d="M133 82l7 8 7-8" />
+        <rect className="f" x="64" y="96" width="152" height="38" rx="10" />
+        <path className="ab" d="M76 116c10-8 18-8 28 0s18 8 28 0 18-8 28 0 18 8 28 0" />
+      </svg>);
+    case "claim": return (
+      <svg {...V} aria-hidden>
+        <circle className="f" cx="104" cy="75" r="42" />
+        <path className="s" d="M104 75V33M104 75l36 21M104 75L68 96" />
+        <path className="a" d="M104 75V43a32 32 0 0 1 28 16z" />
+        <path className="s dash" d="M152 60h30M152 76h38M152 92h30" />
+        <circle className="f" cx="204" cy="60" r="11" /><circle className="a" cx="214" cy="76" r="11" /><circle className="f" cx="204" cy="92" r="11" />
+      </svg>);
+    default: return (
+      <svg {...V} aria-hidden>
+        <rect className="f soft" x="38" y="38" width="54" height="76" rx="5" />
+        <path className="s" d="M48 54h34M48 65h26M48 76h32M48 87h20" />
+        <path className="f" d="M150 18l40 14v34c0 22-17 38-40 48-23-10-40-26-40-48V32z" />
+        <path className="ab thick" d="M130 68l14 14 26-30" />
+        <path className="s dash" d="M96 74h10" />
+        <circle className="f" cx="236" cy="62" r="16" /><circle className="a" cx="236" cy="62" r="4" />
+        <path className="s dash" d="M194 68l26-4" />
+      </svg>);
+  }
+}

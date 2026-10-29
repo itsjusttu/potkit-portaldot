@@ -1,14 +1,11 @@
-import { useEffect, useRef, useState, type ReactNode } from "react";
-import "../landing.css";
-import "./docs.css";
-import "../landing-polish.css";
-import "./docs-polish.css";
-import "./help.css";
-import { Footer, Header, Reveal, app, page, useLenis, Arrow, IcoTelegram } from "./Chrome";
-import { MarketArt, ReceiptArt, VaultArt } from "./Art";
+import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
+import { Arr, Footer, Header, TestnetBar, usePageMotion, useScrolled } from "../plShell";
+import "./docs-pk.css";
+import { app, page, IcoTelegram } from "./Chrome";
+import { MarketArt, ReceiptArt, StepArt, VaultArt } from "./Art";
 
-type Sec = { id: string; t: string; body: ReactNode };
-type Doc = { path: string; kicker: string; title: string; lede: string; secs: Sec[]; next: [string, string] };
+type Sec = { id: string; t: string; body: ReactNode; art?: string };
+type Doc = { path: string; kicker: string; title: string; lede: string; facts?: string[]; secs: Sec[]; next: [string, string] };
 
 const C = ({ children }: { children: ReactNode }) => <code className="dx-c">{children}</code>;
 const Fn = ({ sig, who, children }: { sig: string; who?: string; children: ReactNode }) => (
@@ -19,13 +16,13 @@ const Table = ({ head, rows }: { head: string[]; rows: ReactNode[][] }) => (
   <div className="dx-tw"><table className="dx-t"><thead><tr>{head.map((h) => <th key={h}>{h}</th>)}</tr></thead><tbody>{rows.map((r, i) => <tr key={i}>{r.map((c, j) => <td key={j}>{c}</td>)}</tr>)}</tbody></table></div>
 );
 
-const HELP_LINKS = [
-  { title: "Getting started", desc: "Connect a wallet, understand the network, and learn the receipt lifecycle.", href: "/how-it-works", tag: "Guide" },
-  { title: "Issue an invoice", desc: "Mint a receipt, lock it, and set its face value and due date.", href: "/how-it-works#mint", tag: "Issuers" },
-  { title: "Trade receipt shares", desc: "Learn about listings, escrow, prices, and buying shares.", href: "/how-it-works#trade", tag: "Markets" },
-  { title: "Settlement & claims", desc: "See how invoice payments are split between share holders.", href: "/how-it-works#settle", tag: "Holders" },
-  { title: "Verify a receipt", desc: "Check backing, terms, status, and settlement from chain data.", href: app("?tab=verify"), tag: "Verification" },
-  { title: "Security model", desc: "Understand custody, contract permissions, and testnet limits.", href: "/security", tag: "Security" },
+const HELP_LINKS: { ico: string; title: string; desc: string; href: string; tag: string }[] = [
+  { ico: "M12 3l2.5 5.5L20 9l-4 4 1 6-5-3-5 3 1-6-4-4 5.5-.5z", title: "Getting started", desc: "Connect a wallet, understand the network, and learn the receipt lifecycle.", href: "/how-it-works", tag: "Guide" },
+  { ico: "M6 3h12v18l-3-2-3 2-3-2-3 2zM9 8h6M9 12h6", title: "Issue an invoice", desc: "Mint a receipt, lock it, and set its face value and due date.", href: "/how-it-works#mint", tag: "Issuers" },
+  { ico: "M4 8h13l-3-3M20 16H7l3 3", title: "Trade receipt shares", desc: "Learn about listings, escrow, prices, and buying shares.", href: "/how-it-works#trade", tag: "Markets" },
+  { ico: "M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18zM8.5 10h7M8.5 14h7", title: "Settlement & claims", desc: "See how invoice payments are split between share holders.", href: "/how-it-works#settle", tag: "Holders" },
+  { ico: "M12 3l8 3v6c0 5-3.4 8-8 9-4.6-1-8-4-8-9V6zM9 12l2 2 4-4", title: "Verify a receipt", desc: "Check backing, terms, status, and settlement from chain data.", href: app("?tab=verify"), tag: "Verification" },
+  { ico: "M6 11h12v9H6zM8.5 11V8a3.5 3.5 0 0 1 7 0v3", title: "Security model", desc: "Understand custody, contract permissions, and testnet limits.", href: "/security", tag: "Security" },
 ];
 const HELP_FAQ = [
   ["What is a PotKit receipt?", "A receipt is an NFT representing an invoice or other receivable. Its owner can lock it and issue fixed-supply shares backed by the receipt."],
@@ -50,7 +47,7 @@ function HelpBrowse() {
   return <div className="help-browse">
     <label className="help-search"><span aria-hidden>⌕</span><input ref={search} type="search" placeholder="Search guides and FAQs" value={query} onChange={(e) => setQuery(e.target.value)} aria-label="Search help guides and frequently asked questions" /><kbd>⌘ K</kbd></label>
     <h3>Guides &amp; resources</h3>
-    <div className="help-cards">{links.map((x) => <a className="help-card" href={x.href} key={x.title}><small>{x.tag}</small><b>{x.title}</b><span>{x.desc}</span><i aria-hidden>↗</i></a>)}</div>
+    <div className="help-cards">{links.map((x) => <a className="help-card" href={x.href} key={x.title}><svg className="help-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden><path d={x.ico} /></svg><small>{x.tag}</small><b>{x.title}</b><span>{x.desc}</span><i aria-hidden>↗</i></a>)}</div>
     {!links.length && !faqs.length && <p className="help-empty">No matches. Try “wallet”, “invoice”, “shares”, or “settlement”.</p>}
     <h3>Frequently asked questions</h3>
     <div className="help-faq">{faqs.map(([q, a]) => <details key={q}><summary>{q}<span aria-hidden>+</span></summary><p>{a}</p></details>)}</div>
@@ -70,15 +67,15 @@ const Lifecycle = () => (
   <figure className="dx-fig"><svg viewBox="0 0 900 300" role="img" aria-label="Lifecycle: mint, lock with terms, list, buy, settle, claim, redeem">
     <Defs />
     <Box x={10} y={30} t="1 · Mint" s="mint(to, kind, note)" />
-    <Box x={235} y={30} w={210} t="2 · Lock + terms" s="fractionalize(id, units, face, due)" />
+    <Box x={215} y={30} w={250} t="2 · Lock + terms" s="fractionalize(id, units, face, due)" />
     <Box x={685} y={30} w={200} t="3 · List" s="list (escrow)" tone="m" />
     <Box x={685} y={190} w={200} t="4 · Buy" s="buy · pays tPOT (partial ok)" tone="m" />
     <Box x={460} y={190} t="5 · Settle" s="settle · pays tPOT" />
     <Box x={235} y={190} t="6 · Claim" s="claim (pro-rata tPOT)" />
     <Box x={10} y={190} t="7 · Redeem" s="NFT back to owner" tone="n" />
-    <Ar d="M160 57h72" /><Ar d="M445 57h237" /><Ar d="M785 84v103" />
+    <Ar d="M160 57h52" /><Ar d="M465 57h217" /><Ar d="M785 84v103" />
     <Ar d="M685 217h-72" /><Ar d="M460 217h-72" /><Ar d="M235 217h-72" />
-    <Ar d="M310 84 C 300 140 140 140 90 187" label="or: holder of 100% shares, before settle" lx={120} ly={150} />
+    <Ar d="M310 84 C 300 140 140 140 90 187" label="or: holder of 100% shares, before settle" lx={300} ly={168} />
   </svg><figcaption>Every box is one on-chain transaction against the same PotKit contract. Steps 3–4 can repeat many times. After settlement and once every share is claimed, the depositor redeems the receipt.</figcaption></figure>
 );
 
@@ -118,7 +115,7 @@ const States = () => (
     <Box x={760} y={55} w={130} t="Settled" s="paid, final" />
     <Ar d="M140 82h57" /><Ar d="M330 82h57" /><Ar d="M520 82h57" /><Ar d="M710 82h47" />
     <Ar d="M265 55 C 265 5 825 5 825 52" label="settle() from any unpaid state" lx={545} ly={20} />
-  </svg><figcaption>Computed by <code className="dx-c">Lens.statuses</code> (inside eth_call) from the due date and block time — nothing is stored or pushed by a keeper.</figcaption></figure>
+  </svg><figcaption>Computed by <code className="dx-c">Lens.statuses</code> (inside eth_call) from the due date and block time. Nothing is stored or pushed by a keeper.</figcaption></figure>
 );
 
 const Escrow = () => (
@@ -141,7 +138,7 @@ const DOCS: Record<string, Doc> = {
   "/help": {
     path: "/help", kicker: "Help center", title: "Help & Support",
     lede: "Guides, answers, and support for using PotKit. Find your way from creating a receipt to claiming a settlement.",
-    next: ["/how-it-works", "How PotKit works"],
+    next: ["/how-it-works", "How PotKit works"], facts: ["Searchable guides and FAQ", "Contact the builder"],
     secs: [
       { id: "answers", t: "Find an answer", body: <HelpBrowse /> },
       { id: "contact", t: "Still need help?", body: <div className="help-contact"><div><small>PotKit builder</small><h3>Ask the builder directly</h3><p>Questions, bugs or feedback about PotKit? Message the builder on Telegram or email and get a direct reply.</p></div><div className="help-contact-actions"><a className="help-contact-link" href="https://t.me/itsjusttu" target="_blank" rel="noreferrer"><IcoTelegram /> Telegram</a><a className="help-contact-link" href="https://mail.google.com/mail/?view=cm&fs=1&to=levantu170605@gmail.com" target="_blank" rel="noreferrer"><svg viewBox="0 0 24 24" aria-hidden><path d="M3 5h18v14H3zM3 6l9 7 9-7" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" /></svg> Gmail</a></div></div> },
@@ -150,7 +147,7 @@ const DOCS: Record<string, Doc> = {
   "/how-it-works": {
     path: "/how-it-works", kicker: "Guide", title: "How PotKit works",
     lede: "PotKit turns an unpaid invoice into an on-chain receipt, splits it into fixed-supply shares that can be sold for tPOT today, and pays every holder pro-rata when the debtor settles. One small contract on Portaldot V3, no backend.",
-    next: ["/protocol", "Protocol reference"],
+    next: ["/protocol", "Protocol reference"], facts: ["One contract on Portaldot V3", "Native tPOT, no stablecoin", "No backend or database"],
     secs: [
       { id: "overview", t: "Overview", body: <>
         <p>A business that has delivered work often has to wait to be paid.</p>
@@ -168,34 +165,34 @@ const DOCS: Record<string, Doc> = {
           [<b>Verifier / judge</b>, "Anyone, no wallet needed", "Reads backing, terms, status and settlement through the Verify page."],
         ]} />
       </> },
-      { id: "mint", t: "1 · Mint a receipt", body: <>
+      { id: "mint", t: "1 · Mint a receipt", art: "mint", body: <>
         <p>The issuer calls <C>mint(to, kind, note)</C>.</p>
         <p><C>kind</C> is 0 = Invoice, 1 = Content right, 2 = Equipment. The note is 1–140 bytes, stored on-chain in packed form.</p>
         <p><C>tokenURI(id)</C> returns <C>https://potkit.pro/api/r?id=…</C>. That endpoint has no database: it runs the Lens contract inside <C>eth_call</C> and returns the JSON built from chain state (name, note, kind), escaping the note safely. The app builds the same JSON the same way.</p>
         <Callout>Minting is permissioned: only the issuer or an allow-listed minter can attest a receipt. Anyone can hold and transfer it afterwards.</Callout>
       </> },
-      { id: "lock", t: "2 · Lock, set terms & issue shares", body: <>
+      { id: "lock", t: "2 · Lock, set terms & issue shares", art: "lock", body: <>
         <p>The owner calls <C>fractionalize(id, units, faceValue, dueDate)</C> with 1 to 10¹² whole units: no NFT approval needed, one transaction.</p>
         <p>PotKit takes the NFT, records the terms (face value in wei of tPOT, optional future due date) and gives the receipt its ERC-20 share token named <C>PotKit Fraction #id</C> / <C>KIT{"{id}"}</C> (18 decimals), minting <C>units × 10¹⁸</C> to the depositor. The token is an 82-byte forwarder; the balances live in PotKit. A receipt that is redeemed and locked again keeps the same token address.</p>
         <p>Backing is structural: while any shares exist, the NFT stays in PotKit. A wallet holding <b>every</b> outstanding share can <C>redeem</C> before settlement to burn them and take the NFT back.</p>
         <States />
       </> },
-      { id: "trade", t: "3 · List & buy", body: <>
+      { id: "trade", t: "3 · List & buy", art: "trade", body: <>
         <p>A holder calls <C>list(id, price, amount)</C>. The shares move into escrow inside PotKit (no approval needed). <C>price</C> is in wei of tPOT per <b>one whole share</b>.</p>
         <p>Buyers call <C>buy(listingId, amount)</C> for any amount up to what remains, sending exactly <C>⌈price × amount / 10¹⁸⌉</C> wei as the transaction value (rounded up, so the seller is never short-changed). The seller is paid in the same transaction. Sellers can <C>cancel</C> at any time to get unsold shares back.</p>
         <Callout>There are no protocol fees. Price discovery is entirely up to sellers: the discount is the difference between the listing price and the face value per share.</Callout>
       </> },
-      { id: "settle", t: "4 · Settle", body: <>
+      { id: "settle", t: "4 · Settle", art: "settle", body: <>
         <p>The debtor (or anyone paying on their behalf) calls <C>settle(id)</C> sending at least the face value in tPOT. Any overpayment also goes to holders.</p>
         <p>Settlement is final: buying and listing stop and the pool is split among the share holders.</p>
       </> },
-      { id: "claim", t: "5 · Claim & redeem", body: <>
+      { id: "claim", t: "5 · Claim & redeem", art: "claim", body: <>
         <p>Each holder calls <C>claim(id)</C>. It burns <b>all</b> of the caller's shares and pays their pro-rata part of the pool in tPOT. Cumulative rounding means the payouts always add up to exactly what was paid in.</p>
         <Payout />
         <p>Sellers with open listings at settlement simply <C>cancel</C> to get their escrowed shares back and then claim.</p>
         <p>Once every share is claimed, the depositor calls <C>redeem(id)</C> to take the receipt NFT back; its vault storage is cleared (refunding the storage deposit) and it can be tokenised again later.</p>
       </> },
-      { id: "verify", t: "Verify & data", body: <>
+      { id: "verify", t: "Verify & data", art: "verify", body: <>
         <p>The app's <a className="dx-a" href={app("?tab=verify")}>Verify</a> tab takes a receipt id or a KIT share-token address and checks, from the chain only:</p>
         <ul className="dx-ul"><li>the receipt exists and the NFT is locked in PotKit</li><li>a share token was issued and payment terms are on-chain</li><li>due / overdue status, and whether payment was at least face value</li></ul>
         <p>It produces a VERIFIED / ISSUES FOUND / UNBACKED verdict with a shareable link and works without a wallet.</p>
@@ -210,16 +207,16 @@ const DOCS: Record<string, Doc> = {
   "/protocol": {
     path: "/protocol", kicker: "Reference", title: "Protocol reference",
     lede: "Every public function and event of PotKit, written from the source (contracts/PotKit.yul, ABI in contracts/IPotKit.sol). No external dependencies, no proxies.",
-    next: ["/security", "Security model"],
+    next: ["/security", "Security model"], facts: ["About 3.9 KB of hand-written Yul", "ERC-721 receipts", "ERC-20 shares", "No proxy"],
     secs: [
       { id: "architecture", t: "Architecture", body: <><Architecture />
         <Table head={["Piece", "Standard", "Role"]} rows={[
           ["PotKit", "ERC-721 + ERC-165 + metadata", "Receipts, custody, terms, native-tPOT settlement and payouts, fixed-price market"],
           ["Share token", "ERC-20 (18 dp)", "One 82-byte forwarder per receipt; identical code everywhere, balances kept in PotKit"],
-          ["Lens", "— (never deployed)", "Batch reads + metadata JSON for the UI and api/r, executed inside eth_call"],
+          ["Lens", "None (never deployed)", "Batch reads + metadata JSON for the UI and api/r, executed inside eth_call"],
         ]} /></> },
       { id: "receipt", t: "Receipts (ERC-721)", body: <>
-        <div className="dx-art"><ReceiptArt /></div>
+        <div className="pl-xart dx-sart" aria-hidden><ReceiptArt /></div>
         <p>Name <C>PotKit Receipt</C>, symbol <C>RCPT</C>. Ids start at 1.</p>
         <Fn sig="mint(address to, uint8 kind, string note) → id" who="issuer or minter">kind &lt; 3; note 1–140 bytes. Emits Transfer(0, to, id).</Fn>
         <Fn sig="setMinter(address who, bool allowed)" who="issuer">Allow-list a minter.</Fn>
@@ -229,7 +226,7 @@ const DOCS: Record<string, Doc> = {
         <p className="dx-ev"><b>Events</b> Transfer · Approval · ApprovalForAll</p>
       </> },
       { id: "vault", t: "Vault & settlement", body: <>
-        <div className="dx-art"><VaultArt /></div>
+        <div className="pl-xart dx-sart" aria-hidden><VaultArt /></div>
         <p>Limits: 1 ≤ units ≤ 10¹²; 0 &lt; faceValue &lt; 2⁹⁶ wei; due date 0 (none) or in the future. Status “Due soon” = within 3 days.</p>
         <Fn sig="fractionalize(id, units, faceValue, uint64 dueDate) → token" who="receipt owner">Takes the NFT, records the terms, creates (or reuses) the share token and mints units×10¹⁸ to the caller.</Fn>
         <Fn sig="redeem(id)" who="holder of every outstanding share">Before settlement: the holder of 100% gets the NFT back. After settlement: once all shares are claimed, the depositor. Clears terms and settlement, bumps the lock cycle (old allowances die).</Fn>
@@ -243,7 +240,7 @@ const DOCS: Record<string, Doc> = {
         <p className="dx-ev"><b>Events</b> Transfer · Approval</p>
       </> },
       { id: "market", t: "Market", body: <>
-        <div className="dx-art"><MarketArt /></div>
+        <div className="pl-xart dx-sart" aria-hidden><MarketArt /></div>
         <Fn sig="list(id, price, amount) → listingId" who="share holder">Receipt locked and not settled; 0 &lt; price &lt; 2⁹⁶ wei per whole share; 0 &lt; amount &lt; 2¹²⁸. Escrows the shares.</Fn>
         <Fn sig="buy(listingId, amount) payable → cost" who="anyone but the seller">amount ≤ remaining; not settled; msg.value must equal ⌈price × amount / 10¹⁸⌉. Pays the seller, delivers the shares.</Fn>
         <Fn sig="cancel(listingId)" who="seller">Returns all unsold shares; allowed even after settlement.</Fn>
@@ -267,8 +264,8 @@ const DOCS: Record<string, Doc> = {
   },
   "/security": {
     path: "/security", kicker: "Security", title: "Security model",
-    lede: "What the contract enforces, how value moves, and — just as important — what PotKit does not protect against. This is a hackathon testnet build.",
-    next: ["/how-it-works", "How it works"],
+    lede: "What the contract enforces, how value moves, and what PotKit does not protect against. This is a hackathon testnet build.",
+    next: ["/how-it-works", "How it works"], facts: ["Not audited", "Testnet only", "No admin function over funds"],
     secs: [
       { id: "status", t: "Status & scope", body: <>
         <Callout tone="warn"><b>Not audited. Testnet only.</b> PotKit runs on Portaldot V3 testnet with test tPOT. Do not use with real value.</Callout>
@@ -338,8 +335,14 @@ export const DOC_PATHS = Object.keys(DOCS);
 
 export function Docs({ path }: { path: string }) {
   const d = DOCS[path] ?? DOCS["/how-it-works"];
-  const scrolled = useLenis();
+  const root = useRef<HTMLDivElement>(null);
+  usePageMotion(root);
+  const scrolled = useScrolled();
   const [cur, setCur] = useState(d.secs[0].id);
+  const judge = new URLSearchParams(location.search);
+  const hasJudge = ["kit", "vault", "receipt"].some((k) => judge.has(k));
+  const launch = app(hasJudge ? location.search : "");
+  const rise = (ms: number) => ({ "--d": `${ms}ms` } as CSSProperties);
   useEffect(() => {
     document.title = `${d.title} · PotKit`;
     const els = d.secs.map((s) => document.getElementById(s.id)!).filter(Boolean);
@@ -348,16 +351,20 @@ export function Docs({ path }: { path: string }) {
     return () => io.disconnect();
   }, [d]);
   return (
-    <div className={`lx dx ${path === "/help" ? "dx-help" : ""}`}>
-      <div className="lx-bg" aria-hidden />
-      <Header scrolled={scrolled} active={d.path} />
-      <main>
-        <section className="dx-hero">
-          <Reveal><span className="lx-tag">{d.kicker}</span></Reveal>
-          <Reveal delay={80}><h1>{d.title}</h1></Reveal>
-          <Reveal delay={160}><p>{d.lede}</p></Reveal>
+    <div className={`pl pl-doc ${path === "/help" ? "pl-help" : ""}`} ref={root}>
+      <a className="pl-skip" href="#pl-main">Skip to content</a>
+      <TestnetBar launch={launch} />
+      <Header scrolled={scrolled} launch={launch} demo={hasJudge} active={d.path} />
+      <main id="pl-main">
+        <section className="pl-dhero">
+          <div className="pl-wrap">
+            <p className="pl-kicker pl-in" style={rise(60)}>{d.kicker}</p>
+            <h1 className="pl-in" style={rise(140)}>{d.title}</h1>
+            <p className="pl-dlede pl-in" style={rise(240)}>{d.lede}</p>
+            {d.facts && <div className="dx-facts pl-in" style={rise(340)}>{d.facts.map((f) => <span key={f}>{f}</span>)}</div>}
+          </div>
         </section>
-        <div className="dx-wrap">
+        <div className="pl-wrap dx-wrap">
           <label className="dx-toc-sel-wrap">
             <select className="dx-toc-sel" aria-label="On this page" value={cur} onChange={(e) => { location.hash = e.target.value; /* id without #; browser scrolls */ }}>
               {d.secs.map((s) => <option key={s.id} value={s.id}>{s.t}</option>)}
@@ -366,15 +373,24 @@ export function Docs({ path }: { path: string }) {
           <aside className="dx-toc" aria-label="On this page">
             <small>On this page</small>
             {d.secs.map((s) => <a key={s.id} href={`#${s.id}`} className={cur === s.id ? "on" : ""}>{s.t}</a>)}
-            <a className="dx-toc-app" href={app()}>Launch App <Arrow /></a>
+            <a className="dx-toc-app" href={launch}>Launch App <Arr /></a>
           </aside>
           <article className="dx-body">
-            {d.secs.map((s) => <section key={s.id} id={s.id} className="dx-sec"><h2>{s.t}</h2>{s.body}</section>)}
-            <a className="dx-next" href={page(d.next[0])}><small>Next</small><b>{d.next[1]}</b><Arrow /></a>
+            {d.secs.map((s) => {
+              const n = s.t.match(/^(\d) · (.*)$/);
+              return (
+                <section key={s.id} id={s.id} className="dx-sec">
+                  <h2>{n ? <><span className="dx-n" aria-hidden>{n[1]}</span>{n[2]}</> : s.t}</h2>
+                  {s.art && <div className="pl-xart dx-sart" aria-hidden><StepArt n={s.art} /></div>}
+                  {s.body}
+                </section>
+              );
+            })}
+            <a className="dx-next" href={page(d.next[0])}><small>Next</small><b>{d.next[1]}</b><Arr /></a>
           </article>
         </div>
       </main>
-      <Footer />
+      <Footer launch={launch} />
     </div>
   );
 }
