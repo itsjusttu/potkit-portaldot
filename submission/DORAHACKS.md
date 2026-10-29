@@ -1,7 +1,7 @@
-# PotKit — Invoices that pay you now
+# PotKit - Invoices that pay you now
 
 **Track:** Ecosystem DApps (RWA tokenisation) · Portaldot Hacker House 2026
-**One-liner:** Tokenise an unpaid invoice into backed, tradeable shares on Portaldot V3 — and pay every holder pro-rata, on-chain, when the debtor settles.
+**One-liner:** Tokenise an unpaid invoice into backed, tradeable shares on Portaldot V3 - and pay every holder pro-rata, on-chain, when the debtor settles.
 
 ## Problem
 Freelancers and small businesses often have to wait to get paid after they deliver the work. Factoring is opaque, manual and closed to small invoices.
