@@ -134,7 +134,7 @@ The node console explorer is Substrate-based: it opens **block numbers** but can
 ## Landing page
 `/` is the marketing landing: a dark violet hero with an animated receipt → shares → settlement illustration, an evidence strip of checkable facts, a scroll-driven lifecycle walkthrough, product tabs, a proof section built from this repository (contract excerpts, test names), a resource list and a receipt-number verification form. Every mock-up is labelled illustrative, and the page states that issuer-provided information is not verified and that payment is not guaranteed. Motion respects `prefers-reduced-motion`.
 
-The dApp lives at **`/app`**: pill navigation across the top on desktop (a sidebar on tablets and in the mobile sheet). Judge links can pass the kit address (`?kit=0x…`). Landing styles are in `src/landing-pk.css`; the app's styles are in `src/styles/`, with the final layers in `night*.css`.
+The dApp lives at **`/app`**: a left sidebar on desktop with a wallet status block (connected, wrong network or not connected, address, network and balance), and a top row with a bottom tab bar on phones. Every on-chain write shows a step panel: approve in the wallet, sent (with the hash), confirmed or failed. A switch in the top bar turns on an optional light theme, remembered in the browser; dark is the default. Judge links can pass the kit address (`?kit=0x…`). Landing styles are in `src/landing-pk.css`; the app's styles are in `src/styles/`, with the final layers in `night*.css` (`night-light.css` holds the light theme).
 
 ## Hosting on Vercel
 `vercel.json` rewrites every path except `/api/*` to `index.html`, so `/app` works on refresh (static assets are served first).
@@ -237,7 +237,7 @@ exactly as `msg.value` (that also replaces a slippage cap: the price can't chang
 
 ### Profile, Dashboard and the pay page
 - **Profile** (wallet menu → Profile, or `?tab=profile`): wallet identity and roles, an on-time payment record computed from scanned events, receipts issued and shares bought, achievements, and the **mapped gas account** (with Copy). Name, bio and avatar are stored in the browser only. A stale saved deployment is dropped automatically when the baked `VITE_KIT` changes, and a `?kit=` link always wins.
-- **Dashboard**: market figures read from the chain (outstanding face value, open listings, traded and settled tPOT, upcoming payments, settlement record, latest receipt, recent activity) and an 8-step *Your progress* tracker computed from the wallet's own on-chain activity. The *Cash-now planner* estimates what selling part of a receipt could raise; it sends nothing.
+- **Dashboard**: market figures read from the chain (outstanding face value with a maturity line placing open receipts by due date, open listings, traded and settled tPOT, upcoming payments, settlement record, latest receipt, recent activity) and an 8-step *Your progress* tracker computed from the wallet's own on-chain activity. The *Cash-now planner* estimates what selling part of a receipt could raise; it sends nothing.
 - **Pay page** (`?tab=pay&id=N`): a debtor-facing page for one receipt. The debtor may sign an optional acknowledgement (EIP-712, off-chain, no gas). It only shows which wallet signed; the contract does not use it.
 
 Deployed kit and recorded transaction hashes are collected under [Testnet evidence](#testnet-evidence). Judge link: https://app.potkit.pro/?kit=0x3c26351ad8b9dc7bb4f837c5b921879c35e20fb7
@@ -276,9 +276,9 @@ Limits from packing: face value and listing price ≤ 2^96−1 wei, share units 
 contracts/   PotKit.yul (deployed kit), IPotKit.sol (ABI), Lens.sol (eth_call only), test/, v30/ (reference)
 scripts/     compile.mjs, yulprep.mjs, seed-local.mjs, set-minter.mjs (issuer admin), measure.mjs and measure/ (cost measurement)
 api/         faucet.ts, r.ts (tokenURI JSON)
-test/        potkit.test.mjs, faucet.test.mjs, netswitch.test.mjs, txerrors.test.mjs
+test/        potkit, faucet, netswitch, txerrors, settlecheck, receipt-history, insights, params, setminter (*.test.mjs)
 src/         main.tsx, App.tsx, Landing.tsx, lib/chain.ts (viem), tabs/ (app views), docs/ (guides)
-             theme-tokens.css, landing-pk.css (landing), landing.css (docs pages)
+             theme-tokens.css, landing-pk.css (landing), docs/docs-pk.css (doc pages)
              styles/ (dApp styles; the night*.css files are the final layers)
 ```
 Contract builds generate `src/generated/`; no contract changes are part of this README update.

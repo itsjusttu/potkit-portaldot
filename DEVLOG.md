@@ -2,7 +2,7 @@
 
 Portaldot Hacker House 2026 · Track 4 (Ecosystem DApps) · build period 14 Oct – 6 Nov 2026.
 
-This log lists what the repository history and the chain can show. Commit times are as Git recorded them (UTC+7); chain times are block timestamps (UTC). Entries marked **TODO** are facts only the author can fill in; they are left open on purpose rather than guessed.
+This log lists what the repository history and the chain can show. Commit times are as Git recorded them (UTC+7); chain times are block timestamps (UTC). Where no dated evidence exists, the entry says so instead of guessing.
 
 ## Team
 
@@ -18,15 +18,15 @@ Solo project. Display name used in the deck: Tu - Builder, PotKit. The author co
 | 2026-10-21 22:49 | Two more listings on receipt #1 | blocks 137,797 and 137,799 |
 | 2026-10-28 01:38 – 01:40 | Receipt #2 minted, locked into 100 shares and 40 shares listed | blocks 225,468, 225,478 and 225,482 |
 
-As of 2026-10-29 the kit has 15 state-changing transactions after the deployment from 2 wallets (read from its event logs): 8 in the recorded lifecycle run and 7 later (2 on 20 Oct, 2 on 21 Oct, 3 on 28 Oct).
+As of 2026-10-30 00:57 UTC the kit has 28 state-changing transactions after the deployment from 2 wallets (read from its event logs, block 97421 to 245677; days in UTC): 8 in the recorded lifecycle run on 19 Oct and 20 later (2 on 20 Oct, 2 on 21 Oct, 3 on 28 Oct, 8 on 29 Oct, 5 on 30 Oct). Both wallets belong to the builder.
 
 ## Deployments
 
 | What | When | Notes |
 |---|---|---|
 | Smart contract (`PotKit.yul`) | 2026-10-19 03:15:12 UTC (10:15 UTC+7) | One deployment, immutable. This is the only contract date that matters for the evidence above. |
-| Web frontend (Vercel, production), current build | commit `68c2889` "Keep Vite's preload helper out of the viem chunk so the landing no longer downloads viem" (29 Oct, 12:01 UTC+7), deployed by hand with `vercel --prod` | The author reported the deploy as done; the live site agrees: `app.potkit.pro` and `potkit.pro` serve one build (identical ETag) with `Last-Modified: 2026-10-29 05:02:25 GMT` (12:02 UTC+7), which is when the served files were last modified, not a confirmed deployment time. In a browser check the live `index.html` preloads only a 0.9 KB helper (not viem), the app's Dashboard, Trade and Verify show their data, and the landing shows its hero and six Explore cards. Deployment time and time zone: not verified. |
-| Web frontend, previous production deployments | `0d78ba9` (`Last-Modified: 2026-10-29 04:52:02 GMT`), `7155916` (04:19:09 GMT), `3c730af` (03:03:38 GMT), `c74bb03` (02:07:55 GMT), `e549ee5` (00:09:39 GMT), all on 29 Oct, and before them `f03a5ea` (28 Oct, `Last-Modified: 2026-10-28 02:39:06 GMT`) | `e549ee5`: the author's terminal output showed Ready in 54s, aliased to `potkit.pro`. `f03a5ea`: had the highlighted (blue) Production badge in the Vercel list supplied by the author ("21h ago"). Each was replaced by the next deployment. Commit `a8b86ee` (home link) has no deployment of its own that was observed; it is in the build from `0d78ba9` on at the latest. |
+| Web frontend (Vercel, production), current build | commit `a811082` "Settle drawer facts grid, claimed state for issued invoices, softer light theme with ink edges" (30 Oct, 07:52 UTC+7), deployed by hand with `vercel --prod` | The author reported the deploy as done. The live `app.potkit.pro` serves `Last-Modified: 2026-10-30 00:53:46 GMT` (07:53 UTC+7), and its stylesheet `index-BTea5JzT.css` is byte-for-byte the name a local build of `a811082` produces (the JS entry name differs, as Vercel bakes its own `VITE_*` values). Deployment time and time zone: not verified. |
+| Web frontend, previous production deployments | `68c2889` (29 Oct, `Last-Modified: 2026-10-29 05:02:25 GMT`), then the builds of 29 and 30 Oct listed under the commit timeline below, deployed by hand as they were committed (times not recorded); before them `0d78ba9` (`Last-Modified: 2026-10-29 04:52:02 GMT`), `7155916` (04:19:09 GMT), `3c730af` (03:03:38 GMT), `c74bb03` (02:07:55 GMT), `e549ee5` (00:09:39 GMT), all on 29 Oct, and before them `f03a5ea` (28 Oct, `Last-Modified: 2026-10-28 02:39:06 GMT`) | `e549ee5`: the author's terminal output showed Ready in 54s, aliased to `potkit.pro`. `f03a5ea`: had the highlighted (blue) Production badge in the Vercel list supplied by the author ("21h ago"). Each was replaced by the next deployment. Commit `a8b86ee` (home link) has no deployment of its own that was observed; it is in the build from `0d78ba9` on at the latest. |
 
 ### Vercel deployment list (screenshots supplied by the author)
 
@@ -54,12 +54,12 @@ Vercel shows a day or a relative age for each deployment. Time and time zone of 
 
 | Version | Design | Dates |
 |---|---|---|
-| v30 | Four Solidity contracts (Receipt, Vault, TestUSD, Market); kept in `contracts/v30/` for reference; measured deploy cost about 1,386 tPOT | No dated evidence. The v30 sources first appear in commit `04cfd1c` (19 Oct, 23:22 UTC+7) as a reference folder, with no earlier commit. No v30 deployment exists on-chain from the deployer wallet: its first transaction is the v31 deploy at block 97421. The v30 cost figures in the README are `eth_estimateGas` measurements. Nothing ties the Vercel deployments of 14–19 Oct to v30. **TODO:** the dates v30 was written, only if you can show a dated note or file. |
+| v30 | Four Solidity contracts (Receipt, Vault, TestUSD, Market); kept in `contracts/v30/` for reference; measured deploy cost about 1,386 tPOT | No dated evidence. The v30 sources first appear in commit `04cfd1c` (19 Oct, 23:22 UTC+7) as a reference folder, with no earlier commit. No v30 deployment exists on-chain from the deployer wallet: its first transaction is the v31 deploy at block 97421. The v30 cost figures in the README are `eth_estimateGas` measurements. Nothing ties the Vercel deployments of 14–19 Oct to v30. The dates v30 was written are not recorded. |
 | v31 | One hand-written Yul contract (`PotKit.yul`), native tPOT settlement, never-deployed `Lens.sol` for reads; deploy cost about 327 tPOT | deployed 2026-10-19, see above |
 
 ## Commit timeline (from `git log`)
 
-44 commits between 19 and 29 Oct 2026, all on `main`. Subjects are quoted as committed.
+58 commits between 19 and 30 Oct 2026, all on `main`. Subjects are quoted as committed.
 
 **19 Oct**
 - `04cfd1c` 23:22 Prepare PotKit hackathon submission (contracts, API, tests, app, README)
@@ -120,10 +120,26 @@ Vercel shows a day or a relative age for each deployment. Time and time zone of 
 - `a8b86ee` 11:27 Home link from the app keeps only the deployment params, not the current tab
 - `0d78ba9` 11:50 Tidier mobile layout for landing and doc pages; lighter Newsreader font
 - `68c2889` 12:01 Keep Vite's preload helper out of the viem chunk so the landing no longer downloads viem
+- `e37e698` 12:06 DEVLOG: record the later 29 Oct deployments
+- `1e79377` 12:56 Mobile app layout: reference-style top row, bottom tab bar, card listings
+- `2b4501e` 13:14 Mobile app: fix bottom bar width, trim helper copy
+- `0df7530` 14:55 Receipt stub cards, hide kickers, ledger layer and visual cleanups
+- `d4d5d87` 14:59 DEVLOG: record the app mobile layout and visual refresh
+- `13958a4` 15:18 Update DORAHACKS.md (edited on GitHub)
+- `9e71aaf` 17:01 Link the new demo video, remove the video TODO markers
+
+**30 Oct**
+- `3e1231c` 04:37 Show claimable payouts in Needs attention, last-claim note in Portfolio, clearer closed listings
+- `df7d426` 04:52 Portfolio empty state: last claim on its own line under the actions
+- `2c9c3f6` 05:17 Dashboard on a 12-column grid, flat surfaces, solid violet primary buttons
+- `19d231a` 05:57 Receipt drawings in lists, consistent type scale, fix share value rounding, no long dashes in app copy
+- `52af283` 06:27 Optional light theme with a top-bar switch, remembered per browser
+- `7b8f7c2` 07:33 Sidebar layout, wallet status, transaction steps, invoice cards; audit fixes: headings, touch targets, dead CSS; research-first rule
+- `a811082` 07:52 Settle drawer facts grid, claimed state for issued invoices, softer light theme with ink edges
 
 The five commits of 29 Oct were made within about a minute. They group changes that had been sitting uncommitted in the working tree, so their times show when the changes were grouped, not when each one was written.
 
-The contract, API and script files first appear in `04cfd1c`; `contracts/` and `api/` have not changed since. The GitHub repository was created on 2026-10-19 at 16:18:56 UTC (23:18 UTC+7), four minutes before the first commit, and the contract was deployed about 13 hours earlier (03:15:12 UTC). Before that, the only dated evidence of work is Vercel: 28 command-line deployments, 15 on 14 Oct, 1 on 17 Oct and 12 on 19 Oct (see Deployments). They carry no commit, so what they contained is not known, and the retention setting may have removed older ones. The deployer wallet sent no transaction before the contract deploy, and the files' modified times on disk are not evidence of authorship. **TODO:** any dated notes or drafts from 14–19 Oct that show what was built; otherwise the earlier work stays undocumented.
+The contract, API and script files first appear in `04cfd1c`; `contracts/` and `api/` have not changed since. The GitHub repository was created on 2026-10-19 at 16:18:56 UTC (23:18 UTC+7), four minutes before the first commit, and the contract was deployed about 13 hours earlier (03:15:12 UTC). Before that, the only dated evidence of work is Vercel: 28 command-line deployments, 15 on 14 Oct, 1 on 17 Oct and 12 on 19 Oct (see Deployments). They carry no commit, so what they contained is not known, and the retention setting may have removed older ones. The deployer wallet sent no transaction before the contract deploy, and the files' modified times on disk are not evidence of authorship. No dated notes or drafts from 14–19 Oct were kept, so what was built before 19 Oct is not documented.
 
 ## What the 29 Oct commits contain (`e935bf3` to `e549ee5`, plus `c74bb03`)
 
@@ -168,6 +184,18 @@ The contract, API and script files first appear in `04cfd1c`; `contracts/` and `
 - Landing footer: the decorative bars were replaced by a static maturity line labelled as an illustrative example; docs callouts and diagrams lost the side stripe and the grid background
 - Styles for this layer live in `src/styles/night-ledger.css` (loaded last). Checked with `npm run build`, `npm test` (60 pass) and screenshots at 1440 px and 390 px; not checked on a physical phone, and the Portfolio claim rows were checked only on an injected sample row (no wallet with settled shares)
 
+## Added on 30 Oct (app redesign and fixes, `3e1231c` to `a811082`)
+
+- Wallet B test on the live app (by the author, real wallet): two invoices paid and one claim of 0.4 tPOT; the claim refunded the storage deposit (the balance rose by about 4.1 tPOT). Dashboard then showed claimable payouts under *Needs attention*, and Portfolio shows the last claim when the wallet holds nothing.
+- Share value rounding fixed: face value of a share count is multiplied before dividing, so 60 of 60 shares show exactly 1 tPOT instead of 0.9999999999999996
+- Dashboard on a 12-column grid with flat surfaces; the settlement gauge became a split bar; solid violet primary buttons in the app (the landing and doc pages keep the gradient)
+- Drawn invoice thumbnails in Trade, Explore and Portfolio; Explore cards with a larger drawing (number, kind, face value, status stamp), face value and due date first
+- Desktop app navigation moved to a persistent sidebar with a wallet status block (connected, wrong network, not connected; address, network, balance)
+- A step panel for every on-chain write (approve in wallet, sent with hash, confirmed or failed), fed by the existing transaction events; the sending flow is unchanged
+- Optional light theme from a top-bar switch, remembered per browser, toned down with ink edges; contrast checked page by page
+- Copy: no long dashes in app sentences, sentence-case buttons, "1 buy" plural fix, settled invoices with nothing left to claim say *Claimed* / *All claimed*
+- Impeccable `audit` pass: headings no longer skip from h1 to h3, every phone control is at least 44 px, dead CSS removed
+- Checked with `npm run build`, `npm test` (60 pass), Playwright in Chrome and Firefox (layout, contrast, tap targets, console errors) at 1440 and 390 px. Not checked: Safari, a physical phone, and the transaction step panel during a real transaction
 ## How the work is checked
 
 - `npm test` compiles the contracts and runs the suite in `test/` (contract behaviour on a local Ganache chain, faucet logic, network switching, transaction errors, settle and trade input checks, receipt history, dashboard figures).
