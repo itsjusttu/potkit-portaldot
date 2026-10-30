@@ -2,23 +2,23 @@
    Dark stays the default; the landing never sets data-theme. Same violet accent, ink text on cool white. */
 html[data-route="app"][data-theme="light"] {
   color-scheme: light;
-  --pk-bg: #f4f4f6; --pk-surface: #ffffff; --pk-surface-2: #f6f5fa; --pk-border: #e2e0e9;
+  --pk-bg: #e8e7ee; --pk-surface: #f6f5f9; --pk-surface-2: #f6f5fa; --pk-border: #bdb8cd;
   --pk-text: #16141e; --pk-muted: #55516a;
   --pk-success: #1d7347; --pk-danger: #b3222a; --pk-warning: #8a5300;
   --pk-accent: #5b3df5; --pk-accent-text: #ffffff; --pk-accent-hover: #4b2fe0;
   --n-violet: #5b3df5; --n-violet-l: #4b2fe0; --n-info: #2c47c9;
   --fg: #16141e; --muted: #55516a; --grey-1: #55516a;
-  --line: #e2e0e9; --line-strong: #cfcbdb;
+  --line: #bdb8cd; --line-strong: #9e98b3;
   --glass: rgba(91, 61, 245, .04); --glass-hi: rgba(91, 61, 245, .08);
   --surface-3: #efedf5; --ink-3: #efedf5; --ink-4: #e4e1ee;
-  --nv-card: #ffffff; --nv-edge: #e2e0e9;
-  --g-surface: #ffffff; --g-line: #e2e0e9;
+  --nv-card: #f6f5f9; --nv-edge: #bdb8cd;
+  --g-surface: #f6f5f9; --g-line: #bdb8cd;
   --focus-ring: 0 0 0 2px #ffffff, 0 0 0 4px #5b3df5;
   --shadow-1: none; --shadow-2: none;
 }
 html[data-route="app"][data-theme="light"] body,
 html[data-route="app"][data-theme="light"] .shell,
-html[data-route="app"][data-theme="light"] .shell > main { background: #f4f4f6 !important; color: #16141e; }
+html[data-route="app"][data-theme="light"] .shell > main { background: #e8e7ee !important; color: #16141e; }
 html[data-route="app"][data-theme="light"] ::selection { background: rgba(91, 61, 245, .25); color: #16141e; }
 html[data-route="app"][data-theme="light"] { caret-color: #5b3df5; accent-color: #5b3df5; }
 
@@ -42,13 +42,13 @@ html[data-route="app"][data-theme="light"] .shell :is(.pos, .yield-text, .is-pai
 html[data-route="app"][data-theme="light"] .shell :is(.neg, .tag.bad, .nv-chip.down, .trade-status-tag.overdue, .lg li[data-status="Overdue"] .lg-date, .kpi.neg b, .trade-row-due.late, .is-overdue) { color: #b3222a !important; }
 html[data-route="app"][data-theme="light"] .shell :is(.tag.warn, .trade-status-tag.due-soon, .lg li[data-status="Due soon"] .lg-date, .nv-badge) { color: #8a5300 !important; }
 html[data-route="app"][data-theme="light"] .shell :is(.tag.lock, .trade-status-tag.pending, .lg li[data-status="Pending"] .lg-date) { color: #2c47c9 !important; }
-html[data-route="app"][data-theme="light"] .shell .tag { background: #f3f2f7 !important; border-color: currentColor !important; }
+html[data-route="app"][data-theme="light"] .shell .tag { background: #ecebf2 !important; border-color: currentColor !important; }
 html[data-route="app"][data-theme="light"] .ms-pin[data-status="Pending"] { --c: #2c47c9; }
 html[data-route="app"][data-theme="light"] .ms-pin[data-status="Due soon"] { --c: #8a5300; }
 html[data-route="app"][data-theme="light"] .ms-pin[data-status="Overdue"] { --c: #b3222a; }
-html[data-route="app"][data-theme="light"] .ms-pin > i { box-shadow: 0 0 0 3px #ffffff; }
+html[data-route="app"][data-theme="light"] .ms-pin > i { box-shadow: 0 0 0 3px #f6f5f9; }
 html[data-route="app"][data-theme="light"] .ms-pin > span small { color: var(--c) !important; }
-html[data-route="app"][data-theme="light"] .rthumb-sheet { fill: #ffffff; stroke: #b7b0d6; }
+html[data-route="app"][data-theme="light"] .rthumb-sheet { fill: #f6f5f9; stroke: #b7b0d6; }
 html[data-route="app"][data-theme="light"] .rthumb-fold, html[data-route="app"][data-theme="light"] .rthumb-lines { stroke: #b7b0d6; }
 html[data-route="app"][data-theme="light"] .rthumb-total { stroke: #8d89a0; }
 html[data-route="app"][data-theme="light"] .rthumb-id { fill: #16141e; }
@@ -59,7 +59,7 @@ html[data-route="app"][data-theme="light"] .rthumb[data-status="Settled"] { --st
 
 /* ---- controls: white fields with a grey edge instead of dark wells ---- */
 html[data-route="app"][data-theme="light"] .shell :is(.btn:not(.primary), .chip, .seg-tabs > button, .tb-search, input, select, textarea, .trade-budget-input, .top-icon, .top-verify, .mobile-nav-toggle, .nv-round, .nv-filter button, .nv-view button, .trade-mode button, .trade-view button, .top-tabs button, .top-tabs a) {
-  background: #ffffff !important; border-color: #d9d6e3 !important; box-shadow: none !important;
+  background: #f6f5f9 !important; border-color: #a9a4bc !important; box-shadow: none !important;
 }
 html[data-route="app"][data-theme="light"] .shell :is(.btn:not(.primary), .chip, .seg-tabs > button, .top-icon, .top-verify, .nv-round, .nv-filter button, .top-tabs button, .top-tabs a):hover { border-color: #b7b0d6 !important; }
 /* selected and current items: a pale violet tint with dark violet text */
@@ -75,20 +75,20 @@ html[data-route="app"][data-theme="light"] .shell .issue-steps li.active .issue-
 html[data-route="app"][data-theme="light"] .shell .issue-steps li.done .issue-step-n { color: #1d7347 !important; }
 
 /* Trade and Issue still carry an older token set */
-html[data-route="app"][data-theme="light"] .shell :is(.trade, .issue) { --ri-bg: #f4f4f6; --ri-panel: #ffffff; --ri-panel-raised: #f8f8fa; --ri-line: #e2e0e9; --ri-line-strong: #cfcbdb; --ri-text: #16141e; --ri-muted: #55516a; }
+html[data-route="app"][data-theme="light"] .shell :is(.trade, .issue) { --ri-bg: #e8e7ee; --ri-panel: #ffffff; --ri-panel-raised: #f8f8fa; --ri-line: #bdb8cd; --ri-line-strong: #9e98b3; --ri-text: #16141e; --ri-muted: #55516a; }
 html[data-route="app"][data-theme="light"] .shell .trade-row-closed .trade-row-due { color: #b3222a !important; }
-html[data-route="app"][data-theme="light"] .shell .nv-ev-ico { background: #f1eff7 !important; border-color: #e2e0e9 !important; }
+html[data-route="app"][data-theme="light"] .shell .nv-ev-ico { background: #f1eff7 !important; border-color: #bdb8cd !important; }
 
 /* menus, popovers and phone chrome */
-html[data-route="app"][data-theme="light"] .shell :is(.top-help-pop, .qv) { background: #ffffff !important; border-color: #e2e0e9 !important; box-shadow: 0 12px 32px -12px rgba(22, 20, 30, .25) !important; }
+html[data-route="app"][data-theme="light"] .shell :is(.top-help-pop, .qv) { background: #f6f5f9 !important; border-color: #bdb8cd !important; box-shadow: 0 12px 32px -12px rgba(22, 20, 30, .25) !important; }
 html[data-route="app"][data-theme="light"] .shell .qv .nv-ico { background: #ebe7ff !important; color: #2a1f7a !important; }
-html[data-route="app"][data-theme="light"] .shell .nv .nv-kpis { background: #ffffff !important; border-color: #e2e0e9 !important; }
-html[data-route="app"][data-theme="light"] .shell > main > header.top { background: linear-gradient(180deg, rgba(244, 244, 246, .97) 68%, rgba(244, 244, 246, 0)) !important; }
-html[data-route="app"][data-theme="light"] .bottom-nav { background: rgba(255, 255, 255, .96) !important; border-color: #e2e0e9 !important; box-shadow: 0 -8px 24px -16px rgba(22, 20, 30, .25) !important; }
+html[data-route="app"][data-theme="light"] .shell .nv .nv-kpis { background: #f6f5f9 !important; border-color: #bdb8cd !important; }
+html[data-route="app"][data-theme="light"] .shell > main > header.top { background: linear-gradient(180deg, rgba(232, 231, 238, .97) 68%, rgba(232, 231, 238, 0)) !important; }
+html[data-route="app"][data-theme="light"] .bottom-nav { background: rgba(246, 245, 249, .97) !important; border-color: #bdb8cd !important; box-shadow: 0 -8px 24px -16px rgba(22, 20, 30, .25) !important; }
 html[data-route="app"][data-theme="light"] .bottom-nav button { color: #55516a !important; }
 html[data-route="app"][data-theme="light"] .bottom-nav button.on:not(.bn-main) { background: #ebe7ff !important; color: #2a1f7a !important; }
-html[data-route="app"][data-theme="light"] .bottom-nav .bn-main { box-shadow: 0 0 0 6px #f4f4f6 !important; }
-html[data-route="app"][data-theme="light"] .side.mobile-open, html[data-route="app"][data-theme="light"] .side { background: #ffffff !important; border-color: #e2e0e9 !important; color: #16141e; }
+html[data-route="app"][data-theme="light"] .bottom-nav .bn-main { box-shadow: 0 0 0 6px #e8e7ee !important; }
+html[data-route="app"][data-theme="light"] .side.mobile-open, html[data-route="app"][data-theme="light"] .side { background: #f6f5f9 !important; border-color: #bdb8cd !important; color: #16141e; }
 html[data-route="app"][data-theme="light"] .side :is(a, button, span, b, small) { color: #16141e !important; }
 html[data-route="app"][data-theme="light"] .side :is(.on, [aria-current="page"]) { background: #ebe7ff !important; color: #2a1f7a !important; }
 html[data-route="app"][data-theme="light"] .mobile-nav-backdrop { background: rgba(22, 20, 30, .35) !important; }
@@ -115,31 +115,31 @@ html[data-route="app"][data-theme="light"] .shell .top .mobile-nav-toggle::befor
 
 /* ---------- sidebar, wallet status, transaction panel and invoice cards in light ---------- */
 html[data-route="app"][data-theme="light"] { --st-open: #2c47c9; --st-soon: #8a5300; --st-late: #b3222a; --st-paid: #1d7347; --st-none: #6a667e; }
-html[data-route="app"][data-theme="light"] .shell .side { background: #ffffff !important; border-right-color: #e2e0e9 !important; }
+html[data-route="app"][data-theme="light"] .shell .side { background: #f6f5f9 !important; border-right-color: #bdb8cd !important; }
 html[data-route="app"][data-theme="light"] .shell .side-brand img { filter: none; }
 html[data-route="app"][data-theme="light"] .shell .side-group-title { color: #6a667e !important; }
 html[data-route="app"][data-theme="light"] .shell .side-item:hover { background: #f4f3f8 !important; }
 html[data-route="app"][data-theme="light"] .shell .side-item.on { background: #ebe7ff !important; border-color: #c9bcff !important; }
 html[data-route="app"][data-theme="light"] .shell .side-item.on :is(span, svg) { color: #2a1f7a !important; }
-html[data-route="app"][data-theme="light"] .shell .side-new { border-color: #cfcbdb !important; }
-html[data-route="app"][data-theme="light"] .shell .side-wallet { background: #f7f6fb; border-color: #e2e0e9; }
+html[data-route="app"][data-theme="light"] .shell .side-new { border-color: #9e98b3 !important; }
+html[data-route="app"][data-theme="light"] .shell .side-wallet { background: #f7f6fb; border-color: #bdb8cd; }
 html[data-route="app"][data-theme="light"] .shell .side-wallet.is-wrong .sw-state { color: #b3222a !important; }
-html[data-route="app"][data-theme="light"] .shell .sw-addr { background: #ffffff !important; border-color: #d9d6e3 !important; }
-html[data-route="app"][data-theme="light"] .txs { background: #ffffff; border-color: #d9d6e3; color: #16141e; box-shadow: 0 16px 40px -18px rgba(22, 20, 30, .35); }
+html[data-route="app"][data-theme="light"] .shell .sw-addr { background: #f6f5f9 !important; border-color: #a9a4bc !important; }
+html[data-route="app"][data-theme="light"] .txs { background: #f6f5f9; border-color: #a9a4bc; color: #16141e; box-shadow: 0 16px 40px -18px rgba(22, 20, 30, .35); }
 html[data-route="app"][data-theme="light"] .txs :is(b, code, li[data-step="now"], li[data-step="done"]) { color: #16141e; }
 html[data-route="app"][data-theme="light"] .txs li { color: #55516a; }
 html[data-route="app"][data-theme="light"] .txs li[data-step="now"] > i { border-color: #5b3df5; }
-html[data-route="app"][data-theme="light"] .txs :is(.txs-x, .txs-copy) { border-color: #d9d6e3; color: #16141e; }
+html[data-route="app"][data-theme="light"] .txs :is(.txs-x, .txs-copy) { border-color: #a9a4bc; color: #16141e; }
 html[data-route="app"][data-theme="light"] .inv-art { background: #f1eff8; }
 html[data-route="app"][data-theme="light"] .rart-rule { stroke: #e2deef; }
-html[data-route="app"][data-theme="light"] .rart-sheet { fill: #ffffff; stroke: #b7b0d6; }
+html[data-route="app"][data-theme="light"] .rart-sheet { fill: #f6f5f9; stroke: #b7b0d6; }
 html[data-route="app"][data-theme="light"] .rart-fold { stroke: #b7b0d6; }
 html[data-route="app"][data-theme="light"] .rart-lines { stroke: #d6d1ea; }
 html[data-route="app"][data-theme="light"] .rart-total { stroke: #8d89a0; }
 html[data-route="app"][data-theme="light"] .rart-k { fill: #4b2fe0; }
 html[data-route="app"][data-theme="light"] :is(.rart-id, .rart-face) { fill: #16141e; }
 html[data-route="app"][data-theme="light"] .shell .inv-badge { background: rgba(255, 255, 255, .92) !important; color: var(--st) !important; border-color: var(--st) !important; }
-html[data-route="app"][data-theme="light"] .shell .inv-chips li { border-color: #d9d6e3; }
+html[data-route="app"][data-theme="light"] .shell .inv-chips li { border-color: #a9a4bc; }
 html[data-route="app"][data-theme="light"] .shell .inv-chips li.on-mkt { border-color: #c9bcff; color: #2a1f7a !important; }
 html[data-route="app"][data-theme="light"] .shell .inv-body h3 .num { color: #55516a !important; }
 
@@ -152,4 +152,23 @@ html[data-route="app"][data-theme="light"] .nv .nv-segs i { background: #e4e1ee 
 html[data-route="app"][data-theme="light"] .nv .nv-segs i.on { background: #5b3df5 !important; }
 html[data-route="app"][data-theme="light"] .explore-meter { background: #e4e1ee !important; }
 html[data-route="app"][data-theme="light"] .explore-meter i { background: #5b3df5 !important; }
-html[data-route="app"][data-theme="light"] { scrollbar-color: #c9c4dc #f4f4f6; }
+html[data-route="app"][data-theme="light"] { scrollbar-color: #c9c4dc #e8e7ee; }
+
+/* light, toned down: a grey-lavender ground, off-white cards, and a dark ink edge on every card like the dark theme's violet edge */
+html[data-route="app"][data-theme="light"] .shell :is(.card, .db-card, .nv-card, .pf2-sec, .pf2-balances, .ex-stats, .trade-market-card, .wiz-pane, .wiz-preview, .verify-cert, .pay-doc, .pay-panel, .issue-steps, .rd-attention, .empty, .kpi, .trade-kpis, .history-table, .verify-lookup, .db-wallet, .explore-card, .side-wallet, .nv .nv-kpis) {
+  border: 1px solid rgba(22, 20, 30, .34) !important;
+}
+html[data-route="app"][data-theme="light"] .shell .side { border-right: 1px solid rgba(22, 20, 30, .34) !important; background: #efeef4 !important; }
+html[data-route="app"][data-theme="light"] .shell .top { border-bottom-color: rgba(22, 20, 30, .28) !important; }
+html[data-route="app"][data-theme="light"] .shell :is(.btn:not(.primary), .chip, .seg-tabs > button, .tb-search, input, select, textarea, .top-icon, .top-verify, .mobile-nav-toggle, .nv-round, .nv-filter button, .trade-panel-tabs, .trade-board-views) { border-color: rgba(22, 20, 30, .42) !important; }
+html[data-route="app"][data-theme="light"] .shell :is(.btn.primary, .cw-btn:not(.on)) { border: 1px solid #2a1f7a !important; }
+html[data-route="app"][data-theme="light"] .inv-art { background: #e2e0ea; border-bottom-color: rgba(22, 20, 30, .28); }
+html[data-route="app"][data-theme="light"] .drawer, html[data-route="app"][data-theme="light"] .drawer-panel { background: #f6f5f9 !important; border-color: rgba(22, 20, 30, .34) !important; color: #16141e; }
+html[data-route="app"][data-theme="light"] .drawer :is(h2, h3, b, strong, dd, label, span, div, p, button:not(.btn.primary), input) { color: #16141e !important; }
+html[data-route="app"][data-theme="light"] .drawer :is(.muted, dt, small, .kicker) { color: #55516a !important; }
+html[data-route="app"][data-theme="light"] .drawer :is(input, select, textarea, .dr-x, .btn:not(.primary)) { background: #fbfbfd !important; border-color: rgba(22, 20, 30, .42) !important; }
+html[data-route="app"][data-theme="light"] .drawer .btn.primary, html[data-route="app"][data-theme="light"] .drawer .btn.primary * { color: #ffffff !important; }
+html[data-route="app"][data-theme="light"] .dr-back { background: rgba(22, 20, 30, .35) !important; }
+/* a disabled primary button stays readable: grey fill, slate text, ink edge */
+html[data-route="app"][data-theme="light"] .btn.primary:disabled, html[data-route="app"][data-theme="light"] .btn.primary:disabled * { background: #d6d3e1 !important; color: #3d3952 !important; border-color: rgba(22, 20, 30, .34) !important; opacity: 1 !important; }
+html[data-route="app"][data-theme="light"] .drawer { border-left: 1px solid rgba(22, 20, 30, .34) !important; }

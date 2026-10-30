@@ -137,3 +137,12 @@ html[data-route="app"] .shell .empty > h2.empty-title { margin: .3rem 0 0; font-
 html[data-route="app"] .shell .quick-buy-panel > header h2.h-sub { display: none !important; }
 html[data-route="app"] .shell .trade-selection-panel h2.h-sub { margin: .2rem 0 0; overflow-wrap: anywhere; }
 html[data-route="app"] .shell :is(.t-explore > .empty, .trade-unconfigured) h2 { margin: 0; }
+
+/* settle drawer facts: label above value, both left-aligned, two even columns */
+html[data-route="app"] .facts:not(.compact) { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem 1.5rem; margin: 1rem 0 1.25rem; padding: 1rem 0; border-block: 1px dashed var(--line-strong); }
+html[data-route="app"] .facts:not(.compact) > div { display: grid; gap: .25rem; align-content: start; }
+html[data-route="app"] .facts:not(.compact) dt { font: 500 .76rem var(--n-sans); letter-spacing: 0; text-transform: none; color: var(--muted); }
+html[data-route="app"] .facts:not(.compact) dd { margin: 0; text-align: left; font-size: 1.02rem; font-weight: 600; }
+
+/* issued invoices: a settled receipt with nothing left to claim says so instead of offering a button */
+html[data-route="app"] .shell .issue-claimed { display: inline-flex; align-items: center; min-height: 36px; padding: 0 .75rem; border: 1px dashed var(--line-strong); border-radius: 999px; color: var(--muted); font-size: .84rem; font-weight: 600; }

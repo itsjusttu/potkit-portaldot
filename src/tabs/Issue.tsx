@@ -169,7 +169,7 @@ export function Issue({ c }: { c: Ctx }) {
                       {next === "lock" && <button className="btn sm primary" onClick={() => resume(r.id)}>Lock &amp; issue <Ico n="arrow" /></button>}
                       {next === "live" && bal > 0n && <button className="btn sm" onClick={() => c.setTab("trade", { sell: String(r.id) })}>Sell</button>}
                       {next === "live" && <button className="btn sm" onClick={() => c.openPay(r.id)}>Settle</button>}
-                      {next === "done" && <button className="btn sm" onClick={() => c.setTab("portfolio")}>Claim in Portfolio</button>}
+                      {next === "done" && ((c.claims.get(r.id) ?? 0n) > 0n ? <button className="btn sm" onClick={() => c.setTab("portfolio")}>Claim {fmt(c.claims.get(r.id) ?? 0n, 18)} tPOT</button> : <span className="issue-claimed">{c.events.some((e) => e.kind === "claim" && e.id === r.id && e.actors.some((x) => x.toLowerCase() === c.account.toLowerCase())) ? "Claimed" : r.supply === 0n ? "All claimed" : "Nothing to claim"}</span>)}
                     </div></td>
                   </tr>
                 );
