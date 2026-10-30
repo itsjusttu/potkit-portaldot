@@ -3,7 +3,7 @@ import { fmt, KINDS, short, units, type ChainEvent, type Row } from "../lib/chai
 import { Addr, CountUp, Empty, Ico } from "../AppUi";
 import { faceShare, type Ctx } from "./ctx";
 import { day, fmtDate, pct } from "./shared";
-import { ReceiptThumb } from "./ReceiptThumb";
+import { ReceiptArt } from "./ReceiptThumb";
 import { N } from "./shared";
 import { readReceiptHistory } from "./receipt-history";
 export const SkelRows = ({ n = 6, cols = 6 }: { n?: number; cols?: number }) => <div className="skel-rows" aria-busy="true" aria-label="Loading">{Array.from({ length: n }, (_, i) => <div key={i} className="skel-row">{Array.from({ length: cols }, (_, j) => <span key={j} className={`skel ${j === 0 ? "w100" : "w60"}`} />)}</div>)}</div>;
@@ -80,17 +80,24 @@ export function Explore({ c }: { c: Ctx }) {
               {rows.map((r) => {
                 const onMkt = open.filter((l) => l.receiptId === r.id).reduce((s, l) => s + l.remaining, 0n);
                 const p = ask.get(r.id); const totalShares = supplyOf(r); const face = faceValueOf(r); const dueDate = dueDateOf(r); const redeemed = isRedeemed(r);
-                const facePerShare = totalShares > 0n ? face * 10n ** 18n / totalShares : faceShare(r);
-                const marketPct = redeemed ? 100 : totalShares > 0n ? Math.min(100, Number((onMkt * 10000n) / totalShares) / 100) : 0;
+                const word = redeemed ? "Redeemed" : isSettled(r) ? "Paid" : r.status === "Pending" ? "Open" : r.status === "Free" ? "Not locked" : r.status;
                 const tone = redeemed ? "redeemed" : isSettled(r) ? "settled" : r.status === "Overdue" ? "overdue" : r.fraction ? (onMkt ? "trading" : "listed") : "minted";
                 return (
-                  <article className={`explore-card ex-${tone}`} key={r.id}>
-                    <header><ReceiptThumb id={r.id} status={redeemed ? "Redeemed" : isSettled(r) ? "Settled" : r.status} /><span className="ex-id">INVOICE #{r.id}</span>{redeemed ? <span className="tag explore-redeemed-tag">REDEEMED</span> : <SettleBadge r={r} terms={false} />}</header>
-                    <h3>{r.note || KINDS[r.kind]}</h3><p className="explore-issuer">{KINDS[r.kind]} · issuer wallet {short(r.depositor || r.owner)}</p>
-                    <div className="explore-card-facts"><div><small>Face value</small><b>{face ? `${fmt(face, r.settle.decimals)} ${r.settle.symbol}` : "Terms pending"}</b></div><div><small>Due</small><b>{dueDate ? fmtDate(new Date(dueDate * 1000)) : redeemed ? "No due date" : "—"}</b></div></div>
-                    <div className="explore-meter-label"><span>{redeemed ? "Shares issued before redemption" : "Currently listed"}</span><b>{redeemed && totalShares > 0n ? units(totalShares) : totalShares > 0n ? `${units(onMkt)} / ${units(totalShares)}` : r.fraction && isSettled(r) ? "All claimed" : "Not issued"}</b></div><div className="explore-meter"><i style={{ width: `${redeemed ? 0 : marketPct}%` }} /></div>
-                    <div className="explore-card-foot"><span>{redeemed ? "Lifecycle complete" : r.fraction ? `${units(totalShares)} shares` : "Receipt only"}</span><b>{redeemed && receiptHistory.get(r.id)?.settled ? <>Settled · {fmt(receiptHistory.get(r.id)?.settle?.value ?? r.settle.amount, r.settle.decimals)} {r.settle.symbol} paid</> : p === undefined ? (redeemed ? "REDEEMED" : "Not listed") : <>{fmt(p, 18)} <small>tPOT / share</small></>}</b></div>
-                    <footer><button className="btn sm" onClick={() => c.setTab("verify", { id: String(r.id) })}><Ico n="shield" /> Verify</button>{!redeemed && r.fraction && !r.settle.settled && <button className="btn sm" onClick={() => p !== undefined ? c.setTab("trade") : c.openPay(r.id)}>{p !== undefined ? "View market" : "Pay invoice"}</button>}</footer>
+                  <article className={`explore-card inv-card ex-${tone}`} key={r.id}>
+                    <div className="inv-art"><ReceiptArt id={r.id} kind={KINDS[r.kind]} face={face ? `${fmt(face, r.settle.decimals)} ${r.settle.symbol}` : "Terms pending"} status={word} /><span className="inv-badge" data-status={word}>{word}{!redeemed && !isSettled(r) && dueDate ? ` · ${fmtDate(new Date(dueDate * 1000))}` : ""}</span></div>
+                    <div className="inv-body">
+                      <h3><span className="num">#{r.id}</span> {r.note || KINDS[r.kind]}</h3>
+                      <ul className="inv-chips" aria-label="Receipt details"><li>{KINDS[r.kind]}</li><li>{redeemed && totalShares > 0n ? `${units(totalShares)} shares issued` : totalShares > 0n ? `${units(totalShares)} shares` : r.fraction && isSettled(r) ? "All claimed" : "No shares yet"}</li>{!redeemed && totalShares > 0n && <li className={onMkt > 0n ? "on-mkt" : ""}>{onMkt > 0n ? `${units(onMkt)} listed` : "Not listed"}</li>}</ul>
+                      <dl className="inv-facts">
+                        <div><dt>Face value</dt><dd>{face ? `${fmt(face, r.settle.decimals)} ${r.settle.symbol}` : "Terms pending"}</dd></div>
+                        <div><dt>Due</dt><dd>{dueDate ? fmtDate(new Date(dueDate * 1000)) : redeemed ? "No due date" : "—"}</dd></div>
+                      </dl>
+                      <p className="inv-issuer">Issuer {short(r.depositor || r.owner)} · not verified by PotKit</p>
+                      <footer>
+                        <div className="inv-price">{redeemed && receiptHistory.get(r.id)?.settled ? <><small>Paid</small><b>{fmt(receiptHistory.get(r.id)?.settle?.value ?? r.settle.amount, r.settle.decimals)} {r.settle.symbol}</b></> : p === undefined ? <><small>Market</small><b>{redeemed ? "Redeemed" : "Not listed"}</b></> : <><small>Ask per share</small><b>{fmt(p, 18)} tPOT</b></>}</div>
+                        <div className="inv-acts"><button className="btn sm" onClick={() => c.setTab("verify", { id: String(r.id) })}><Ico n="shield" /> Verify</button>{!redeemed && r.fraction && !r.settle.settled && <button className="btn sm" onClick={() => p !== undefined ? c.setTab("trade") : c.openPay(r.id)}>{p !== undefined ? "View market" : "Pay invoice"}</button>}</div>
+                      </footer>
+                    </div>
                   </article>
                 );
               })}

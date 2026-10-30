@@ -73,7 +73,7 @@ export function WalletModal({ open, wallets, busyId, onPick, onClose }: { open: 
   );
 }
 
-/** Chamfered HUD wallet button: "Connect Wallet" when disconnected, short address when connected. */
+/** Chamfered HUD wallet button: "Connect wallet" when disconnected, short address when connected. */
 export function WalletButton({ account, label, net, onConnect, onProfile, onCopy, onExplore, onDisconnect, onSwitchNet }: {
   account: string; label: string; net: "ok" | "wrong" | "unknown";
   onConnect: () => void; onProfile: () => void; onCopy: () => Promise<void> | void; onExplore: () => void; onDisconnect: () => void; onSwitchNet: () => void;
@@ -90,7 +90,7 @@ export function WalletButton({ account, label, net, onConnect, onProfile, onCopy
     ref.current?.querySelector<HTMLElement>(".wd-menu [role=menuitem]")?.focus();
     return () => { document.removeEventListener("mousedown", c); window.removeEventListener("keydown", k); };
   }, [open]);
-  if (!account) return <button className="cw-btn" onClick={onConnect}><span className="cw-in">Connect Wallet</span></button>;
+  if (!account) return <button className="cw-btn" onClick={onConnect}><span className="cw-in">Connect wallet</span></button>;
   const act = (f: () => void) => () => { setOpen(false); f(); };
   const keys = (e: React.KeyboardEvent) => {
     const f = [...(ref.current?.querySelectorAll<HTMLElement>(".wd-menu [role=menuitem]") ?? [])]; const i = f.indexOf(document.activeElement as HTMLElement);

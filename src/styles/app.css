@@ -1397,12 +1397,6 @@ html[data-route="app"] body {
   background:radial-gradient(ellipse 55rem 32rem at 92% -8%,rgba(255,255,255,.20),transparent 72%),radial-gradient(ellipse 40rem 25rem at 48% 42%,rgba(255,255,255,.055),transparent 72%),#07070d;
   color:var(--neo-text);
 }
-html[data-route="app"] body::before {
-  content:""; position:fixed; inset:0; z-index:0; pointer-events:none; opacity:.32;
-  background-image:radial-gradient(circle,rgba(255,255,255,.55) 1px,transparent 1.5px),linear-gradient(rgba(255,255,255,.025) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.025) 1px,transparent 1px);
-  background-size:97px 97px,48px 48px,48px 48px; background-position:11px 7px,0 0,0 0;
-  mask-image:linear-gradient(to bottom,black,transparent 84%);
-}
 html[data-route="app"] .shell { position:relative; z-index:1; }
 html[data-route="app"] .shell main { max-width:100rem; }
 html[data-route="app"] .side { background:rgba(8,8,14,.95); border-right-color:var(--line); }
@@ -1624,7 +1618,6 @@ html[data-route="app"] .dashboard-page { gap:1.45rem; }
 html[data-route="app"] .dash-overview { display:grid; grid-template-columns:minmax(15rem,.78fr) minmax(32rem,1.42fr); gap:1.5rem; align-items:center; min-height:12rem; padding:1.2rem 1rem 1.55rem; }
 html[data-route="app"] .dash-overview-copy .kicker { margin:0 0 .8rem; color:#8f8aa7; font:600 .68rem "IBM Plex Mono",monospace; letter-spacing:.16em; text-transform:uppercase; }
 html[data-route="app"] .dash-overview h1 { margin:0; color:#f4f1fb; font-size:clamp(2.25rem,3.3vw,3.5rem); letter-spacing:-.06em; line-height:1.02; }
-html[data-route="app"] .dash-overview h1 span { color:#969696; background:linear-gradient(95deg,#a8a8a8,#919191 72%,#a0a0a0); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; }
 html[data-route="app"] .dash-overview-copy>p:not(.kicker) { max-width:31rem; margin:.8rem 0 0; color:#9691a6; font-size:.9rem; line-height:1.55; }
 html[data-route="app"] .dash-connect { margin-top:1rem; }
 html[data-route="app"] .dash-hero-metrics { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:.8rem; }

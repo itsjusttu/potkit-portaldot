@@ -149,9 +149,9 @@ export function Trade({ c }: { c: Ctx }) {
       <section className="trade-intro"><div><p className="kicker">Markets · Portaldot V3</p><h1>Trade</h1><p>Compare listings by price, discount and due date. Payouts are not guaranteed.</p></div><div className="trade-intro-stats"><span><b>{eligible.length}</b> open listings</span><span><b>{num(eligible.reduce((s, x) => s + x.price * Number(x.l.remaining) / 1e18, 0))}</b> tPOT listed</span></div></section>
       <section className="trade-kpis" aria-label="Market overview">
         <article><small>Best APR</small><strong className="yield-text">{bestYield ? pct(bestYield.apr!) : "—"}</strong><span>{bestYield ? `KIT#${bestYield.r.id} · due in ${Math.ceil(bestYield.days)}d` : "No eligible listings"}</span></article>
-        <article><small>Average discount</small><strong>{openAvgDiscount === null ? "—" : pct(openAvgDiscount)}</strong><span>Open listings</span></article>
+        <article><small>Average discount</small><strong>{openAvgDiscount === null ? "—" : pct(openAvgDiscount)}</strong><span>Across buyable listings</span></article>
         <article><small>Open listings</small><strong>{eligible.length}</strong><span>{num(eligible.reduce((s, x) => s + Number(x.l.remaining) / 1e18, 0), 2)} shares available</span></article>
-        <article><small>24h volume</small><strong>{c.eventsLoading ? "…" : c.eventsOk ? `${fmt(volume24hRaw, 18)} tPOT` : "—"}</strong><span>{c.eventsLoading ? "Reading chain activity" : c.eventsOk ? `${buys24h.length} buys` : "History unavailable"}</span></article>
+        <article><small>24h volume</small><strong>{c.eventsLoading ? "…" : c.eventsOk ? `${fmt(volume24hRaw, 18)} tPOT` : "—"}</strong><span>{c.eventsLoading ? "Reading chain activity" : c.eventsOk ? `${buys24h.length} buy${buys24h.length === 1 ? "" : "s"}` : "History unavailable"}</span></article>
       </section>
       {cards.length > 0 && <div className="trade-bar" role="search">
         <div className="tb-search"><Ico n="search" /><input aria-label="Search listings" placeholder="Search invoice, id or kind" value={q} onChange={(e) => setQ(e.target.value)} /></div>
@@ -169,18 +169,18 @@ export function Trade({ c }: { c: Ctx }) {
 
       <div className="trade-grid">
         <section aria-label="Listings">
-          {!c.market ? <div className="trade-unconfigured empty"><span className="e-ico" aria-hidden>⇄</span><h3>Market not configured</h3><p className="muted">Deploy PotKit from Issue to activate listings and share trading.</p><div className="row" style={{ justifyContent: "center" }}><button className="btn sm primary" onClick={() => c.setTab("issue")}>Open Issue <Ico n="arrow" /></button></div></div> : c.loading ? <SkelCards />
+          {!c.market ? <div className="trade-unconfigured empty"><span className="e-ico" aria-hidden>⇄</span><h2 className="h-sub">Market not configured</h2><p className="muted">Deploy PotKit from Issue to activate listings and share trading.</p><div className="row" style={{ justifyContent: "center" }}><button className="btn sm primary" onClick={() => c.setTab("issue")}>Open Issue <Ico n="arrow" /></button></div></div> : c.loading ? <SkelCards />
             : !cards.length ? <>
               <Empty icon="⇄" title="No open listings" body="Nobody is selling shares right now. List yours from the panel to get cash today." />
               {!cards.length && recentTrades.length > 0 && <section className="card trade-recent" aria-label="Recent trades">
-                <header><div><p className="kicker">On-chain activity</p><h3>Recent trades</h3></div><span className="trade-recent-live"><i />Verified</span></header>
+                <header><div><p className="kicker">On-chain activity</p><h2 className="h-sub">Recent trades</h2></div><span className="trade-recent-live"><i />Verified</span></header>
                 <ol>{recentTrades.map((e) => <li key={`${e.hash}-${e.logIndex}-${e.kind}`}><span className="trade-recent-icon"><Ico n="cart" size={16} /></span><b>{e.text}</b><small>Block {e.block.toString()}</small></li>)}</ol>
               </section>}
             </>
             : (
               <>
               <div className="trade-market-card card" id="market-board">
-                <div className="trade-market-heading"><div><p className="kicker">Live board</p><h3>{marketView === "market" ? "Listings" : "My listings"} <span>{boardItems.length}</span></h3></div><div className="trade-board-views" role="group" aria-label="Listing view">{([ ["market", "All listings"], ["mine", `My listings · ${myListings.length}`] ] as const).map(([key, label]) => <button key={key} type="button" className={marketView === key ? "on" : ""} onClick={() => setMarketView(key)}>{label}</button>)}</div></div>
+                <div className="trade-market-heading"><div><p className="kicker">Live board</p><h2 className="h-sub">{marketView === "market" ? "Listings" : "My listings"} <span>{boardItems.length}</span></h2></div><div className="trade-board-views" role="group" aria-label="Listing view">{([ ["market", "All listings"], ["mine", `My listings · ${myListings.length}`] ] as const).map(([key, label]) => <button key={key} type="button" className={marketView === key ? "on" : ""} onClick={() => setMarketView(key)}>{label}</button>)}</div></div>
                 {marketView === "market" ? <div className="trade-market-list" role="table" aria-label="Open invoice share markets">
                   <div className="trade-row trade-row-head" role="row"><span role="columnheader">Invoice</span><span role="columnheader">Price / share</span><span role="columnheader"><Term k="discount">Discount</Term></span><span role="columnheader"><Term k="apr">Est. APR</Term></span><span role="columnheader">Due in</span><span role="columnheader">Shares available</span><span role="columnheader">Action</span></div>
                   {shown.map((x) => {
@@ -205,21 +205,21 @@ export function Trade({ c }: { c: Ctx }) {
                   })}
                 </div>}
               </div>
-              <section className="card trade-charts"><header><div><p className="kicker">Market activity</p><h3>Last trades</h3></div><small>On-chain price · tPOT / share</small></header><div className="trade-chart-grid">{[...new Map(marketEvents.filter((e) => e.kind === "buy").map((e) => [e.id, e])).values()].slice(0, 5).map((e) => { const values = tradesByReceipt.get(e.id) ?? []; const last = values.at(-1); return <article key={e.id}><div><b>KIT#{e.id}</b><small>{last === undefined ? "—" : `${num(last)} tPOT`}</small></div>{values.length > 1 ? <Sparkline values={values} /> : <small className="muted">1 trade so far, no price history yet</small>}</article>; })}{!marketEvents.some((e) => e.kind === "buy") && <p className="muted">No on-chain buy trades to chart yet.</p>}</div></section>
+              <section className="card trade-charts"><header><div><p className="kicker">Market activity</p><h2 className="h-sub">Last trades</h2></div><small>On-chain price · tPOT / share</small></header><div className="trade-chart-grid">{[...new Map(marketEvents.filter((e) => e.kind === "buy").map((e) => [e.id, e])).values()].slice(0, 5).map((e) => { const values = tradesByReceipt.get(e.id) ?? []; const last = values.at(-1); return <article key={e.id}><div><b>KIT#{e.id}</b><small>{last === undefined ? "—" : `${num(last)} tPOT`}</small></div>{values.length > 1 ? <Sparkline values={values} /> : <small className="muted">1 trade so far, no price history yet</small>}</article>; })}{!marketEvents.some((e) => e.kind === "buy") && <p className="muted">No on-chain buy trades to chart yet.</p>}</div></section>
               </>
             )}
         </section>
 
         <aside className="trade-side-column">
         {sel && detailsOpen && <section className="card trade-selection-panel" aria-label="Selected listing details">
-          <header><div><p className="kicker">Selected listing</p><h3>#{sel.r.id} · {sel.r.note}</h3></div><button type="button" className="btn sm" onClick={() => { setDetailsOpen(false); setOpen(null); }}>Close</button></header>
+          <header><div><p className="kicker">Selected listing</p><h2 className="h-sub">#{sel.r.id} · {sel.r.note}</h2></div><button type="button" className="btn sm" onClick={() => { setDetailsOpen(false); setOpen(null); }}>Close</button></header>
           <div className="tags"><SettleBadge r={sel.r} /></div>
           <dl className="facts compact"><div><dt>Price / share</dt><dd className="num">{num(sel.price)} tPOT</dd></div><div><dt>Face / share</dt><dd className="num">{sel.face ? `${num(sel.face)} tPOT` : "no terms"}</dd></div><div><dt>Discount</dt><dd className="num">{sel.face ? pct(sel.discount) : "—"}</dd></div><div><dt><Term k="apr">Est. APR</Term></dt><dd className="num">{sel.apr !== null ? <>{pct(sel.apr)} <small className="muted">estimate</small></> : "—"}</dd></div><div><dt>Issuer record</dt><dd>{recordLabel(recordOf(sel))}</dd></div><div><dt>Due</dt><dd>{sel.r.dueDate ? day(sel.r.dueDate) : "—"}</dd></div><div><dt>Available</dt><dd className="num">{units(sel.l.remaining)}</dd></div></dl>
                     {sel.l.seller === c.account ? <button className="btn block" onClick={() => openBuy(sel)}>Manage listing</button> : sel.state === "Settled" || sel.state === "Overdue" ? <ClosedWhy state={sel.state} onPortfolio={() => c.setTab("portfolio")} /> : <button className="btn block" onClick={() => openBuy(sel)}>Buy shares</button>}
         </section>}
         {c.market && <div className="trade-panel-tabs" role="tablist" aria-label="Trade actions">{([["quick", "Quick buy"], ["sell", "Sell"]] as const).map(([k, label]) => <button key={k} type="button" role="tab" id={`tab-${k}`} aria-selected={panel === k} aria-controls={k === "quick" ? "quick-buy" : "sell"} className={panel === k ? "on" : ""} onClick={() => setPanel(k)}>{label}</button>)}</div>}
         {c.market && panel === "quick" && <section className="card quick-buy-panel" id="quick-buy" role="tabpanel" aria-labelledby="tab-quick" aria-label="Quick buy">
-          <header><div><p className="kicker">Quote across live listings</p><h3>Quick buy</h3></div><small>Lowest price first</small></header>
+          <header><div><p className="kicker">Quote across live listings</p><h2 className="h-sub">Quick buy</h2></div><small>Lowest price first</small></header>
           <label htmlFor="quick-budget">Spend</label>
           <div className="trade-budget-input"><input id="quick-budget" inputMode="decimal" value={quickBudget} aria-label="Spend amount in tPOT" aria-invalid={Boolean(budgetError)} aria-describedby={budgetError ? "quick-budget-error" : undefined} onChange={(e) => setQuickBudget(e.target.value)} /><span>tPOT</span></div>
           {budgetError && <small id="quick-budget-error" className="field-error" role="alert">{budgetError}</small>}

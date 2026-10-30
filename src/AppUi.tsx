@@ -60,7 +60,7 @@ export function Empty({ icon, title, body, children, tone = "" }: { icon: string
   return (
     <div className={`empty ${tone}`}>
       <span className="e-ico" aria-hidden>{icon}</span>
-      <h3>{title}</h3>
+      <h2 className="empty-title">{title}</h2>
       <p className="muted">{body}</p>
       {children && <div className="row" style={{ justifyContent: "center" }}>{children}</div>}
     </div>

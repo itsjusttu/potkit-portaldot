@@ -1,0 +1,139 @@
+/* App layout layer (after night-grid, before night-light): persistent sidebar on desktop, wallet status in the
+   sidebar, step-by-step transaction panel, invoice cards with a drawing. Status colours always come with a word. */
+html[data-route="app"] {
+  --st-open: #8ea2ff; --st-soon: #f3bf5a; --st-late: #ff8a91; --st-paid: #5fd9a3; --st-none: #a9a4c4;
+}
+
+/* ---------- desktop: sidebar + slim top bar ---------- */
+@media (min-width: 68.76rem) {
+  html[data-route="app"] .shell { grid-template-columns: 16rem minmax(0, 1fr) !important; }
+  html[data-route="app"] .shell.side-collapsed { grid-template-columns: 4.75rem minmax(0, 1fr) !important; }
+  html[data-route="app"] .shell > .side { display: flex !important; }
+  html[data-route="app"] .shell > main { max-width: 92rem; margin-inline: 0; padding-inline: 2rem !important; }
+  html[data-route="app"] .shell .top { border: 0 !important; border-bottom: 1px solid var(--line) !important; border-radius: 0 !important; background: transparent !important; padding: .9rem 0 !important; margin: 0 0 1.6rem !important; }
+  html[data-route="app"] .shell .top .top-brand, html[data-route="app"] .shell .top nav.top-tabs { display: none !important; }
+  html[data-route="app"] .shell .top .crumb { display: flex !important; align-items: center; gap: .45rem; flex: 1 1 auto; min-width: 0; font-size: .92rem; }
+  html[data-route="app"] .shell .top .crumb .icon-btn, html[data-route="app"] .shell .top .crumb .mobile-nav-toggle { display: none !important; }
+  html[data-route="app"] .shell .top .crumb-root { color: var(--muted); }
+}
+
+/* ---------- sidebar ---------- */
+html[data-route="app"] .shell .side { gap: 1.1rem; padding: 1.2rem .9rem; }
+html[data-route="app"] .shell .side-new { background: transparent !important; border: 1px solid var(--line-strong) !important; color: inherit; box-shadow: none !important; }
+html[data-route="app"] .shell .side-group-title { margin: 0 0 .35rem .6rem; font-size: .74rem; letter-spacing: .02em; text-transform: none; }
+html[data-route="app"] .shell .side-item { display: flex; align-items: center; gap: .65rem; min-height: 40px; padding: 0 .65rem; border: 1px solid transparent; border-radius: 8px; font-size: .92rem; }
+html[data-route="app"] .shell .side-item.on { box-shadow: none !important; border-color: rgba(143, 114, 255, .45) !important; background: rgba(123, 92, 255, .14) !important; }
+
+/* wallet status: a dot and a word, the address, network and balance, and the one action that fixes the state */
+html[data-route="app"] .shell .side-wallet { margin-top: auto; display: grid; gap: .55rem; padding: .9rem; border: 1px solid var(--line-strong); border-radius: 12px; background: rgba(123, 92, 255, .06); }
+html[data-route="app"] .shell .sw-state { display: flex; align-items: center; gap: .5rem; margin: 0; font-weight: 600; font-size: .9rem; }
+html[data-route="app"] .shell .sw-state i { width: 9px; height: 9px; border-radius: 50%; background: var(--st-none); flex: none; }
+html[data-route="app"] .shell .side-wallet.is-ok .sw-state i { background: var(--st-paid); }
+html[data-route="app"] .shell .side-wallet.is-wrong .sw-state i { background: var(--st-late); }
+html[data-route="app"] .shell .side-wallet.is-checking .sw-state i { background: var(--st-soon); }
+html[data-route="app"] .shell .side-wallet.is-wrong .sw-state { color: var(--st-late); }
+html[data-route="app"] .shell .sw-note { margin: 0; font-size: .8rem; line-height: 1.45; color: var(--muted); }
+html[data-route="app"] .shell .sw-addr { justify-self: start; padding: .3rem .55rem; border: 1px solid var(--line); border-radius: 6px; background: transparent; color: inherit; font: 500 .82rem var(--n-mono); cursor: copy; }
+html[data-route="app"] .shell .sw-facts { display: grid; gap: .3rem; margin: 0; }
+html[data-route="app"] .shell .sw-facts > div { display: flex; justify-content: space-between; gap: .6rem; font-size: .8rem; }
+html[data-route="app"] .shell .sw-facts dt { color: var(--muted); }
+html[data-route="app"] .shell .sw-facts dd { margin: 0; font-weight: 600; text-align: right; }
+html[data-route="app"] .shell .side-wallet .btn { width: 100%; justify-content: center; }
+html[data-route="app"] .shell.side-collapsed .side-wallet { display: none; }
+
+/* ---------- transaction panel ---------- */
+html[data-route="app"] .txs { position: fixed; right: 1.25rem; bottom: 1.25rem; z-index: 120; width: min(24rem, calc(100vw - 1.5rem)); box-sizing: border-box; padding: 1rem 1.1rem; border: 1px solid var(--line-strong); border-radius: 12px; background: #120e24; color: var(--fg); box-shadow: 0 16px 40px -18px rgba(0, 0, 0, .8); }
+html[data-route="app"] .txs header { display: flex; align-items: center; justify-content: space-between; gap: .6rem; margin-bottom: .6rem; }
+html[data-route="app"] .txs header b { font-size: .95rem; }
+html[data-route="app"] .txs-x { width: 32px; height: 32px; border: 1px solid var(--line); border-radius: 8px; background: transparent; color: inherit; font-size: 1.1rem; line-height: 1; cursor: pointer; }
+html[data-route="app"] .txs ol { list-style: none; margin: 0; padding: 0; display: grid; gap: .55rem; }
+html[data-route="app"] .txs li { display: grid; grid-template-columns: 18px minmax(0, 1fr); gap: .1rem .6rem; align-items: start; font-size: .86rem; color: var(--muted); }
+html[data-route="app"] .txs li > i { width: 14px; height: 14px; margin-top: .15rem; border-radius: 50%; border: 1.5px solid var(--line-strong); box-sizing: border-box; }
+html[data-route="app"] .txs li > small, html[data-route="app"] .txs li > span ~ small { grid-column: 2; font-size: .78rem; color: var(--st-soon); }
+html[data-route="app"] .txs li[data-step="now"] { color: var(--fg); font-weight: 600; }
+html[data-route="app"] .txs li[data-step="now"] > i { border: 4px solid #7b5cff; }
+html[data-route="app"] .txs li[data-step="done"] { color: var(--fg); }
+html[data-route="app"] .txs li[data-step="done"] > i { border: 0; background: var(--st-paid); }
+html[data-route="app"] .txs li[data-step="fail"] { color: var(--st-late); }
+html[data-route="app"] .txs li[data-step="fail"] > i { border: 0; background: var(--st-late); }
+html[data-route="app"] .txs code { font: 500 .8rem var(--n-mono); }
+html[data-route="app"] .txs-copy { margin-left: .35rem; padding: .1rem .45rem; border: 1px solid var(--line); border-radius: 6px; background: transparent; color: inherit; font-size: .74rem; cursor: pointer; }
+html[data-route="app"] .txs.txs-success { border-color: rgba(95, 217, 163, .45); }
+html[data-route="app"] .txs.txs-error { border-color: rgba(255, 138, 145, .5); }
+@media (max-width: 68.75rem) {
+  html[data-route="app"] .txs { left: .75rem; right: .75rem; width: auto; bottom: calc(5.4rem + env(safe-area-inset-bottom)); }
+}
+
+/* ---------- invoice cards (Explore, cards view) ---------- */
+html[data-route="app"] .shell .explore-card-grid { grid-template-columns: repeat(auto-fill, minmax(17.5rem, 1fr)) !important; gap: 1rem; }
+html[data-route="app"] .shell .explore-card.inv-card { display: flex; flex-direction: column; gap: 0; padding: 0; overflow: hidden; border-radius: 14px; transform: none !important; transition: border-color 180ms ease; }
+html[data-route="app"] .shell .explore-card.inv-card:hover { border-color: rgba(143, 114, 255, .5) !important; box-shadow: none !important; }
+html[data-route="app"] .inv-art { position: relative; aspect-ratio: 32 / 15; background: #15112a; border-bottom: 1px solid var(--line); }
+html[data-route="app"] .rart { --st: var(--st-none); display: block; width: 100%; height: 100%; }
+html[data-route="app"] .rart[data-status="Open"] { --st: var(--st-open); }
+html[data-route="app"] .rart[data-status="Due soon"] { --st: var(--st-soon); }
+html[data-route="app"] .rart[data-status="Overdue"] { --st: var(--st-late); }
+html[data-route="app"] .rart[data-status="Paid"] { --st: var(--st-paid); }
+html[data-route="app"] .rart-rule { stroke: rgba(187, 168, 255, .12); stroke-width: 1; }
+html[data-route="app"] .rart-sheet { fill: #1e1838; stroke: rgba(187, 168, 255, .45); stroke-width: 1; stroke-linejoin: round; }
+html[data-route="app"] .rart-fold { fill: none; stroke: rgba(187, 168, 255, .45); stroke-width: 1; stroke-linejoin: round; }
+html[data-route="app"] .rart-lines { stroke: rgba(187, 168, 255, .28); stroke-width: 3; stroke-linecap: round; }
+html[data-route="app"] .rart-total { stroke: rgba(255, 255, 255, .45); stroke-width: 1; stroke-dasharray: 3 3; }
+html[data-route="app"] .rart-k { fill: #bba8ff; font: 600 9px var(--n-sans); letter-spacing: .08em; }
+html[data-route="app"] .rart-id { fill: #f4f2fa; font: 600 15px var(--n-mono); }
+html[data-route="app"] .rart-face { fill: #f4f2fa; font: 600 12px var(--n-mono); }
+html[data-route="app"] .rart-stamp circle { fill: none; stroke: var(--st); stroke-width: 2; }
+html[data-route="app"] .rart-stamp .rart-stamp-in { stroke-width: 1; stroke-dasharray: 2 2; }
+html[data-route="app"] .rart-stamp text { fill: var(--st); font: 700 9.5px var(--n-sans); letter-spacing: .06em; }
+html[data-route="app"] .inv-badge { --st: var(--st-none); position: absolute; top: .65rem; left: .65rem; padding: .2rem .6rem; border: 1px solid var(--st); border-radius: 999px; background: rgba(10, 8, 20, .82); color: var(--st); font: 600 .74rem/1.3 var(--n-sans); }
+html[data-route="app"] .inv-badge[data-status="Open"] { --st: var(--st-open); }
+html[data-route="app"] .inv-badge[data-status="Due soon"] { --st: var(--st-soon); }
+html[data-route="app"] .inv-badge[data-status="Overdue"] { --st: var(--st-late); }
+html[data-route="app"] .inv-badge[data-status="Paid"] { --st: var(--st-paid); }
+html[data-route="app"] .inv-body { display: grid; gap: .7rem; padding: 1rem 1.1rem 1.1rem; flex: 1; }
+html[data-route="app"] .inv-body h3 { margin: 0; font-size: 1rem; font-weight: 600; line-height: 1.3; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+html[data-route="app"] .inv-body h3 .num { color: var(--muted); font-weight: 500; }
+html[data-route="app"] .inv-chips { display: flex; flex-wrap: wrap; gap: .35rem; margin: 0; padding: 0; list-style: none; }
+html[data-route="app"] .inv-chips li { padding: .15rem .55rem; border: 1px solid var(--line-strong); border-radius: 6px; font-size: .76rem; color: var(--muted); }
+html[data-route="app"] .inv-chips li.on-mkt { border-color: rgba(143, 114, 255, .5); color: #c9bcff; }
+html[data-route="app"] .inv-facts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .6rem; margin: 0; }
+html[data-route="app"] .inv-facts dt { font-size: .74rem; color: var(--muted); }
+html[data-route="app"] .inv-facts dd { margin: .1rem 0 0; font-size: 1.05rem; font-weight: 600; font-variant-numeric: tabular-nums; }
+html[data-route="app"] .inv-issuer { margin: 0; font-size: .76rem; color: var(--muted); }
+html[data-route="app"] .inv-body footer { display: flex; align-items: flex-end; justify-content: space-between; gap: .6rem; margin-top: auto; padding-top: .7rem; border-top: 1px solid var(--line); }
+html[data-route="app"] .inv-price { display: grid; gap: .1rem; }
+html[data-route="app"] .inv-price small { font-size: .74rem; color: var(--muted); }
+html[data-route="app"] .inv-price b { font-size: 1rem; }
+html[data-route="app"] .inv-acts { display: flex; gap: .4rem; flex-wrap: wrap; justify-content: flex-end; }
+html[data-route="app"] .shell .side-group + .side-group { margin-top: .6rem; }
+
+/* Trade table header: sentence case, one line, readable size (the mono capitals broke into two lines beside the sidebar) */
+html[data-route="app"] .shell .trade-row-head { font: 600 .76rem var(--n-sans) !important; letter-spacing: 0 !important; text-transform: none !important; white-space: nowrap; color: var(--muted); }
+html[data-route="app"] .shell .trade-row-head > * { white-space: nowrap; }
+
+/* section headings that were h3 under the page h1 are h2 now; they keep the look they had */
+html[data-route="app"] .shell h2.h-sub { margin: 0; font-family: var(--n-sans); font-size: 1rem; font-weight: 600; line-height: 1.25; letter-spacing: -.01em; color: inherit; }
+html[data-route="app"] .shell .issue-receipt > h2.h-sub { margin: 1.25rem 0 .25rem; }
+html[data-route="app"] .shell .verify-lookup-copy > h2.h-sub { margin: 0 0 .35rem; }
+html[data-route="app"] .shell .trade-market-heading h2.h-sub span { margin-left: .3rem; color: var(--muted); font: 500 .8rem var(--n-mono); }
+
+/* phones: every control is at least 44px to tap; small icon buttons get an invisible larger hit area */
+@media (max-width: 68.75rem) {
+  html[data-route="app"] .shell .top :is(.top-verify, .theme-toggle, .mobile-nav-toggle) { width: 44px !important; height: 44px !important; }
+  html[data-route="app"] .shell .top :is(.cw-btn, .wallet-btn) { min-height: 44px !important; }
+  html[data-route="app"] .shell :is(.nv-filter button, .seg-tabs > button, .trade-mode button, .chip, .nv-link, .btn.sm) { min-height: 44px; }
+  html[data-route="app"] .shell :is(.watch-btn, .addr-c, .nv-round, .nv-inline, .txs-copy) { position: relative; }
+  html[data-route="app"] .shell :is(.watch-btn, .addr-c, .nv-round)::after { content: ""; position: absolute; inset: -6px; }
+  html[data-route="app"] .shell :is(.nv-inline, .txs-copy)::after { content: ""; position: absolute; inset: -12px -4px; }
+}
+/* empty states: their title is an h2 under the page h1 and keeps the old size */
+html[data-route="app"] .shell .empty > h2.empty-title { margin: .3rem 0 0; font-family: var(--n-sans); font-size: 1rem; font-weight: 600; letter-spacing: -.01em; text-transform: none; color: inherit; }
+@media (max-width: 68.75rem) {
+  html[data-route="app"] .shell .top .top-brand { min-width: 44px; min-height: 44px; justify-content: center; }
+  html[data-route="app"] .shell .seg-tabs[aria-label="Filter receipts by lifecycle"] > button, html[data-route="app"] .shell .trade-panel-tabs > button, html[data-route="app"] .shell .nv-next { min-height: 44px !important; }
+}
+
+/* rules that were written for these headings when they were h3 */
+html[data-route="app"] .shell .quick-buy-panel > header h2.h-sub { display: none !important; }
+html[data-route="app"] .shell .trade-selection-panel h2.h-sub { margin: .2rem 0 0; overflow-wrap: anywhere; }
+html[data-route="app"] .shell :is(.t-explore > .empty, .trade-unconfigured) h2 { margin: 0; }

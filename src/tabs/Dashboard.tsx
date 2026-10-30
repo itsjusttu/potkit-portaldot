@@ -115,7 +115,7 @@ export function Dashboard({ c }: { c: Ctx }) {
             : <ul className="nv-rows">{shown.slice(0, 6).map((r) => { const nx = nextFor(r); return (
               <li key={r.id}>
                 <span className="nv-ev-ico num">#{r.id}</span>
-                <span className="nv-ev-t"><b>{r.note || KINDS[r.kind]}</b><small>{KINDS[r.kind]}{r.dueDate ? <> · due <span className="num">{day(r.dueDate)}</span></> : ""}{r.fraction ? <> · <span className="num">{units(r.supply)}</span> shares</> : " · not locked yet"}</small></span>
+                <span className="nv-ev-t"><b>{r.note || KINDS[r.kind]}</b><small>{KINDS[r.kind]}{r.dueDate ? <> · due <span className="num">{day(r.dueDate)}</span></> : ""}{!r.fraction ? " · not locked yet" : r.settle.settled && r.supply === 0n ? " · all shares claimed" : <> · <span className="num">{units(r.supply)}</span> shares</>}</small></span>
                 <span className="nv-row-status"><SettleBadge r={r} terms={false} /></span>
                 <span className="nv-row-v num">{faceValueOf(r) ? `${fmt(faceValueOf(r), r.settle.decimals)} tPOT` : "—"}</span>
                 <span className="nv-row-act">

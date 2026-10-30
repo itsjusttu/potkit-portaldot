@@ -230,7 +230,7 @@ html[data-route="landing"] { scroll-behavior: smooth; }
 .pl-prod-copy h3 { font-size: clamp(1.7rem, 2.8vw, 2.4rem); max-width: 15ch; }
 .pl-prod-copy p { margin-top: auto; color: var(--soft); font-size: 1rem; } .pl-prod-copy .pl-link { align-self: flex-start; }
 .pl-frame { position: relative; display: grid; place-items: center; min-width: 0; padding: clamp(1.2rem, 3vw, 2.4rem); border-radius: 4px; overflow: hidden; background: radial-gradient(55% 55% at 50% 45%, rgba(123,92,255,.42), transparent 75%), #07050f; animation: plSwap .6s var(--ease); }
-.pl-frame::before { content: ""; position: absolute; inset: 0; background-image: linear-gradient(rgba(178,160,255,.06) 1px, transparent 1px), linear-gradient(90deg, rgba(178,160,255,.06) 1px, transparent 1px); background-size: 48px 48px; }
+.pl-frame::before { content: ""; position: absolute; inset: 0; border: 1px solid rgba(178,160,255,.08); border-radius: inherit; }
 .pl-frame > * { position: relative; }
 @keyframes plSwap { from { opacity: 0; transform: translateY(12px); } }
 

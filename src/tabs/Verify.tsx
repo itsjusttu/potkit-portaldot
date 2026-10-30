@@ -94,9 +94,9 @@ export function Verify({ c }: { c: Ctx }) {
       <section className="verify-intro"><div><p className="kicker">Public verification · Portaldot V3</p><h1>Verify an invoice</h1><p>Read the receipt, custody and settlement state directly from the selected PotKit contract.</p></div><span className="verify-network"><i /> Chain 420420777</span></section>
       <div className="verify-scope"><Ico n="info" /><p><b>What this proof checks:</b> receipt and share-token state, custody, terms and settlement events read from Portaldot. It does not independently confirm that the off-chain invoice or claim is genuine.</p></div>
       <div className="verify-lookup">
-        <div className="verify-lookup-copy"><h3>Look up a receipt</h3><p>Enter a receipt ID to read current contract state. A share-token address can find a receipt in the loaded range.</p></div>
+        <div className="verify-lookup-copy"><h2 className="h-sub">Look up a receipt</h2><p>Enter a receipt ID to read current contract state. A share-token address can find a receipt in the loaded range.</p></div>
         <form className="v-search" onSubmit={(e) => { e.preventDefault(); void check(input); }}>
-          <label htmlFor="v-in" className="sr-only">Receipt id or share-token address</label>
+          <label htmlFor="v-in" className="sr-only">Receipt ID or share-token address</label>
           <div className="tb-search"><Ico n="search" /><input id="v-in" placeholder="Receipt id (e.g. 4) or KIT share-token address" value={input} onChange={(e) => setInput(e.target.value)} /></div>
           <button className="btn primary" type="submit" disabled={loading}>{loading ? "Reading…" : "Verify on-chain"}</button>
         </form>
@@ -134,7 +134,7 @@ export function Verify({ c }: { c: Ctx }) {
             <p className="cert-disclaimer">Read {res.at.toLocaleString("en-GB", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit", second: "2-digit" })} from chain 420420777. This proves on-chain state, not the authenticity of off-chain invoice documents.</p>
           </article>
           <aside className="proof-trail">
-            <header><div><h3>On-chain proof trail</h3><p className="muted">Earlier cycles may share this receipt ID and token address. Current status is shown above; events below span the readable history.</p></div><span>{hist.length}<small>events loaded</small></span></header>
+            <header><div><h2 className="h-sub">On-chain proof trail</h2><p className="muted">Earlier cycles may share this receipt ID and token address. Current status is shown above; events below span the readable history.</p></div><span>{hist.length}<small>events loaded</small></span></header>
             {!c.eventsOk && <p className="proof-scan-note">The RPC event scan is incomplete. Missing steps below may exist outside the range that could be read.</p>}
             <ol className="proof-events">{proofSteps.map((step) => (
               <li key={step.key} className={step.done ? "done" : "pending"}>

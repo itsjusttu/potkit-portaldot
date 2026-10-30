@@ -4,6 +4,7 @@ import { checkPayment, needsAck } from "./lib/settlecheck";
 import { DEFAULTS } from "./config";
 import { appShareUrl, homeUrl, isAppHost } from "./routes";
 import { WalletButton, WalletModal } from "./WalletUi";
+import { TxStatus } from "./TxStatus";
 import { selected } from "./lib/wallets";
 import { useWalletStatus } from "./hooks/useWalletStatus";
 import { useTx } from "./hooks/useTx";
@@ -297,10 +298,8 @@ export function App() {
         <button className="side-new" title="New invoice" onClick={() => setTab("issue")}><TabIco t="issue" /><span>New invoice</span></button>
         <nav id="app-sections" className="side-nav" aria-label="Sections">
           {([
-            ["Overview", ["dashboard"]],
-            ["Issue", ["issue"]],
-            ["Markets", ["trade", "explore"]],
-            ["You", ["portfolio", "history", "profile"]],
+            ["Main", ["dashboard", "issue", "trade", "explore", "portfolio"]],
+            ["Account", ["history", "profile"]],
             ["Trust", ["verify"]],
           ] as [string, Tab[]][]).map(([group, tabs]) => <div className="side-group" key={group}>
             <p className="side-group-title">{group}</p>
@@ -313,9 +312,24 @@ export function App() {
         </nav>
         <div className="side-group side-support">
           <p className="side-group-title">Support</p>
-          <button type="button" className="side-item" title="Contact Support" onClick={() => setSupportOpen(true)}><Ico n="mail" /><span>Contact Support</span></button>
+          <button type="button" className="side-item" title="Contact support" onClick={() => setSupportOpen(true)}><Ico n="mail" /><span>Contact support</span></button>
           <a className="side-item" title="Help Center" href={protocolPage("/help")}><Ico n="life" /><span>Help Center</span><Ico n="ext" /></a>
         </div>
+        <section className={`side-wallet ${!account ? "is-off" : chainOk ? "is-ok" : chainOk === false ? "is-wrong" : "is-checking"}`} aria-label="Wallet status">
+          {!account ? <>
+            <p className="sw-state"><i aria-hidden />Wallet not connected</p>
+            <p className="sw-note">You can browse, explore and verify without one. Issuing, buying and claiming need a wallet.</p>
+            <button type="button" className="btn primary sm" onClick={connectWallet}>Connect wallet</button>
+          </> : <>
+            <p className="sw-state"><i aria-hidden />{chainOk ? "Connected" : chainOk === false ? "Wrong network" : "Checking network…"}</p>
+            <button type="button" className="sw-addr" onClick={copyAddr} title="Copy address">{short(account)}</button>
+            <dl className="sw-facts">
+              <div><dt>Network</dt><dd>{chainOk === false ? "Not Portaldot V3" : `Portaldot V3 · ${portaldot.id}`}</dd></div>
+              <div><dt>Balance</dt><dd>{native === null ? (nativeLoading ? "Reading…" : "—") : `${(Number(native) / 1e18).toLocaleString("en-US", { maximumFractionDigits: 2 })} tPOT`}</dd></div>
+            </dl>
+            {chainOk === false && <button type="button" className="btn primary sm" disabled={Boolean(busy)} onClick={switchNet}>{busy === "net" ? "Switching…" : "Switch to Portaldot V3"}</button>}
+          </>}
+        </section>
       </aside>
       <main>
         <header className="top">
@@ -342,12 +356,11 @@ export function App() {
               <button type="button" className="top-icon" aria-label="Help and support" aria-expanded={helpOpen} aria-haspopup="menu" title="Help and support" onClick={() => setHelpOpen((v) => !v)}><svg className="ico" viewBox="0 0 24 24" width="17" height="17" aria-hidden fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="9" /><path d="M9.5 9.5a2.5 2.5 0 0 1 4.9.7c0 1.7-2.4 2.1-2.4 3.6M12 17h.01" /></svg></button>
               {helpOpen && <div className="top-help-pop" role="menu">
                 <a role="menuitem" href={protocolPage("/help")}><Ico n="life" /> Help Center</a>
-                <button type="button" role="menuitem" onClick={() => { setHelpOpen(false); setSupportOpen(true); }}><Ico n="mail" /> Contact Support</button>
+                <button type="button" role="menuitem" onClick={() => { setHelpOpen(false); setSupportOpen(true); }}><Ico n="mail" /> Contact support</button>
               </div>}
             </div>
             <ThemeToggle />
             <span className={`top-net ${!account ? "" : chainOk ? "ok" : chainOk === false ? "bad" : ""}`} title={`Portaldot V3 Testnet · chain ${portaldot.id}`}><i aria-hidden />{!account ? "Portaldot V3 · read-only" : chainOk ? "Portaldot V3" : chainOk === false ? "Wrong network" : "Checking network…"}</span>
-            {phase !== "idle" && <span className={`top-tx tx-${phase}`} role="status" aria-live="polite"><i aria-hidden />{phase === "signing" ? "Confirm in your wallet…" : phase === "pending" ? "Transaction pending…" : phase === "success" ? "Transaction confirmed" : "Transaction not completed"}</span>}
             <WalletButton account={account} label={short(account)} net={chainOk ? "ok" : chainOk === false ? "wrong" : "unknown"}
               onConnect={connectWallet} onProfile={() => setTab("profile")} onCopy={copyAddr} onExplore={() => setTab("explore", { addr: account })}
               onDisconnect={() => void disconnect()} onSwitchNet={switchNet} />
@@ -379,13 +392,14 @@ export function App() {
         </div>
 
         {(notice || wallet.embedded) && <p className="banner" role="status">{notice || "Wallets cannot attach inside an embedded preview. Open this page in a full browser tab."}</p>}
+        {needsWallet && (wallet.noWallet || !account) && <h1 className="sr-only">{TITLES[tab][0]}</h1>}
         {needsWallet && wallet.noWallet ? (
           <Empty icon="◇" title="No wallet detected" tone="warn" body={wallet.embedded ? "Wallets can't attach inside an embedded preview. Open this page in a full browser tab." : "Install any EVM browser wallet (OKX, Rabby, MetaMask, Coinbase and more), then reload. Explore and Verify work without a wallet."}>
             <button className="btn primary" onClick={wallet.open}>Choose a wallet</button>
           </Empty>
         ) : needsWallet && !account ? (
           <Empty icon="◎" title="Connect your wallet" body="Connect to issue invoices, trade shares and claim payouts. Explore and Verify work without a wallet.">
-            <button className="btn primary" disabled={Boolean(busy)} onClick={connectWallet}>Connect Wallet</button>
+            <button className="btn primary" disabled={Boolean(busy)} onClick={connectWallet}>Connect wallet</button>
           </Empty>
         ) : (
           <>
@@ -413,6 +427,7 @@ export function App() {
           </>
         )}
       </main>
+      <TxStatus phase={phase} />
 
       {tab !== "pay" && (
         <nav className="bottom-nav" aria-label="Main sections">

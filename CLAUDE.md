@@ -7,7 +7,7 @@ do not touch contracts/, api/, src/lib/chain.ts, VITE_* variable names or the tr
   violet-gray secondary text. Primary buttons are a solid violet (#5b3df5, hover #6a4ff7) with white text and a light-violet edge, no glow,
   never a white or lavender fill; one primary action per screen. The old white accent token (`--pk-accent`) is violet now.
 - An optional light theme (cool white #f4f4f6, ink #16141e, same violet accent, darker status shades) is switched from the top bar and remembered per browser; dark stays the default. Its rules live in `src/styles/night-light.css` (loaded last) under `html[data-theme="light"]`; every new dark-only colour needs a light counterpart there.
-- Desktop (>= 1100px) uses pill navigation across the top bar; the sidebar stays for tablet rail and the mobile sheet.
+- Desktop (>= 1100px) uses a persistent left sidebar (Main, Account, Trust, Support) with the wallet status block at its foot, and a slim top bar with a breadcrumb; phones keep the top row, the bottom tab bar and the sections sheet. On-chain writes show the step panel from `src/TxStatus.tsx` (wallet, sent, confirmed or failed).
 - Violet marks the selected item, focus and chart series. No marquees or looping animation in data areas. Status colours
   keep their meaning and are always paired with a word: blue open/trading, amber due soon, red overdue/error, green settled.
 - Type: one clean sans (Hanken Grotesk) for text and headings; monospace for addresses, tx hashes and table figures.
@@ -28,3 +28,8 @@ do not touch contracts/, api/, src/lib/chain.ts, VITE_* variable names or the tr
 - Motion must respect `prefers-reduced-motion`, never take over scrolling, and keep all content visible without it.
 - Primary buttons on the landing and the doc pages use the dark-violet gradient (#5b3df5 to #3f36c0): no white button fills anywhere.
 - Do not copy another brand's code, CSS, fonts, logos, images or wording; recreate structure and feel with PotKit assets.
+
+## WORKING ON CODE (both surfaces)
+- For a feature that is unfamiliar, do not write it from scratch: first look for open-source projects on GitHub that solve the
+  same problem, compare their approaches, and only then start. Reuse ideas and patterns, never copied code that the licence does
+  not allow, and say which projects were compared.

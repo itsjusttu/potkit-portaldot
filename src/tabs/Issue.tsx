@@ -134,11 +134,11 @@ export function Issue({ c }: { c: Ctx }) {
           <div className="issue-receipt" aria-label="Live invoice receipt preview">
             <div className="ir-corner ir-tl" /><div className="ir-corner ir-tr" /><div className="ir-corner ir-bl" /><div className="ir-corner ir-br" />
             <div className="ir-meta"><span>POTKIT RECEIPT · {KINDS[row?.kind ?? kind].toUpperCase()}</span><span>ERC-721 {row ? `· #${row.id}` : "· PREVIEW"}</span></div>
-            <h3>{row?.note || note || "Your invoice title"}</h3>
+            <h2 className="h-sub">{row?.note || note || "Your invoice title"}</h2>
             <p className="ir-sub">Issuer-provided invoice record · Portaldot V3</p>
             <div className="ir-face"><strong>{row?.settle.faceValue ? fmt(row.settle.faceValue, row.settle.decimals) : face || "—"}<i> tPOT</i></strong><small>FACE VALUE</small></div>
             <dl className="ir-facts"><div><dt>DUE DATE</dt><dd>{row?.dueDate ? day(row.dueDate) : due ? fmtDate(new Date(due + "T12:00:00")) : "—"}</dd></div><div><dt>SHARES</dt><dd>{row?.supply ? units(row.supply) : supply || "—"}</dd></div></dl>
-            <div className="ir-foot"><span>{row?.depositor || row?.owner || c.account ? short(row?.depositor || row?.owner || c.account) : "ISSUER WALLET NOT CONNECTED"}</span><span className="ir-state"><i />{row?.settle.settled ? "SETTLED" : cur >= 3 ? "LIVE · TERMS ON-CHAIN" : cur >= 2 ? "MINTED" : "READY TO MINT"}</span></div>
+            <div className="ir-foot"><span>{row?.depositor || row?.owner || c.account ? short(row?.depositor || row?.owner || c.account) : "ISSUER WALLET NOT CONNECTED"}</span><span className="ir-state"><i />{row?.settle.settled ? "SETTLED" : cur >= 3 ? "LIVE · TERMS ON-CHAIN" : cur >= 2 ? "MINTED" : c.account ? "READY TO MINT" : "DRAFT"}</span></div>
           </div>
           {cur >= 2 && <p className="wiz-minted-note"><Ico n="check" /> Mint confirmed. The receipt can now be locked and split into shares.</p>}
           <p className="muted small">The NFT stays inside PotKit while shares are outstanding.</p>

@@ -112,3 +112,44 @@ html[data-route="app"][data-theme="light"] .mobile-nav-backdrop { background: rg
   html[data-route="app"] .shell .top .top-verify > svg:last-child { display: none; }
 }
 html[data-route="app"][data-theme="light"] .shell .top .mobile-nav-toggle::before { background: #16141e; box-shadow: 0 -5px 0 #16141e, 0 5px 0 #16141e; }
+
+/* ---------- sidebar, wallet status, transaction panel and invoice cards in light ---------- */
+html[data-route="app"][data-theme="light"] { --st-open: #2c47c9; --st-soon: #8a5300; --st-late: #b3222a; --st-paid: #1d7347; --st-none: #6a667e; }
+html[data-route="app"][data-theme="light"] .shell .side { background: #ffffff !important; border-right-color: #e2e0e9 !important; }
+html[data-route="app"][data-theme="light"] .shell .side-brand img { filter: none; }
+html[data-route="app"][data-theme="light"] .shell .side-group-title { color: #6a667e !important; }
+html[data-route="app"][data-theme="light"] .shell .side-item:hover { background: #f4f3f8 !important; }
+html[data-route="app"][data-theme="light"] .shell .side-item.on { background: #ebe7ff !important; border-color: #c9bcff !important; }
+html[data-route="app"][data-theme="light"] .shell .side-item.on :is(span, svg) { color: #2a1f7a !important; }
+html[data-route="app"][data-theme="light"] .shell .side-new { border-color: #cfcbdb !important; }
+html[data-route="app"][data-theme="light"] .shell .side-wallet { background: #f7f6fb; border-color: #e2e0e9; }
+html[data-route="app"][data-theme="light"] .shell .side-wallet.is-wrong .sw-state { color: #b3222a !important; }
+html[data-route="app"][data-theme="light"] .shell .sw-addr { background: #ffffff !important; border-color: #d9d6e3 !important; }
+html[data-route="app"][data-theme="light"] .txs { background: #ffffff; border-color: #d9d6e3; color: #16141e; box-shadow: 0 16px 40px -18px rgba(22, 20, 30, .35); }
+html[data-route="app"][data-theme="light"] .txs :is(b, code, li[data-step="now"], li[data-step="done"]) { color: #16141e; }
+html[data-route="app"][data-theme="light"] .txs li { color: #55516a; }
+html[data-route="app"][data-theme="light"] .txs li[data-step="now"] > i { border-color: #5b3df5; }
+html[data-route="app"][data-theme="light"] .txs :is(.txs-x, .txs-copy) { border-color: #d9d6e3; color: #16141e; }
+html[data-route="app"][data-theme="light"] .inv-art { background: #f1eff8; }
+html[data-route="app"][data-theme="light"] .rart-rule { stroke: #e2deef; }
+html[data-route="app"][data-theme="light"] .rart-sheet { fill: #ffffff; stroke: #b7b0d6; }
+html[data-route="app"][data-theme="light"] .rart-fold { stroke: #b7b0d6; }
+html[data-route="app"][data-theme="light"] .rart-lines { stroke: #d6d1ea; }
+html[data-route="app"][data-theme="light"] .rart-total { stroke: #8d89a0; }
+html[data-route="app"][data-theme="light"] .rart-k { fill: #4b2fe0; }
+html[data-route="app"][data-theme="light"] :is(.rart-id, .rart-face) { fill: #16141e; }
+html[data-route="app"][data-theme="light"] .shell .inv-badge { background: rgba(255, 255, 255, .92) !important; color: var(--st) !important; border-color: var(--st) !important; }
+html[data-route="app"][data-theme="light"] .shell .inv-chips li { border-color: #d9d6e3; }
+html[data-route="app"][data-theme="light"] .shell .inv-chips li.on-mkt { border-color: #c9bcff; color: #2a1f7a !important; }
+html[data-route="app"][data-theme="light"] .shell .inv-body h3 .num { color: #55516a !important; }
+
+/* bars: visible tracks and fills with at least 3:1 against white */
+html[data-route="app"][data-theme="light"] .nv .nv-split { background: #e4e1ee; }
+html[data-route="app"][data-theme="light"] .nv .nv-split i.ok, html[data-route="app"][data-theme="light"] .nv .nv-gauge footer i.d-ok { background: #2f9e6a; }
+html[data-route="app"][data-theme="light"] .nv .nv-split i.late, html[data-route="app"][data-theme="light"] .nv .nv-gauge footer i.d-late { background: #d6404a; }
+html[data-route="app"][data-theme="light"] .nv .nv-split i.open, html[data-route="app"][data-theme="light"] .nv .nv-gauge footer i.d-open { background: #3d5bd9; }
+html[data-route="app"][data-theme="light"] .nv .nv-segs i { background: #e4e1ee !important; }
+html[data-route="app"][data-theme="light"] .nv .nv-segs i.on { background: #5b3df5 !important; }
+html[data-route="app"][data-theme="light"] .explore-meter { background: #e4e1ee !important; }
+html[data-route="app"][data-theme="light"] .explore-meter i { background: #5b3df5 !important; }
+html[data-route="app"][data-theme="light"] { scrollbar-color: #c9c4dc #f4f4f6; }
