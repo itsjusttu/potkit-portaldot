@@ -149,7 +149,7 @@ The contract, API and script files first appear in `04cfd1c`; `contracts/` and `
 - Debtor pay page with an optional off-chain acknowledgement signature; issuer record and watch list on Trade; *Cash-now planner*; quick Verify popover
 - Profile page re-layout
 - Plain-language term explanations, reasons shown next to disabled buttons, and a clearer closed-listing explanation
-- Transaction links now point at the block (the node console cannot resolve EVM transaction hashes); since 30 Oct the README and DoraHacks evidence tables also link each hash to Pindex, which a Portaldot team member pointed to in Discord (it resolved all nine, but only 10 of the kit's 28 transactions, so the app itself still links blocks)
+- Transaction links now point at the block (the node console cannot resolve EVM transaction hashes); since 30 Oct the README and DoraHacks evidence tables also link each hash to Pindex, a community explorer built by another hackathon participant, who pointed to it in the Discord office hour (it resolved all nine; at that time it had 10 of the kit's 28 transactions and said it was backfilling, so the app itself still links blocks)
 - `scripts/set-minter.mjs` (issuer approves a minter; dry run by default; checks the network, the kit and the issuer's balance; estimates the cost), "Judge quick start" and the minter guide in the README
 - The event scan starts at the shared kit's deploy block (97421) when `VITE_FROM_BLOCK` is not set, so a clone sees the kit's whole history
 - Tests for the new pure logic (`test/insights.test.mjs`) and for the `set-minter` script (`test/setminter.test.mjs`, local Ganache) alongside the existing suite
