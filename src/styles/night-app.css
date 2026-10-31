@@ -119,7 +119,9 @@ html[data-route="app"] .shell .trade-market-heading h2.h-sub span { margin-left:
 
 /* phones: every control is at least 44px to tap; small icon buttons get an invisible larger hit area */
 @media (max-width: 68.75rem) {
-  html[data-route="app"] .shell .top :is(.top-verify, .theme-toggle, .mobile-nav-toggle) { width: 44px !important; height: 44px !important; }
+  html[data-route="app"] .shell .top :is(.theme-toggle, .mobile-nav-toggle) { width: 44px !important; height: 44px !important; }
+  html[data-route="app"] .shell .top .top-verify { min-width: 44px; height: 44px !important; }
+  @media (max-width: 30rem) { html[data-route="app"] .shell .top .top-verify { width: 44px !important; } }
   html[data-route="app"] .shell .top :is(.cw-btn, .wallet-btn) { min-height: 44px !important; }
   html[data-route="app"] .shell :is(.nv-filter button, .seg-tabs > button, .trade-mode button, .chip, .nv-link, .btn.sm) { min-height: 44px; }
   html[data-route="app"] .shell :is(.watch-btn, .addr-c, .nv-round, .nv-inline, .txs-copy) { position: relative; }
@@ -150,3 +152,14 @@ html[data-route="app"] .shell .issue-claimed { display: inline-flex; align-items
 /* Settlement record: the count reads as a sentence ("2 of 3 paid on time") */
 html[data-route="app"] .shell .nv-gauge-v .nv-gauge-s { font: 500 .95rem var(--n-sans); color: var(--muted); letter-spacing: 0; }
 html[data-route="app"] .shell .nv-gauge-v .nv-gauge-s { margin-left: .3rem; }
+
+/* Below 1100px the bottom tab bar and the sections sheet carry navigation. The leftover 56px icon rail showed up between 900 and
+   1100px next to the bottom bar, and the wallet block inside it was clipped, so the rail is not drawn there. */
+@media (max-width: 68.75rem) {
+  html[data-route="app"] .shell, html[data-route="app"] .shell.side-collapsed { grid-template-columns: minmax(0, 1fr) !important; }
+  html[data-route="app"] .shell > .side:not(.mobile-open) { display: none !important; }
+  html[data-route="app"] .shell > main { margin-inline: 0; max-width: none; }
+}
+/* the wallet block fills the sections sheet instead of being a fixed-width box */
+html[data-route="app"] .shell .side.mobile-open .side-wallet { width: auto; max-width: none; box-sizing: border-box; }
+html[data-route="app"] .shell .side-wallet :is(.sw-facts dd, .sw-addr, .sw-note) { overflow-wrap: anywhere; }
