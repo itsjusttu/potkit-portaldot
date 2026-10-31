@@ -16,6 +16,7 @@ import {
 } from "viem";
 import { Fraction, Lens, PotKit, REASON_CODES } from "../generated/artifacts";
 import { selectedProvider } from "./wallets";
+import { backoffMs, isTransient, loadStep, onScanOk, onScanRefused, saveStep, SCAN_MIN, startScan, TRANSIENT_RETRIES } from "./scanstep";
 
 const env = import.meta.env as Record<string, string | undefined>;
 /** VITE_RPC_URL (primary) and optional VITE_RPC_URL2 (comma-separated lists allowed) — baked in at build time. */
@@ -546,35 +547,40 @@ export type ChainEvent = {
 /** Scans PotKit events from `fromBlock` (deploy block) — or the last `span` blocks if unknown — in chunks,
  *  because many RPCs cap the eth_getLogs block range. ok=false means some chunk could not be read.
  *  Everything PotKit does is one contract: receipt Transfer (mint) + one generic Activity event. */
-/** eth_getLogs window. The public V3 RPC accepted every span tried up to the whole history in one call (tested 10k to 166k blocks), and its occasional 503s do not depend on the span, so a large window means far fewer requests per page load. A rejected window is halved down to 500 blocks and grows back. */
-const SCAN_STEP = 100_000n;
 export async function loadEvents(a: Addrs, _market: Address | "", listings: Listing[], fromBlockHint?: bigint, span = 50_000n): Promise<{ events: ChainEvent[]; ok: boolean }> {
   const latest = await reader.getBlockNumber();
   const fromBlock = fromBlockHint !== undefined && fromBlockHint <= latest ? fromBlockHint : latest > span ? latest - span : 0n;
   let ok = true;
+  // Window size comes from ./scanstep: large by default, halved when the RPC refuses a range (and never grown back past
+  // that size), retried with a backoff when the gateway fails transiently, and remembered for this browser session.
+  const stepKey = `potkit.scanStep.v1:${RPC_URLS[0]}`;
+  let scanState = startScan(loadStep(stepKey));
   async function scan<T>(get: (f: bigint, t: bigint) => Promise<T[]>): Promise<T[]> {
     const out: T[] = [];
-    let step = SCAN_STEP;
     for (let f = fromBlock; f <= latest; ) {
-      const t = f + step - 1n > latest ? latest : f + step - 1n;
-      try {
-        out.push(...(await get(f, t)));
-        f = t + 1n;
-        // Grow back toward the normal range after a smaller query succeeds. This keeps
-        // restrictive public RPCs working without paying the small-range cost everywhere.
-        if (step < SCAN_STEP) step = step * 2n > SCAN_STEP ? SCAN_STEP : step * 2n;
-      } catch {
-        // Portaldot RPC providers can impose different eth_getLogs limits. Retry the same
-        // block window with progressively smaller ranges before marking history incomplete.
-        if (step > 500n) { step = step / 2n < 500n ? 500n : step / 2n; continue; }
-        ok = false;
-        f = t + 1n;
+      const t = f + scanState.step - 1n > latest ? latest : f + scanState.step - 1n;
+      let attempt = 0;
+      for (;;) {
+        try {
+          out.push(...(await get(f, t)));
+          f = t + 1n;
+          scanState = onScanOk(scanState);
+          break;
+        } catch (e) {
+          if (isTransient(e)) {
+            if (attempt < TRANSIENT_RETRIES) { await new Promise((r) => setTimeout(r, backoffMs(attempt++))); continue; }
+            ok = false; f = t + 1n; break; // the gateway kept failing: skip this window and say the history is incomplete
+          }
+          if (scanState.step > SCAN_MIN) { scanState = onScanRefused(scanState); break; } // retry the same start with a smaller window
+          ok = false; f = t + 1n; break;
+        }
       }
     }
     return out;
   }
   type L = { eventName: string; args: Record<string, unknown>; transactionHash: Hash; blockNumber: bigint; logIndex: number };
   const logs = (await scan((f, t) => reader.getContractEvents({ address: a.vault, abi: PotKit.abi, fromBlock: f, toBlock: t }))) as unknown as L[];
+  saveStep(stepKey, scanState.ceiling);
   // Reconstruct sellers from on-chain list events as well as the latest listing
   // snapshot. Closed or older listings may no longer be included in the snapshot.
   const sellerByLid = new Map<number, Address>(listings.map((l) => [l.lid, l.seller]));
