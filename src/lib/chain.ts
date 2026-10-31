@@ -546,13 +546,15 @@ export type ChainEvent = {
 /** Scans PotKit events from `fromBlock` (deploy block) — or the last `span` blocks if unknown — in chunks,
  *  because many RPCs cap the eth_getLogs block range. ok=false means some chunk could not be read.
  *  Everything PotKit does is one contract: receipt Transfer (mint) + one generic Activity event. */
+/** eth_getLogs window. The public V3 RPC accepted every span tried up to the whole history in one call (tested 10k to 166k blocks), and its occasional 503s do not depend on the span, so a large window means far fewer requests per page load. A rejected window is halved down to 500 blocks and grows back. */
+const SCAN_STEP = 100_000n;
 export async function loadEvents(a: Addrs, _market: Address | "", listings: Listing[], fromBlockHint?: bigint, span = 50_000n): Promise<{ events: ChainEvent[]; ok: boolean }> {
   const latest = await reader.getBlockNumber();
   const fromBlock = fromBlockHint !== undefined && fromBlockHint <= latest ? fromBlockHint : latest > span ? latest - span : 0n;
   let ok = true;
   async function scan<T>(get: (f: bigint, t: bigint) => Promise<T[]>): Promise<T[]> {
     const out: T[] = [];
-    let step = 5_000n;
+    let step = SCAN_STEP;
     for (let f = fromBlock; f <= latest; ) {
       const t = f + step - 1n > latest ? latest : f + step - 1n;
       try {
@@ -560,7 +562,7 @@ export async function loadEvents(a: Addrs, _market: Address | "", listings: List
         f = t + 1n;
         // Grow back toward the normal range after a smaller query succeeds. This keeps
         // restrictive public RPCs working without paying the small-range cost everywhere.
-        if (step < 5_000n) step = step * 2n > 5_000n ? 5_000n : step * 2n;
+        if (step < SCAN_STEP) step = step * 2n > SCAN_STEP ? SCAN_STEP : step * 2n;
       } catch {
         // Portaldot RPC providers can impose different eth_getLogs limits. Retry the same
         // block window with progressively smaller ranges before marking history incomplete.
