@@ -162,7 +162,7 @@ VITE_RPC_URL=http://localhost:8545 npm run dev        # open /app?kit=0x… (imp
 Requires Node.js 20+.
 ```bash
 npm install
-npm test        # compiles the contracts, then runs the whole suite in test/ (64 tests as of 31 Oct 2026: PotKit on local Ganache, faucet, network switch, transaction errors, settle and trade input checks, receipt history, dashboard figures, the `set-minter` script)
+npm test        # compiles the contracts, then runs the whole suite in test/ (72 tests as of 31 Oct 2026: PotKit on local Ganache, faucet, network switch, transaction errors, settle and trade input checks, receipt history, the event-scan window, dashboard figures, the `set-minter` script)
 npm run dev     # open the URL Vite prints (http://localhost:8080 by default)
 npm run build   # type-check + production build into dist/
 ```
@@ -313,7 +313,7 @@ What building PotKit taught us about V3 (pallet-revive), in the order it shaped 
 - **Read-only code costs nothing.** `contracts/Lens.sol` is never deployed: viem runs its bytecode inside `eth_call`, and it reads raw storage through `PotKit.peek(slots)`. See `src/lib/chain.ts` for the call pattern.
 - **Measure before you spend.** `node scripts/measure.mjs` runs a harness through `eth_estimateGas` and `eth_call`, so costs are measured without sending a transaction.
 - **Explorers.** The node console opens block numbers only. The community explorer Pindex resolves EVM transaction hashes (see Testnet evidence).
-- **RPC quirks.** Old log ranges can be discarded, and the public gateway sometimes answers 503 without CORS headers (measured on 31 Oct: about 31% of preflight requests and 8–17% of `eth_getLogs` calls), which a browser shows as a CORS error even though the retry succeeds. The app scans events in 100,000-block windows to keep the number of calls low, halves the window if the RPC refuses it, and says when a scan is incomplete instead of presenting partial data as complete.
+- **RPC quirks.** Old log ranges can be discarded, and the public gateway sometimes answers 503 without CORS headers (measured on 31 Oct: about 31% of preflight requests and 8–17% of `eth_getLogs` calls), which a browser shows as a CORS error even though the retry succeeds. The app scans events in 100,000-block windows to keep the number of calls low, halves the window if the RPC refuses it (and does not grow back past that size), retries a gateway failure on the same window after a backoff, remembers the working window for the browser session, and says when a scan is incomplete instead of presenting partial data as complete.
 
 ## Who guarantees the debtor pays?
 Nobody. PotKit does not verify the invoice or the debtor: payment is a credit risk on the issuer and the debtor, and buyers should price it as one. The app shows the issuer's record, labels everything as issuer-provided, marks receipts paid from the issuer's own wallet (a hint only: an issuer can pay from a second wallet) and hides Buy on overdue invoices. The contract still accepts a purchase after the due date and does not refund an overpayment; both are known limits. Planned for a next version, not built: an optional debtor acknowledge and dispute, buying that reverts after the due date, and refunds for overpayment.

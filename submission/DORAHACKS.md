@@ -110,7 +110,7 @@ Read-only mode: Explore and Verify work without a wallet through a direct RPC cl
 Yul + Solidity 0.8.28 (solc-js, pinned) · custom compile script (no Hardhat) · node:test + ganache · React 19 + TypeScript + Vite 7 ·
 viem 2 · lenis (smooth scroll on the docs pages) · canvas 2D intro animation. No database: every screen reads the chain directly (the only server code is the optional gas faucet and the `tokenURI` JSON endpoint).
 
-## What's tested (`npm test`: 64 tests as of 31 Oct 2026)
+## What's tested (`npm test`: 72 tests as of 31 Oct 2026)
 - ERC-721 compliance (ERC-165, approve, operators, transferFrom, safeTransferFrom with receiver contracts and rejection), mint permissions, unknown ids revert
 - Notes of every length 1–140 stored losslessly; metadata JSON escapes quotes, backslashes and control characters
 - Lock: owner-only, terms set in the same call, whole supply to the owner; share tokens are identical 82-byte forwarders and their events cannot be spoofed
