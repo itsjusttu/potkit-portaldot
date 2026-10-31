@@ -58,6 +58,16 @@
   .facts .card { padding: 22px 24px; margin-bottom: 16px; }
   .facts .card p { font-size: 22px; }
   .facts .card b { color: var(--ink); }
+  .proof2 { display: grid; grid-template-columns: 470px 1fr; gap: 26px; align-items: start; }
+  .proof2 table td, .proof2 table th { font-size: 16px; padding: 3px 8px; line-height: 1.25; }
+  .evid { margin: 10px 0 0; font-size: 16px; line-height: 1.4; color: var(--muted); }
+  .evid b { color: var(--ink); }
+  .evid a { color: var(--accent); text-decoration: none; }
+  .shots figure { margin: 0; }
+  .shots img { display: block; width: 100%; height: 218px; object-fit: cover; object-position: 50% 72%; border: 1px solid var(--edge); border-radius: 10px; }
+  .shotrow img { height: 132px; object-position: 50% 6%; }
+  .shots figcaption { font-size: 13px; letter-spacing: .06em; text-transform: uppercase; color: var(--faint); margin: 6px 0 0; }
+  .shotrow { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 8px; }
   /* 6 architecture */
   .arch { display: grid; grid-template-columns: 1fr 120px 1.25fr; align-items: stretch; gap: 0; margin-bottom: 22px; }
   .arch .arrow { display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 17px; color: var(--accent); text-align: center; line-height: 1.3; }
@@ -128,28 +138,33 @@
 <!-- 4 -->
 <section class="slide">
   <p class="kicker">It works</p>
-  <h2>A full lifecycle, recorded on Portaldot V3 testnet.</h2>
-  <div class="body">
-  <div class="proof">
-    <table>
-      <tr><th>Step</th><th></th><th style="text-align:right">Block</th></tr>
-      <tr><td>Mint receipt #1</td><td class="ok">✓</td><td class="r">97600</td></tr>
-      <tr><td>Lock, set terms, issue 100 shares</td><td class="ok">✓</td><td class="r">97632</td></tr>
-      <tr><td>List 90 shares at 0.009 tPOT</td><td class="ok">✓</td><td class="r">97654</td></tr>
-      <tr><td>Buy 90 shares for 0.81 tPOT</td><td class="ok">✓</td><td class="r">97684</td></tr>
-      <tr><td>Debtor settles: pays 1 tPOT</td><td class="ok">✓</td><td class="r">97706</td></tr>
-      <tr><td>Investor claims 0.9 tPOT</td><td class="ok">✓</td><td class="r">97713</td></tr>
-      <tr><td>Issuer claims 0.1 tPOT</td><td class="ok">✓</td><td class="r">97719</td></tr>
-      <tr><td>Redeem the paid receipt NFT</td><td class="ok">✓</td><td class="r">97722</td></tr>
-    </table>
-    <div class="facts">
-      <div class="card"><p><b>Contract</b><br><span class="mono" style="font-size:20px">0x3c26…0fb7</span></p></div>
-      <div class="card"><p><b>Deployed</b> 2026-10-19, block 97421. All 8 transactions succeeded.</p></div>
-      <div class="card"><p><b>Checkable:</b> block links and hashes are in the README (Testnet evidence).</p></div>
+  <h2 style="font-size:40px;margin-bottom:18px">A full lifecycle, recorded on Portaldot V3 testnet.</h2>
+  <div class="body" style="justify-content:flex-start">
+  <div class="proof2">
+    <div>
+      <table>
+        <tr><th>Step</th><th></th><th style="text-align:right">Block</th></tr>
+        <tr><td>Mint receipt #1</td><td class="ok">✓</td><td class="r">97600</td></tr>
+        <tr><td>Lock, set terms, issue 100 shares</td><td class="ok">✓</td><td class="r">97632</td></tr>
+        <tr><td>List 90 shares at 0.009 tPOT</td><td class="ok">✓</td><td class="r">97654</td></tr>
+        <tr><td>Buy 90 shares for 0.81 tPOT</td><td class="ok">✓</td><td class="r">97684</td></tr>
+        <tr><td>Debtor settles: pays 1 tPOT</td><td class="ok">✓</td><td class="r">97706</td></tr>
+        <tr><td>Investor claims 0.9 tPOT</td><td class="ok">✓</td><td class="r">97713</td></tr>
+        <tr><td>Issuer claims 0.1 tPOT</td><td class="ok">✓</td><td class="r">97719</td></tr>
+        <tr><td>Redeem the paid receipt NFT</td><td class="ok">✓</td><td class="r">97722</td></tr>
+      </table>
+      <p class="evid"><b>Contract</b> <span class="mono">0x3c26…0fb7</span>, deployed 2026-10-19, block 97421. All 8 transactions succeeded.<br><b>Deploy tx</b> <a class="mono" href="https://pindex.onrender.com/app/?q=0x5ce8a4a4661025a4cac0fe059dd3f10b111a05890c4530abb5d6490c9bf41614">0x5ce8a4a4…bf41614</a> (community explorer Pindex).<br><b>Every hash and block link:</b> <a href="https://github.com/itsjusttu/potkit-portaldot#testnet-evidence">github.com/itsjusttu/potkit-portaldot#testnet-evidence</a></p>
+    </div>
+    <div class="shots">
+      <figure><img src="img/verify.jpg" alt="PotKit Verify page for receipt 2, settled, with its on-chain proof trail"><figcaption>Verify · receipt #2, read from the chain</figcaption></figure>
+      <div class="shotrow">
+        <figure><img src="img/dashboard.jpg" alt="PotKit Dashboard with the maturity line and settlement record"><figcaption>Dashboard</figcaption></figure>
+        <figure><img src="img/explore.jpg" alt="PotKit Explore cards for four receipts"><figcaption>Explore</figcaption></figure>
+      </div>
     </div>
   </div>
   </div>
-  <div class="foot"><span>Testnet data. tPOT has no market value.</span><span>4 / 11</span></div>
+  <div class="foot"><span>Live app screenshots, 31 Oct 2026. Testnet data; tPOT has no market value.</span><span>4 / 11</span></div>
 </section>
 
 <!-- 5 -->
@@ -186,9 +201,10 @@
     <div class="arrow"><span>⇄</span>JSON-RPC</div>
     <div class="card"><h3>Portaldot V3 testnet</h3><p><b>PotKit</b>: one hand-written Yul contract (3.9 KB). Receipts, vault, settlement and market in one place.</p></div>
   </div>
-  <div class="two">
+  <div class="two" style="grid-template-columns:1fr 1fr 1.15fr;gap:16px">
     <div class="card"><h3>Lens</h3><p>Read logic that runs inside <span class="mono" style="font-size:20px">eth_call</span>. Never deployed, so it costs no storage deposit.</p></div>
     <div class="card"><h3>Two small server functions</h3><p>tokenURI JSON for receipts, and an optional faucet (closed for now).</p></div>
+    <div class="card"><h3>Try it without tokens</h3><p style="font-size:19px;line-height:1.4">Open the judge link: reading is free. To write, ask the Portaldot team for tPOT on Discord. Minting also needs the issuer's approval.</p></div>
   </div>
   </div>
   <div class="foot"><span>PotKit · Portaldot Hacker House 2026</span><span>6 / 11</span></div>
@@ -204,10 +220,10 @@
       <li>Fixed share supply for each lock</li>
       <li>Settlement must cover the face value</li>
       <li>Payouts split pro-rata and empty the pool exactly</li>
-      <li>58 automated tests pass</li></ul></div>
+      <li>64 automated tests pass</li></ul></div>
     <div class="col bad"><h3>Not proven</h3><ul>
       <li>Invoices are issuer-provided: PotKit does not verify them</li>
-      <li>No debtor attestation, no default or recovery procedure</li>
+      <li>No on-chain debtor attestation (the optional signature is off-chain), no default or recovery procedure</li>
       <li>Payment is not guaranteed</li></ul></div>
   </div>
   <div class="card" style="margin-top:6px;padding:18px 24px"><p style="font-size:21px"><b style="color:var(--ink)">What the product does about it:</b> limits shown next to every action, a public Verify page, an optional off-chain debtor acknowledgement (a signature, not proof of identity), and an issuer payment record from on-chain events.</p></div>
@@ -225,7 +241,7 @@
     <div class="stat"><b>2</b><span>wallets, both the builder's</span></div>
     <div class="stat"><b>8 / 8</b><span>lifecycle steps recorded, from mint to redeem</span></div>
   </div>
-  <p class="lead" style="font-size:25px">Read from the kit's event logs on 2026-10-30. Testnet only. No customers, revenue or partners are claimed. Live app: app.potkit.pro. Open source (MIT).</p>
+  <p class="lead" style="font-size:25px">Read from the kit's event logs on 2026-10-31. Testnet only. No customers, revenue or partners are claimed. Live app: app.potkit.pro. Open source (MIT).</p>
   </div>
   <div class="foot"><span>PotKit · Portaldot Hacker House 2026</span><span>8 / 11</span></div>
 </section>
@@ -252,7 +268,7 @@
   <div class="body">
   <div class="two" style="gap:40px">
     <div><h3 style="font-size:26px;margin:0 0 14px;color:var(--accent)">Roadmap</h3>
-      <ul class="big"><li>Debtor attestation and issuer reputation</li><li>An explicit default and recovery policy</li><li>Partial payments and instalments</li><li>An indexer for history</li></ul></div>
+      <ul class="big"><li>Optional on-chain debtor acknowledge and dispute, and richer issuer reputation</li><li>An explicit default and recovery policy</li><li>Partial payments and instalments</li><li>An indexer for history</li></ul></div>
     <div><h3 style="font-size:26px;margin:0 0 14px;color:var(--accent)">Continued support would unlock</h3>
       <ul class="big"><li>Mainnet migration guidance</li><li>RWA data mapping, oracle or data synchronisation</li><li>A security review</li><li>Liquidity and gas incentives</li></ul></div>
   </div>

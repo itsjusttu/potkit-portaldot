@@ -3,6 +3,11 @@
 **Track:** Ecosystem DApps (RWA tokenisation) · Portaldot Hacker House 2026
 **One-liner:** Tokenise an unpaid invoice into backed, tradeable shares on Portaldot V3 - and pay every holder pro-rata, on-chain, when the debtor settles.
 
+## Overview
+A freelancer who has delivered the work but is still waiting to be paid can turn the invoice into shares and sell them at a discount, so the cash arrives now. Investors who buy those shares are paid in tPOT, pro-rata, when the debtor settles the invoice. Payment is not guaranteed: the invoice details are provided by the issuer and PotKit does not verify them.
+
+What is specific to Portaldot: the whole product is one hand-written Yul contract (3.9 KB) built around V3's storage deposit. It deploys for about 327 tPOT instead of 1,386 for the first four-contract design, a full demo lifecycle costs about 47 tPOT, and the app needs no indexer or database: it reads the chain directly, and its read logic runs inside `eth_call` without being deployed.
+
 ## Problem
 Freelancers and small businesses often have to wait to get paid after they deliver the work. Factoring is opaque, manual and closed to small invoices.
 Investors who would happily fund a receivable have no simple, verifiable way to buy a slice of one and get paid out automatically.
@@ -105,7 +110,7 @@ Read-only mode: Explore and Verify work without a wallet through a direct RPC cl
 Yul + Solidity 0.8.28 (solc-js, pinned) · custom compile script (no Hardhat) · node:test + ganache · React 19 + TypeScript + Vite 7 ·
 viem 2 · lenis (smooth scroll on the docs pages) · canvas 2D intro animation. No database: every screen reads the chain directly (the only server code is the optional gas faucet and the `tokenURI` JSON endpoint).
 
-## What's tested (`npm test`)
+## What's tested (`npm test`: 64 tests as of 31 Oct 2026)
 - ERC-721 compliance (ERC-165, approve, operators, transferFrom, safeTransferFrom with receiver contracts and rejection), mint permissions, unknown ids revert
 - Notes of every length 1–140 stored losslessly; metadata JSON escapes quotes, backslashes and control characters
 - Lock: owner-only, terms set in the same call, whole supply to the owner; share tokens are identical 82-byte forwarders and their events cannot be spoofed
@@ -138,14 +143,16 @@ Run with two wallets (issuer/seller and investor/debtor). Each hash was re-check
 | 8 | Claim (issuer, 0.1 tPOT) | [97719](https://node-console.portaldot.dev/?rpc=wss%3A%2F%2Ftest-node-v3.portaldot.dev#/explorer/query/97719) | 2026-10-19 03:45:00 | [`0x83cc9d7f3606d28e9cdd4c9dcd58525731987b79ffdf404a1952dd2bcf420e66`](https://pindex.onrender.com/app/?q=0x83cc9d7f3606d28e9cdd4c9dcd58525731987b79ffdf404a1952dd2bcf420e66) |
 | 9 | Redeem paid receipt NFT | [97722](https://node-console.portaldot.dev/?rpc=wss%3A%2F%2Ftest-node-v3.portaldot.dev#/explorer/query/97722) | 2026-10-19 03:45:18 | [`0x8e4f7704cce8d0224116c855f5789a5ef18260714a9520eddb00ed4e0cdf1b89`](https://pindex.onrender.com/app/?q=0x8e4f7704cce8d0224116c855f5789a5ef18260714a9520eddb00ed4e0cdf1b89) |
 - Share tokens: created by PotKit on each lock (`Lens.rows` lists them)
+- After this recorded run the kit has 28 state-changing transactions from 2 wallets, both the builder's (read from its event logs on 2026-10-31). The table above is the recorded lifecycle run; the same table with explorer links is in the README under [Testnet evidence](https://github.com/itsjusttu/potkit-portaldot#testnet-evidence).
 
 ## Known limitations
-- **No debtor attestation yet.** Anyone can mint an invoice and the contract cannot verify that the debtor agreed to it; trust in the issuer is off-chain. Debtor signatures and issuer reputation are on the roadmap.
+- **No on-chain debtor attestation yet.** The pay page offers an optional off-chain EIP-712 acknowledgement for the debtor; it only shows which wallet signed and the contract does not use it. Anyone can mint an invoice and the contract cannot verify that the debtor agreed to it; trust in the issuer is off-chain. An optional on-chain acknowledge and dispute, and richer issuer reputation, are planned for a next version, not built.
 - **Shares left in an open listing at settlement** stay in escrow until the seller cancels; the depositor cannot redeem the NFT until every share is claimed, so sellers should cancel before or right after settlement.
 - **Testnet only.** Payments use native tPOT; there is no stablecoin option or KYC for mainnet yet.
 - **Minting is permissioned.** Only the issuer and approved minters can mint (`not minter` otherwise); anyone can still hold, trade, settle and claim. Judges can run the local demo (README → Judge quick start) or be approved with `scripts/set-minter.mjs`.
 - **The PotKit faucet is closed.** Hackathon test tokens are handed out by the Portaldot team.
 - **Overdue is an app rule.** The contract accepts a purchase until the invoice is settled; the app hides Buy on overdue listings.
+- **Nobody guarantees the debtor pays.** Payment is a credit risk on the issuer and the debtor. The app marks receipts paid from the issuer's own wallet (a hint, not a fraud check) and does not refund overpayments. Planned for a next version, not built: optional debtor acknowledge and dispute, buy reverting after the due date, refunds for overpayment.
 - **Contract is immutable** and its `tokenURI` points at `https://potkit.pro/api/r`; the JSON is built off-chain from chain state.
 
 
@@ -158,7 +165,7 @@ This section is the builder's plan. It states no market size, customers, partner
 - **Limits that stay true:** issuer-provided details are not verified by PotKit, and payment is not guaranteed.
 
 ## Roadmap
-- Partial payments and instalments; debtor attestation / signature on terms
+- Partial payments and instalments; optional on-chain debtor acknowledge and dispute
 - Credit and reputation signals per issuer and debtor
 - AMM pool or auctions for Fraction shares; price discovery by time-to-due
 - Stablecoin settlement option and KYC'd issuer registry for mainnet

@@ -37,7 +37,9 @@ export function Intro() {
   const [phase, setPhase] = useState<"run" | "out" | "done">(() => {
     try {
       const forced = consumeIntroParam();
-      if (!forced && (sessionStorage.getItem(KEY) || matchMedia("(prefers-reduced-motion: reduce)").matches)) return "done";
+      // a shared judge link (?kit=0x…) opens straight onto the data; the intro still plays when arriving from the landing page
+      const sharedLink = new URLSearchParams(location.search).has("kit");
+      if (!forced && (sharedLink || sessionStorage.getItem(KEY) || matchMedia("(prefers-reduced-motion: reduce)").matches)) return "done";
       sessionStorage.setItem(KEY, "1");
       return "run";
     } catch { return "run"; }

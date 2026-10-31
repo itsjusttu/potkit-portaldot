@@ -90,7 +90,7 @@ export function Dashboard({ c }: { c: Ctx }) {
         <div className="nv-kpis">
           <button type="button" className="nv-card nv-kpi" style={{ "--i": 7 } as React.CSSProperties} onClick={() => c.setTab("trade")}><span>Open listings</span><b className="num">{c.loading ? "—" : open.length}</b><small>{units(sharesForSale)} shares listed{closedListings ? ` · ${closedListings} closed, past due` : ""}</small></button>
           <button type="button" className="nv-card nv-kpi" style={{ "--i": 8 } as React.CSSProperties} onClick={() => c.setTab("trade")}><span>Traded volume</span><b className="num">{c.eventsOk ? `${fmt(traded, 18)} tPOT` : "—"}</b><small>{buyEvents.length} buy{buyEvents.length === 1 ? "" : "s"} in scanned events</small></button>
-          <button type="button" className="nv-card nv-kpi" style={{ "--i": 9 } as React.CSSProperties} title="Adds up every settlement payment found in the scanned events, including receipts that were redeemed afterwards. 'Paid now' counts receipts that are currently marked Settled." onClick={() => c.setTab("explore")}><span>Settled</span><b className="num">{c.eventsOk ? `${fmt(settledTotal, 18)} tPOT` : "—"}</b><small>{c.eventsOk ? `${settleEvents.length} payment${settleEvents.length === 1 ? "" : "s"} received · ` : ""}{settledRows.length} receipt{settledRows.length === 1 ? "" : "s"} paid now</small></button>
+          <button type="button" className="nv-card nv-kpi" style={{ "--i": 9 } as React.CSSProperties} title="Adds up every settlement payment found in the scanned events, including receipts that were redeemed afterwards. 'Paid now' counts receipts that are currently marked Settled." onClick={() => c.setTab("explore")}><span>Settled</span><b className="num">{c.eventsOk ? `${fmt(settledTotal, 18)} tPOT` : "—"}</b><small>{c.eventsOk ? `${settleEvents.length} payment${settleEvents.length === 1 ? "" : "s"} received, all cycles · ` : ""}{settledRows.length} receipt{settledRows.length === 1 ? "" : "s"} paid now</small></button>
         </div>
 
         <div className="nv-row">
@@ -130,10 +130,10 @@ export function Dashboard({ c }: { c: Ctx }) {
       <aside className="nv-side">
         <article className="nv-card nv-gauge" style={{ "--i": 3 } as React.CSSProperties} aria-labelledby="nv-rec">
           <header><span className="nv-ico"><Ico n="check" /></span><h2 id="nv-rec">Settlement record</h2></header>
-          <b className="nv-gauge-v num">{rated ? `${split.onTime} of ${rated}` : "—"}</b>
+          <b className="nv-gauge-v num">{rated ? <>{split.onTime} of {rated}<span className="nv-gauge-s"> paid on time</span></> : "—"}</b>
           <div className="nv-split" role="img" aria-label={`${split.onTime} paid on time, ${split.late} late or unpaid past due, ${split.open} still open`}>{split.onTime + split.late + split.open ? <>{split.onTime > 0 && <i className="ok" style={{ flexGrow: split.onTime }} />}{split.late > 0 && <i className="late" style={{ flexGrow: split.late }} />}{split.open > 0 && <i className="open" style={{ flexGrow: split.open }} />}</> : <i className="none" />}</div>
           <footer><span><i className="d-ok" />On time {split.onTime}</span><span><i className="d-late" />Late {split.late}</span><span><i className="d-open" />Open {split.open}</span></footer>
-          <small className="muted">paid on time, dated receipts only</small>
+          <small className="muted">Counts invoices with a due date that were paid or are past due. Open ones are not rated yet.</small>
         </article>
 
         <article className="nv-card nv-progress" style={{ "--i": 4 } as React.CSSProperties} aria-labelledby="nv-prog">

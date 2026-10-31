@@ -3,9 +3,10 @@ import { explain, fmt, KINDS, loadRows, PAY_SYMBOL, readTokenUri, short, units, 
 import { Addr, Ico } from "../AppUi";
 import { type Ctx } from "./ctx";
 import { blockUrl, day } from "./shared";
-import { readReceiptHistory } from "./receipt-history";
+import { readReceiptHistory, settlementPayer } from "./receipt-history";
 
-type Check = { ok: boolean | null; k: string; v: ReactNode };
+/** `credit` marks a row about the debtor's payment: an unpaid, overdue invoice is a credit status, not a failed verification. */
+type Check = { ok: boolean | null; k: string; v: ReactNode; credit?: boolean };
 
 export function Verify({ c }: { c: Ctx }) {
   const [input, setInput] = useState(c.param("id") || "");
@@ -49,6 +50,8 @@ export function Verify({ c }: { c: Ctx }) {
   // Redeeming clears live terms and share state, so restore the final receipt facts from its on-chain events.
   const lastRedeem = receiptHistory?.redeem;
   const paidEv = receiptHistory?.settle;
+  const payerInfo = r ? settlementPayer(receiptHistory, r.depositor) : null;
+  const whoPaid: Check | null = payerInfo ? { ok: null, k: "Who paid", v: payerInfo.byIssuer ? <><Addr a={payerInfo.payer} /> is the issuer's own wallet. Nothing on-chain shows the debtor and the issuer are different people.</> : <><Addr a={payerInfo.payer} /> is not the issuer's wallet. The contract does not know who the real debtor is.</> } : null;
   const termsEv = receiptHistory?.terms;
   const lockEv = receiptHistory?.lock;
   const redeemed = Boolean(receiptHistory?.redeemed);
@@ -74,6 +77,7 @@ export function Verify({ c }: { c: Ctx }) {
     { ok: true, k: "Receipt exists on-chain", v: <>{res!.name}{res!.kind ? ` · ${res!.kind}` : ""}</> },
     { ok: true, k: "Debtor payment", v: <>Paid {fmt(paidEv?.value ?? 0n, 18)} {PAY_SYMBOL} into PotKit{paidEv ? ` (block ${paidEv.block.toString()})` : ""}</> },
     { ok: termsEv ? (paidEv?.value ?? 0n) >= (termsEv.value ?? 0n) : null, k: "Paid at least face value", v: termsEv ? `${fmt(termsEv.value ?? 0n, 18)} ${PAY_SYMBOL} face value` : "—" },
+    ...(whoPaid ? [whoPaid] : []),
     { ok: true, k: "Payout claimed and shares burned", v: "Every share was claimed before redemption" },
     { ok: null, k: "NFT returned to the depositor", v: <>Held by <Addr a={r.owner} /> as a paid receipt</> },
   ] : r ? [
@@ -81,12 +85,14 @@ export function Verify({ c }: { c: Ctx }) {
     { ok: r.fraction ? vaultHeld : null, k: "NFT locked in PotKit", v: vaultHeld ? <Addr a={r.owner} label="PotKit" /> : r.fraction ? <>Held by <Addr a={r.owner} /></> : "Not locked, still a plain NFT" },
     { ok: r.fraction ? true : null, k: "Share token issued", v: r.fraction ? <><Addr a={r.fraction} label={`KIT${r.id}`} /> {units(r.supply)} shares</> : "No shares" },
     { ok: r.settle.faceValue > 0n ? true : null, k: "Payment terms on-chain", v: r.settle.faceValue > 0n ? <>{fmt(r.settle.faceValue, r.settle.decimals)} {r.settle.symbol}{r.dueDate ? ` · due ${day(r.dueDate)}` : ""}</> : "No terms set" },
-    { ok: r.settle.settled ? true : r.status === "Overdue" ? false : null, k: "Debtor payment", v: r.settle.settled ? <>Paid {fmt(r.settle.amount, r.settle.decimals)} {r.settle.symbol} · {fmt(r.settle.paidOut, r.settle.decimals)} claimed</> : r.status === "Overdue" ? "Overdue, not paid" : "Not yet due" },
+    { ok: r.settle.settled ? true : r.status === "Overdue" ? false : null, credit: true, k: "Debtor payment", v: r.settle.settled ? <>Paid {fmt(r.settle.amount, r.settle.decimals)} {r.settle.symbol} · {fmt(r.settle.paidOut, r.settle.decimals)} claimed</> : r.status === "Overdue" ? "Overdue, not paid" : "Not yet due" },
     { ok: r.settle.settled ? r.settle.amount >= r.settle.faceValue : null, k: "Paid at least face value", v: r.settle.settled ? (r.settle.amount >= r.settle.faceValue ? "Yes" : "Short-paid") : "—" },
+    ...(whoPaid ? [whoPaid] : []),
   ] : [];
-  const fails = checks.filter((x) => x.ok === false).length;
+  const fails = checks.filter((x) => x.ok === false && !x.credit).length;
+  const overdueUnpaid = Boolean(r && r.status === "Overdue" && !currentSettle && !redeemed);
   const shortPaid = Boolean(r && r.settle.settled && r.settle.faceValue > 0n && r.settle.amount < r.settle.faceValue);
-  const verdict = !r ? "" : shortPaid ? "SHORT-PAID" : fails ? "CHECKS FAILED" : redeemedPaid ? "PAID · REDEEMED" : r.status === "Overdue" && !currentSettle ? "OVERDUE · UNPAID" : currentSettle ? "SETTLED" : currentLock ? "LOCKED · UNPAID" : r.fraction ? "UNBACKED" : "RECEIPT ONLY";
+  const verdict = !r ? "" : shortPaid ? "SHORT-PAID" : fails ? "CHECKS FAILED" : redeemedPaid ? "PAID · REDEEMED" : overdueUnpaid ? "OVERDUE · UNPAID" : currentSettle ? "SETTLED" : currentLock ? "LOCKED · UNPAID" : r.fraction ? "UNBACKED" : "RECEIPT ONLY";
   const link = r && c.addrs ? `${location.origin}${location.pathname}?kit=${c.addrs.vault}&tab=verify&id=${r.id}` : "";
 
   return (
@@ -106,7 +112,7 @@ export function Verify({ c }: { c: Ctx }) {
       {!res && !loading && !msg && <p className="muted verify-empty">Enter a receipt id to inspect its current on-chain state. Share-token address lookup covers loaded receipts only.</p>}
       {res && r && (
         <div className="verify-result" aria-live="polite">
-          <article className={`cert ${fails ? "bad" : currentSettle || currentLock ? "good" : "warn"}`}>
+          <article className={`cert ${fails || overdueUnpaid ? "bad" : currentSettle || currentLock ? "good" : "warn"}`}>
             <i className="c-c tl" /><i className="c-c tr" /><i className="c-c bl" /><i className="c-c br" />
             <header className="cert-head">
               <div>
@@ -116,7 +122,7 @@ export function Verify({ c }: { c: Ctx }) {
               <div className="cert-status">{currentSettle && <span className="is-paid">● SETTLED</span>}{!currentSettle && !redeemed && <span>● UNPAID</span>}{redeemed && <span className="is-redeemed">● REDEEMED</span>}{!redeemed && <span>{currentLock ? "● LOCKED IN POTKIT" : "● NOT LOCKED"}</span>}</div>
               </div>
               <div className="seal" aria-label={`Verdict: ${verdict}`}>
-                <svg viewBox="0 0 120 120" aria-hidden><circle cx="60" cy="60" r="54" /><circle cx="60" cy="60" r="44" /><path d={fails ? "M44 44l32 32M76 44 44 76" : "M40 61l14 14 27-30"} /></svg>
+                <svg viewBox="0 0 120 120" aria-hidden><circle cx="60" cy="60" r="54" /><circle cx="60" cy="60" r="44" /><path d={fails ? "M44 44l32 32M76 44 44 76" : overdueUnpaid ? "M60 36v28M60 80v1" : "M40 61l14 14 27-30"} /></svg>
                 <b>{verdict}</b>
               </div>
             </header>
@@ -131,6 +137,7 @@ export function Verify({ c }: { c: Ctx }) {
               <div className="cert-contract"><span>CONTRACT</span><Addr a={c.addrs!.vault} label="PotKit · Portaldot V3" /></div>
               <button className="btn" onClick={() => void copy(link, "proof")}><Ico n={copied === "proof" ? "check" : "link"} /> {copied === "proof" ? "Link copied" : "Share proof"}</button>
             </footer>
+            {r.status === "Overdue" && !r.settle.settled && <p className="cert-disclaimer">Past due and unpaid. The contract still accepts purchases of this receipt's shares after the due date; this app hides Buy on overdue listings.</p>}
             <p className="cert-disclaimer">Read {res.at.toLocaleString("en-GB", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit", second: "2-digit" })} from chain 420420777. This proves on-chain state, not the authenticity of off-chain invoice documents.</p>
           </article>
           <aside className="proof-trail">

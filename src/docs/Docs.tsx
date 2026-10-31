@@ -31,6 +31,8 @@ const HELP_FAQ = [
   ["Can I sell only part of my shares?", "Yes. A seller chooses the share amount and price when creating a listing. Buyers can take a partial amount, and the seller can cancel the unsold remainder."],
   ["How are holders paid after settlement?", "The debtor pays at least the face value in native tPOT. Each holder claims their pro-rata share; the contract's cumulative rounding distributes the pool exactly."],
   ["Does PotKit charge a protocol fee?", "The current contract has no protocol fee. Market prices are set by sellers; the contract does not promise invoice payment or investment returns."],
+  ["Who guarantees the debtor pays?", "Nobody. PotKit does not verify the invoice or the debtor; payment is a credit risk on the issuer and the debtor, and buyers should price it as one. The app shows the issuer's record and labels everything as issuer-provided."],
+  ["Can an overdue invoice still be bought?", "The contract still accepts a purchase after the due date. This app hides Buy on overdue listings as a product rule. Do not buy shares of an invoice that is past due and unpaid unless you accept that risk."],
   ["Where can I find a transaction?", "Open History in the app for wallet activity, or follow the transaction hash in your wallet. Chain events are public and may take a moment to load."],
 ];
 function HelpBrowse() {
@@ -316,6 +318,15 @@ const DOCS: Record<string, Doc> = {
           <li><b>Metadata endpoint.</b> tokenURI points at potkit.pro; the JSON there is derived from chain state, and the app and Verify read the chain directly.</li>
           <li><b>Privacy.</b> Notes and all activity are public on-chain.</li>
         </ul>
+      </> },
+      { id: "credit", t: "Credit risk and the due date", body: <>
+        <Callout tone="warn"><b>Nobody guarantees that a debtor pays.</b> Payment is a credit risk on the issuer and the debtor, and buyers should price it as one.</Callout>
+        <ul className="dx-ul">
+          <li><b>Buying after the due date.</b> The contract does not read the due date when someone buys, so it still accepts a purchase on an overdue, unpaid invoice. This app hides Buy on overdue listings; that is an app rule, not a contract rule.</li>
+          <li><b>Overpayment.</b> Paying more than the face value is not refunded: the whole amount goes to the pool for share holders. The pay page warns before you confirm.</li>
+          <li><b>Who paid.</b> Receipts paid from the issuer's own wallet are marked on Explore and Verify. It is a hint, not a fraud check: an issuer can pay from a second wallet, and the contract does not know who the real debtor is.</li>
+        </ul>
+        <p>Planned for a next version, not built: an optional debtor acknowledge and dispute, buying that reverts after the due date, and refunds for overpayment.</p>
       </> },
       { id: "tests", t: "Tests", body: <>
         <p><C>npm test</C> runs the automated tests on a local chain:</p>

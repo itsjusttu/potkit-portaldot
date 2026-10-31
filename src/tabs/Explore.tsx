@@ -5,7 +5,7 @@ import { faceShare, type Ctx } from "./ctx";
 import { day, fmtDate, pct } from "./shared";
 import { ReceiptArt } from "./ReceiptThumb";
 import { N } from "./shared";
-import { readReceiptHistory } from "./receipt-history";
+import { readReceiptHistory, settlementPayer } from "./receipt-history";
 export const SkelRows = ({ n = 6, cols = 6 }: { n?: number; cols?: number }) => <div className="skel-rows" aria-busy="true" aria-label="Loading">{Array.from({ length: n }, (_, i) => <div key={i} className="skel-row">{Array.from({ length: cols }, (_, j) => <span key={j} className={`skel ${j === 0 ? "w100" : "w60"}`} />)}</div>)}</div>;
 import { SettleBadge, useWatch, WatchBtn } from "./shared";
 
@@ -54,12 +54,12 @@ export function Explore({ c }: { c: Ctx }) {
 
   return (
     <div className="explore">
-      <section className="explore-intro"><div><p className="kicker">Loaded receipts · {R.length} of {c.total}</p><h1>Explore real-world receivables</h1><p>Issuer-provided receipts. Select one to inspect its proof.</p></div><div className="explore-intro-actions"><span className="explore-live"><i /> Live from Portaldot V3</span><button className="btn sm primary" onClick={() => c.setTab("trade")}>Open share market <Ico n="arrow" /></button></div></section>
+      <section className="explore-intro"><div><p className="kicker">Loaded receipts · {R.length} of {c.total}</p><h1>Explore receivables</h1><p>Issuer-provided receipts. Select one to inspect its proof.</p></div><div className="explore-intro-actions"><span className="explore-live"><i /> Live from Portaldot V3</span><button className="btn sm primary" onClick={() => c.setTab("trade")}>Open share market <Ico n="arrow" /></button></div></section>
       {!c.eventsOk && !c.eventsLoading && <p className="banner ex-scan-warning" role="status">Event scan incomplete. Trade totals and redeemed statuses may omit transactions outside the readable range.</p>}
       <section className="ex-stats" aria-label="Loaded network overview">
         <div className="kpi"><span>Receipts on contract</span><b className="num"><N l={c.loading}><CountUp v={c.total} /></N></b><small><N l={c.loading}>{R.filter((r) => r.fraction).length} locked among loaded receipts</N></small></div>
         <div className="kpi"><span>Outstanding</span><b className="num"><N l={c.loading}><CountUp v={fmt(outstanding, 18)} /></N></b><small>tPOT owed by debtors</small></div>
-        <div className="kpi"><span>Settled</span><b className="num"><N l={c.loading}><CountUp v={fmt(settledVol, 18)} /></N></b><small>tPOT paid into PotKit</small></div>
+        <div className="kpi"><span>Settled</span><b className="num"><N l={c.loading}><CountUp v={fmt(settledVol, 18)} /></N></b><small>tPOT on receipts paid now, earlier cycles not counted</small></div>
         <div className="kpi"><span>Open listings</span><b className="num"><N l={c.loading}><CountUp v={open.length} /></N></b><small><N l={c.loading}>{fmt(listedVal, 18)} tPOT asked</N></small></div>
         <div className="kpi"><span>Traded</span><b className="num">{c.eventsLoading ? "Reading…" : !c.eventsOk ? "—" : <CountUp v={fmt(traded, 18)} />}</b><small>{c.eventsOk ? "tPOT in scanned buys" : "Incomplete event scan"}</small></div>
         <div className={`kpi ${R.some((r) => r.status === "Overdue") ? "neg" : ""}`}><span>Overdue</span><b className="num"><N l={c.loading}><CountUp v={R.filter((r) => r.status === "Overdue").length} /></N></b><small>past due, unpaid</small></div>
@@ -80,6 +80,7 @@ export function Explore({ c }: { c: Ctx }) {
               {rows.map((r) => {
                 const onMkt = open.filter((l) => l.receiptId === r.id).reduce((s, l) => s + l.remaining, 0n);
                 const p = ask.get(r.id); const totalShares = supplyOf(r); const face = faceValueOf(r); const dueDate = dueDateOf(r); const redeemed = isRedeemed(r);
+                const selfPaid = settlementPayer(receiptHistory.get(r.id), r.depositor)?.byIssuer ?? false;
                 const word = redeemed ? "Redeemed" : isSettled(r) ? "Paid" : r.status === "Pending" ? "Open" : r.status === "Free" ? "Not locked" : r.status;
                 const tone = redeemed ? "redeemed" : isSettled(r) ? "settled" : r.status === "Overdue" ? "overdue" : r.fraction ? (onMkt ? "trading" : "listed") : "minted";
                 return (
@@ -87,7 +88,7 @@ export function Explore({ c }: { c: Ctx }) {
                     <div className="inv-art"><ReceiptArt id={r.id} kind={KINDS[r.kind]} face={face ? `${fmt(face, r.settle.decimals)} ${r.settle.symbol}` : "Terms pending"} status={word} /><span className="inv-badge" data-status={word}>{word}{!redeemed && !isSettled(r) && dueDate ? ` · ${fmtDate(new Date(dueDate * 1000))}` : ""}</span></div>
                     <div className="inv-body">
                       <h3><span className="num">#{r.id}</span> {r.note || KINDS[r.kind]}</h3>
-                      <ul className="inv-chips" aria-label="Receipt details"><li>{KINDS[r.kind]}</li><li>{redeemed && totalShares > 0n ? `${units(totalShares)} shares issued` : totalShares > 0n ? `${units(totalShares)} shares` : r.fraction && isSettled(r) ? "All claimed" : "No shares yet"}</li>{!redeemed && totalShares > 0n && <li className={onMkt > 0n ? "on-mkt" : ""}>{onMkt > 0n ? `${units(onMkt)} listed` : "Not listed"}</li>}</ul>
+                      <ul className="inv-chips" aria-label="Receipt details"><li>{KINDS[r.kind]}</li><li>{redeemed && totalShares > 0n ? `${units(totalShares)} shares issued` : totalShares > 0n ? `${units(totalShares)} shares` : r.fraction && isSettled(r) ? "All claimed" : "No shares yet"}</li>{selfPaid && <li title="The wallet that issued this invoice also paid it. Nothing on-chain shows the debtor and the issuer are different people.">Paid from the issuer's own wallet</li>}{!redeemed && totalShares > 0n && <li className={onMkt > 0n ? "on-mkt" : ""}>{onMkt > 0n ? `${units(onMkt)} listed` : "Not listed"}</li>}</ul>
                       <dl className="inv-facts">
                         <div><dt>Face value</dt><dd>{face ? `${fmt(face, r.settle.decimals)} ${r.settle.symbol}` : "Terms pending"}</dd></div>
                         <div><dt>Due</dt><dd>{dueDate ? fmtDate(new Date(dueDate * 1000)) : redeemed ? "No due date" : "—"}</dd></div>

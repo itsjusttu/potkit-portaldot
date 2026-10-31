@@ -173,7 +173,7 @@ export function Trade({ c }: { c: Ctx }) {
             : !cards.length ? <>
               <Empty icon="⇄" title="No open listings" body="Nobody is selling shares right now. List yours from the panel to get cash today." />
               {!cards.length && recentTrades.length > 0 && <section className="card trade-recent" aria-label="Recent trades">
-                <header><div><p className="kicker">On-chain activity</p><h2 className="h-sub">Recent trades</h2></div><span className="trade-recent-live"><i />Verified</span></header>
+                <header><div><p className="kicker">On-chain activity</p><h2 className="h-sub">Recent trades</h2></div><span className="trade-recent-live"><i />From chain events</span></header>
                 <ol>{recentTrades.map((e) => <li key={`${e.hash}-${e.logIndex}-${e.kind}`}><span className="trade-recent-icon"><Ico n="cart" size={16} /></span><b>{e.text}</b><small>Block {e.block.toString()}</small></li>)}</ol>
               </section>}
             </>

@@ -38,3 +38,15 @@ export function withoutRedeemed<T extends { id: number }>(rows: T[], events: Cha
   const history = readReceiptHistory(events);
   return rows.filter((r) => !(history.get(r.id)?.redeemed ?? false));
 }
+
+/**
+ * Who paid the current cycle of a receipt, and whether that is the wallet that issued (locked) it.
+ * It is a hint from public events, not a fraud check: an issuer can pay from a second wallet.
+ */
+export function settlementPayer(history: ReceiptHistory | undefined, depositor?: string): { payer: string; byIssuer: boolean } | null {
+  const ev = history?.settle;
+  if (!history?.settled || !ev?.actors?.length) return null;
+  const payer = ev.actors[0]!;
+  const issuer = (history.lock?.actors?.[0] ?? depositor ?? "").toLowerCase();
+  return { payer, byIssuer: Boolean(issuer) && payer.toLowerCase() === issuer };
+}

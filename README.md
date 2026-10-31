@@ -98,7 +98,7 @@ The optional due date is used only by `Lens.statuses`: an unpaid locked receipt 
 
 ## Assumptions & limitations
 - Invoice notes and terms are issuer/depositor self-reported. The contract does not verify the invoice, delivery, debtor identity, debtor consent, or legal enforceability.
-- There is no oracle, KYC, debtor attestation, credit underwriting, stablecoin, or mainnet deployment. All payments here use testnet native tPOT.
+- There is no oracle, KYC, on-chain debtor attestation, credit underwriting, stablecoin, or mainnet deployment. The pay page offers an optional off-chain EIP-712 acknowledgement for the debtor; it only shows which wallet signed and the contract does not use it. All payments here use testnet native tPOT.
 - The app simulates the roles of issuer, seller, buyer/investor, and debtor with wallets; the contract does not know which wallet is the real debtor.
 - Minting is permissioned: only the issuer and approved minters can mint (`not minter` otherwise). Holding, trading, settling and claiming are open to everyone. The issuer approves a minter with `setMinter` (see `scripts/set-minter.mjs`).
 - The contract does not look at the due date when someone buys, so it still accepts a purchase on an overdue, unpaid invoice. The app hides the Buy button for overdue listings as a product rule.
@@ -126,7 +126,7 @@ The recorded end-to-end testnet run for kit `0x3c26351ad8b9dc7bb4f837c5b921879c3
 The node console explorer is Substrate-based: it opens **block numbers** but cannot resolve an EVM transaction hash, so each block above links to its console page. Each hash links to the community explorer [Pindex](https://pindex.onrender.com), which resolves EVM transaction hashes on the V3 testnet (checked for all nine on 2026-10-30: status, block and the kit as recipient); the hashes are also verified through the RPC. At first Pindex lacked part of this contract's history; after its author backfilled it, all 28 post-deploy transactions resolved (checked 2026-10-31). Its index trails the chain tip (about 1,300 blocks when checked), so very recent transactions can be missing for a while: the RPC stays the reference, and the app keeps linking block pages. The contract was deployed once (block 97421); the web frontend is a separate Vercel deployment that is rebuilt as the UI changes, so its deploy dates are not the contract's.
 
 ## Roadmap
-- Add debtor attestation/signatures, issuer reputation, and invoice-document verification without pretending that on-chain metadata is proof.
+- Add an optional on-chain debtor acknowledge and dispute, richer issuer reputation, and invoice-document verification without pretending that on-chain metadata is proof.
 - Define an explicit default/recovery policy, including partial payments and any permitted restructuring or buyout flow.
 - Add an indexer and explorer links when Portaldot V3 history is reliably available; preserve approximate-time labels when it is not.
 - Explore optional stablecoin settlement, KYC/compliance integrations, and deeper secondary-market mechanisms for a production deployment.
@@ -162,7 +162,7 @@ VITE_RPC_URL=http://localhost:8545 npm run dev        # open /app?kit=0x… (imp
 Requires Node.js 20+.
 ```bash
 npm install
-npm test        # compiles the contracts, then runs the whole suite in test/ (PotKit on local Ganache, faucet, network switch, transaction errors, settle and trade input checks, receipt history, dashboard figures, the `set-minter` script)
+npm test        # compiles the contracts, then runs the whole suite in test/ (64 tests as of 31 Oct 2026: PotKit on local Ganache, faucet, network switch, transaction errors, settle and trade input checks, receipt history, dashboard figures, the `set-minter` script)
 npm run dev     # open the URL Vite prints (http://localhost:8080 by default)
 npm run build   # type-check + production build into dist/
 ```
@@ -298,6 +298,25 @@ No third-party Solidity/Yul code is used in the contracts (`PotKit.yul`, `Lens.s
 | ganache | 7.9 | MIT | local test chain |
 
 Assets: wallet logos are bundled locally (see `src/assets/wallets/SOURCES.md`: web3icons MIT, simple-icons CC0; trademarks belong to their owners). Fonts Hanken Grotesk, Newsreader and IBM Plex Mono are loaded from Google Fonts (SIL Open Font License). Landing and dApp visuals were created for this project; layout ideas came from public design references, and no code, images, logos or text were copied.
+
+## For Portaldot builders
+What building PotKit taught us about V3 (pallet-revive), in the order it shaped the design. Figures come from `scripts/measure.mjs` (see the cost table above).
+
+| Item | How it behaves | What PotKit did |
+|---|---|---|
+| Deployed code | Storage deposit of about 0.079 tPOT per byte, ~13.3 tPOT per contract | One 3.9 KB Yul contract, 82-byte share forwarders, no TestUSD |
+| New storage slot | About 3.9 tPOT, refunded when the slot is cleared (claim −3.9, redeem −7.8) | Packed fields, one generic `Activity` event, one-letter revert codes |
+| Gas limit | The estimate includes the deposit, so the limit is worth real money; a wallet's default tip makes its maximum look absurd | Limit = estimate + 20%, `maxFeePerGas` = the chain's price, zero tip |
+| Budget | At most 500 tPOT per participant | Deploy about 327 tPOT, full demo about 47 tPOT |
+
+- **Mapped account.** Gas is paid by the mapped Substrate account of your 0x address. Get it from the node console (`reviveApi` → `accountId`); a plain transfer to the 0x address credits it.
+- **Read-only code costs nothing.** `contracts/Lens.sol` is never deployed: viem runs its bytecode inside `eth_call`, and it reads raw storage through `PotKit.peek(slots)`. See `src/lib/chain.ts` for the call pattern.
+- **Measure before you spend.** `node scripts/measure.mjs` runs a harness through `eth_estimateGas` and `eth_call`, so costs are measured without sending a transaction.
+- **Explorers.** The node console opens block numbers only. The community explorer Pindex resolves EVM transaction hashes (see Testnet evidence).
+- **RPC quirks.** Old log ranges can be discarded, and the public gateway sometimes answers 503 without CORS headers (measured on 31 Oct: about 31% of preflight requests and 8–17% of `eth_getLogs` calls), which a browser shows as a CORS error even though the retry succeeds. The app scans events in 100,000-block windows to keep the number of calls low, halves the window if the RPC refuses it, and says when a scan is incomplete instead of presenting partial data as complete.
+
+## Who guarantees the debtor pays?
+Nobody. PotKit does not verify the invoice or the debtor: payment is a credit risk on the issuer and the debtor, and buyers should price it as one. The app shows the issuer's record, labels everything as issuer-provided, marks receipts paid from the issuer's own wallet (a hint only: an issuer can pay from a second wallet) and hides Buy on overdue invoices. The contract still accepts a purchase after the due date and does not refund an overpayment; both are known limits. Planned for a next version, not built: an optional debtor acknowledge and dispute, buying that reverts after the due date, and refunds for overpayment.
 
 ## Known limitations
 See [Assumptions & limitations](#assumptions--limitations) and [Default / overdue handling](#default--overdue-handling). The contract is immutable and its `tokenURI` points at `https://potkit.pro/api/r`; the JSON is built off-chain from chain state.

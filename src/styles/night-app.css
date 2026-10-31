@@ -146,3 +146,7 @@ html[data-route="app"] .facts:not(.compact) dd { margin: 0; text-align: left; fo
 
 /* issued invoices: a settled receipt with nothing left to claim says so instead of offering a button */
 html[data-route="app"] .shell .issue-claimed { display: inline-flex; align-items: center; min-height: 36px; padding: 0 .75rem; border: 1px dashed var(--line-strong); border-radius: 999px; color: var(--muted); font-size: .84rem; font-weight: 600; }
+
+/* Settlement record: the count reads as a sentence ("2 of 3 paid on time") */
+html[data-route="app"] .shell .nv-gauge-v .nv-gauge-s { font: 500 .95rem var(--n-sans); color: var(--muted); letter-spacing: 0; }
+html[data-route="app"] .shell .nv-gauge-v .nv-gauge-s { margin-left: .3rem; }
