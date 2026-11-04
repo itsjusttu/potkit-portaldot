@@ -36,17 +36,32 @@ function devApi(): Plugin {
   };
 }
 
+/** True when every path from an entry to this module goes through @privy-io (the optional Privy chunk). */
+function onlyPrivy(id: string, info: (id: string) => { importers: readonly string[]; dynamicImporters: readonly string[]; isEntry: boolean } | null, seen = new Set<string>()): boolean {
+  if (seen.has(id)) return true;
+  seen.add(id);
+  if (id.includes("/node_modules/@privy-io/") || id.includes("/src/lib/privy.tsx")) return true;
+  const m = info(id);
+  if (!m || m.isEntry) return false;
+  const from = [...m.importers, ...m.dynamicImporters];
+  if (!from.length) return false;
+  return from.every((x) => onlyPrivy(x, info, seen));
+}
+
 export default defineConfig({
   plugins: [react(), devApi()],
   server: { port: 8080, host: true },
   build: {
     rollupOptions: {
       output: {
-        manualChunks(id) {
+        manualChunks(id, { getModuleInfo }) {
           // Vite's dynamic-import helper is used by the entry itself. Left to Rollup it ends up inside the viem chunk, and then
           // index.html preloads ~290 KB of viem on the landing and doc pages, which never use it.
           if (id.includes("vite/preload-helper") || id.includes("vite/modulepreload-polyfill")) return "preload";
-          if (id.includes("/node_modules/viem/") || id.includes("/node_modules/ox/") || id.includes("/node_modules/@noble/")) return "evm-vendor";
+          // viem and its helpers as one cached chunk, but only modules the app itself reaches: anything imported only by the
+          // optional Privy chunk (src/lib/privy.tsx, loaded when VITE_PRIVY_APP_ID is set) stays in that chunk, so the app does not grow
+          const evm = (id.includes("/node_modules/viem/") || id.includes("/node_modules/ox/") || id.includes("/node_modules/@noble/")) && id.split("/node_modules/").length === 2;
+          if (evm && !onlyPrivy(id, getModuleInfo)) return "evm-vendor";
         },
       },
     },

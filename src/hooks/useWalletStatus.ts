@@ -4,6 +4,7 @@ import { rememberedId, select, selected, type WalletOption } from "../lib/wallet
 import { anyWallet, connect, disconnectWallet, ethereum, explain, inFrame, portaldot, short, silentAccount, walletChainId } from "../lib/chain";
 import { toast } from "../AppUi";
 import { useWallets } from "../WalletUi";
+import { onPrivy, openPrivy, privyOn, setPrivyMuted, type PrivyPick } from "../lib/privyBus";
 
 /** Pauses (ms) before each re-ask of a remembered wallet that has not given an account yet; stops at the first account. */
 const RESTORE_RETRY_MS = [500, 1500, 3500, 7000];
@@ -25,9 +26,22 @@ export function useWalletStatus() {
   const [tick, setTick] = useState(0); // bumps whenever the active provider changes
   const embedded = inFrame();
 
+  // with Privy (VITE_PRIVY_APP_ID set) the wallet Privy has connected becomes the active provider; Privy restores it after a reload
+  const privyMode = privyOn();
+  const [privyPick, setPrivyPick] = useState<PrivyPick>(null);
+  useEffect(() => {
+    if (!privyMode) return;
+    return onPrivy((w) => {
+      setPrivyPick(w);
+      if (w) { select({ id: "privy", name: w.name, icon: w.icon, badge: { letter: w.name.slice(0, 1).toUpperCase(), bg: "#16233B", fg: "#fff" }, provider: w.provider, via: "eip6963" }); setWalletId("privy"); }
+      else if (selected()?.id === "privy") select(null);
+      setTick((t) => t + 1);
+    });
+  }, [privyMode]);
+
   // restore the remembered wallet as soon as its provider announces itself
   useEffect(() => {
-    if (selected() || !walletId) return;
+    if (privyMode || selected() || !walletId) return;
     const w = wallets.find((x) => x.id === walletId && x.provider);
     if (w) { select(w); setTick((t) => t + 1); }
   }, [wallets, walletId]);
@@ -61,7 +75,7 @@ export function useWalletStatus() {
     return noWallet ? "no-wallet" : "disconnected";
   }, [picking, account, chainOk, noWallet]);
 
-  const open = useCallback(() => { if (!embedded) setPicker(true); }, [embedded]);
+  const open = useCallback(() => { if (embedded) return; if (privyMode) { setPrivyMuted(false); if (openPrivy()) return; } setPicker(true); }, [embedded, privyMode]);
   const close = useCallback(() => setPicker(false), []);
 
   const pick = useCallback(async (w: WalletOption) => {
@@ -79,9 +93,10 @@ export function useWalletStatus() {
 
   const disconnect = useCallback(async () => {
     const name = selected()?.name ?? "wallet";
+    if (privyMode) { setPrivyMuted(true); privyPick?.disconnect(); }
     await disconnectWallet(); select(null); setWalletId(""); setTick((t) => t + 1);
     toast({ kind: "ok", title: "Disconnected", detail: `${name} is no longer used by PotKit.` });
-  }, []);
+  }, [privyMode, privyPick]);
 
   /** re-read the chain id after a wallet_switchEthereumChain */
   const recheckChain = useCallback(async () => { setChainOk((await walletChainId()) === portaldot.id); }, []);
