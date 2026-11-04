@@ -212,6 +212,13 @@ The contract, API and script files first appear in `04cfd1c`; `contracts/` and `
 
 - Final recount before submission (4 Nov, 05:03 UTC, block 315886): still 28 state-changing transactions from 2 wallets, both the builder's; 72 tests pass; the live app and the repository carry the same commits (`0c7904f`). Dates in the deck, outline and DoraHacks text updated to 4 Nov; the deck PDF was exported again
 
+- Fixes from a second live walkthrough (4 Nov; no contract change, `src/lib/chain.ts` and `contracts/` untouched):
+  - Share amounts are ERC-20 values with 18 decimals and can be bought in fractions, so the exact value is long (for example 487.888888888888888889). One display function, `fmtShares` in `src/lib/shares.ts`, now shows 2 decimals from 1 share up and 4 below it, trailing zeros dropped, thousands grouped, and `<0.0001` for a non-zero amount that would round to zero. It is used on Trade, Verify, Explore, Dashboard, Portfolio, Issue, Profile, Pay, the sale planner and the event lists (listing and buy lines are rebuilt from the event amount by `eventText`). The exact value stays in tooltips on the Trade, Explore and Portfolio tables, and in CSV exports, input presets and the amounts sent in transactions.
+  - The issuer record on Trade and the Pay page (`issuerRecord`) counted a receipt that was paid in an earlier lock cycle as on time even when it was unpaid and overdue again, so it showed 3/3 while the Dashboard showed 2 of 3. Both count invoices (receipts), not payments. The issuer record now judges a receipt by its current cycle, like the Dashboard, and the label reads *2 of 3 invoices paid on time, 1 overdue unpaid*; the Dashboard says *invoices* and that it covers all issuers on the contract.
+  - The *Due soon* tag on Trade cards used a 30-day rule while the contract view (`Lens.sol`), the README and the Docs define Due soon as 3 days or less. The tag now follows the 3-day rule (the separate *Due < 30d* filter chip keeps its own label).
+  - Trade listings between about 1100 and 1400 px wide: the list sits beside the buy panel, so the Discount header wrapped and the price touched the next column. The board now stacks its columns by the width of the list itself (a container query in `night-app.css`), checked at 1280, 1600, 900 and 390 px in dark and light.
+  - Tests: 8 new (6 for the share format and event text, 2 for the issuer record), 80 pass. Slide 7, the README and the DoraHacks text carry 80; the deck PDF was re-exported.
+
 ## How the work is checked
 
 - `npm test` compiles the contracts and runs the suite in `test/` (contract behaviour on a local Ganache chain, faucet logic, network switching, transaction errors, settle and trade input checks, receipt history, dashboard figures).

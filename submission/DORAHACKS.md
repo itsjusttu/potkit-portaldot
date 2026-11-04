@@ -110,7 +110,7 @@ Read-only mode: Explore and Verify work without a wallet through a direct RPC cl
 Yul + Solidity 0.8.28 (solc-js, pinned) · custom compile script (no Hardhat) · node:test + ganache · React 19 + TypeScript + Vite 7 ·
 viem 2 · lenis (smooth scroll on the docs pages) · canvas 2D intro animation. No database: every screen reads the chain directly (the only server code is the optional gas faucet and the `tokenURI` JSON endpoint).
 
-## What's tested (`npm test`: 72 tests as of 31 Oct 2026)
+## What's tested (`npm test`: 80 tests as of 4 Nov 2026)
 - ERC-721 compliance (ERC-165, approve, operators, transferFrom, safeTransferFrom with receiver contracts and rejection), mint permissions, unknown ids revert
 - Notes of every length 1–140 stored losslessly; metadata JSON escapes quotes, backslashes and control characters
 - Lock: owner-only, terms set in the same call, whole supply to the owner; share tokens are identical 82-byte forwarders and their events cannot be spoofed
@@ -121,7 +121,7 @@ viem 2 · lenis (smooth scroll on the docs pages) · canvas 2D intro animation. 
 - Market: escrow, partial and full buys with exact tPOT, round-up cost, seller paid, cancel; no listing on unlocked receipts; trading blocked after settlement while cancel + claim still work
 - Lens windows (`rows`, `balances`, `claimables`, `listings`) consistent
 - Gas faucet API and wallet network switching
-- Settle-amount checks (underpay, exact, overpay needs confirmation), Trade input precision (at most 18 decimals), receipt-history rules, and the dashboard figures (issuer record, due buckets, per-day series, sale plan, CSV and calendar export)
+- Settle-amount checks (underpay, exact, overpay needs confirmation), Trade input precision (at most 18 decimals), receipt-history rules, the share-amount display format (rounded for display, exact value kept for transactions), and the dashboard figures (issuer record counted per invoice, due buckets, per-day series, sale plan, CSV and calendar export)
 
 ## Deployed contracts (Portaldot V3 testnet)
 - PotKit (receipts, vault, settlement, market): `0x3c26351ad8b9dc7bb4f837c5b921879c35e20fb7`

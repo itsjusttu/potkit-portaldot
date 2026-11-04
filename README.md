@@ -162,7 +162,7 @@ VITE_RPC_URL=http://localhost:8545 npm run dev        # open /app?kit=0x… (imp
 Requires Node.js 20+.
 ```bash
 npm install
-npm test        # compiles the contracts, then runs the whole suite in test/ (72 tests as of 31 Oct 2026: PotKit on local Ganache, faucet, network switch, transaction errors, settle and trade input checks, receipt history, the event-scan window, dashboard figures, the `set-minter` script)
+npm test        # compiles the contracts, then runs the whole suite in test/ (80 tests as of 4 Nov 2026: PotKit on local Ganache, faucet, network switch, transaction errors, settle and trade input checks, receipt history, the event-scan window, share-amount display format, dashboard and issuer-record figures, the `set-minter` script)
 npm run dev     # open the URL Vite prints (http://localhost:8080 by default)
 npm run build   # type-check + production build into dist/
 ```
