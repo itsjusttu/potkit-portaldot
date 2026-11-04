@@ -12,7 +12,7 @@ const row = (id, dueDate, status = "Pending", settled = false) => ({ id, deposit
 test("issuer record: paid by the due date is on time, paid after is late, overdue unpaid is late", () => {
   const rows = [row(1, 100, "Settled", true), row(2, 100, "Settled", true), row(3, 100, "Overdue"), row(4, 0), row(5, 900)];
   const events = [{ kind: "settle", id: 1, actors: ["0x1"], time: 90 }, { kind: "settle", id: 2, actors: ["0x1"], time: 150 }];
-  assert.deepEqual(issuerRecord(A.toLowerCase(), rows, events), { issued: 5, rated: 3, onTime: 1, late: 2 });
+  assert.deepEqual(issuerRecord(A.toLowerCase(), rows, events), { issued: 5, rated: 3, onTime: 1, late: 2, unpaid: 1 });
 });
 
 test("issuer record: undated and still-open receipts are not rated", () => {
@@ -89,4 +89,22 @@ test("sale plan: price, proceeds, buyer payout and simple APR", () => {
   assert.ok(Math.abs(p.apr - (0.1 * 365) / 25) < 1e-12);
   assert.equal(salePlan({ face: 1, held: 1, pct: 100, discount: 0.05, days: 0 }).apr, null);
   assert.equal(salePlan({ face: 1, held: 10, pct: 250, discount: 5, days: 10 }).shares, 10);
+});
+
+test("issuer record: a receipt paid in an earlier cycle but unpaid and overdue now is late, like the Dashboard counts it", () => {
+  // #1 was paid on time in cycle 1 (settle at 50), then re-locked and is overdue again; #2 and #3 are paid by their due date
+  const rows = [row(1, 100, "Overdue"), row(2, 100, "Settled", true), row(3, 100, "Settled", true)];
+  const events = [{ kind: "settle", id: 1, actors: ["0x1"], time: 50 }, { kind: "settle", id: 2, actors: ["0x1"], time: 90 }, { kind: "settle", id: 3, actors: ["0x1"], time: 80 }];
+  const r = issuerRecord(A, rows, events);
+  assert.deepEqual(r, { issued: 3, rated: 3, onTime: 2, late: 1, unpaid: 1 });
+  assert.equal(recordLabel(r), "2 of 3 invoices paid on time, 1 overdue unpaid");
+  const dash = settlementSplit(rows.map((x) => ({ ...x, fraction: "0xf", status: "" })), events, 1000);
+  assert.equal(dash.onTime, r.onTime);
+  assert.equal(dash.late, r.late);
+});
+
+test("issuer record: a re-locked receipt that is still open is not rated, and the label counts invoices", () => {
+  const r = issuerRecord(A, [row(1, 900, "Pending"), row(2, 100, "Settled", true)], [{ kind: "settle", id: 1, actors: ["0x1"], time: 50 }, { kind: "settle", id: 2, actors: ["0x1"], time: 90 }]);
+  assert.deepEqual(r, { issued: 2, rated: 1, onTime: 1, late: 0, unpaid: 0 });
+  assert.equal(recordLabel(r), "1 of 1 invoices paid on time");
 });
