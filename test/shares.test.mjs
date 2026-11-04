@@ -4,7 +4,7 @@ import { readFileSync } from "node:fs";
 import { transformSync } from "esbuild";
 
 const code = transformSync(readFileSync(new URL("../src/lib/shares.ts", import.meta.url), "utf8"), { loader: "ts", format: "esm" }).code;
-const { fmtShares, eventText } = await import("data:text/javascript;base64," + Buffer.from(code).toString("base64"));
+const { fmtShares, eventText, shareUnit } = await import("data:text/javascript;base64," + Buffer.from(code).toString("base64"));
 const E18 = 10n ** 18n;
 
 test("share format: the long values seen on the live app are shortened to 2 decimals", () => {
@@ -46,4 +46,12 @@ test("event text: listings and buys are rounded for display, other events keep t
   assert.equal(eventText({ kind: "list", id: 4, amount: 487_888_888_888_888_888_889n, text: "x" }), "487.89 shares of #4 listed");
   assert.equal(eventText({ kind: "list", id: 4, text: "kept" }), "kept");
   assert.equal(eventText({ kind: "settle", id: 4, amount: 1n, text: "#4 settled" }), "#4 settled");
+});
+
+test("share unit: singular only for exactly one share", () => {
+  assert.equal(shareUnit(E18), "share");
+  assert.equal(shareUnit(0n), "shares");
+  assert.equal(shareUnit(5n * 10n ** 17n), "shares");
+  assert.equal(shareUnit(2n * E18), "shares");
+  assert.equal(eventText({ kind: "buy", id: 4, amount: E18, text: "x" }), "1 share of #4 bought");
 });

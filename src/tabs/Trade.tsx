@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { parseUnits, type Address } from "viem";
 import { buyShares, cancelListing, fmt, KINDS, listingCost, listShares, short, units, type Listing, type Row } from "../lib/chain";
-import { eventText, fmtShares } from "../lib/shares";
+import { eventText, fmtShares, shareUnit } from "../lib/shares";
 import { FaucetButton } from "../Faucet";
 import { Addr, Drawer, Empty, Ico, toast } from "../AppUi";
 import { daysTo, faceShare, type Ctx } from "./ctx";
@@ -94,7 +94,7 @@ export function Trade({ c }: { c: Ctx }) {
   const buyValid = Boolean(sel) && buyRaw > 0n && buyRaw <= (sel?.l.remaining ?? 0n);
   let buyCost = 0n;
   if (sel && buyValid) buyCost = listingCost(sel.l.price, buyRaw);
-  const buyError = !amt ? "" : buyPrecisionError ? "Use up to 18 decimal places." : buyRaw <= 0n ? "Enter a positive share amount." : buyRaw > (sel?.l.remaining ?? 0n) ? `Only ${fmtShares(sel?.l.remaining ?? 0n)} shares are available.` : "";
+  const buyError = !amt ? "" : buyPrecisionError ? "Use up to 18 decimal places." : buyRaw <= 0n ? "Enter a positive share amount." : buyRaw > (sel?.l.remaining ?? 0n) ? `Only ${fmtShares(sel?.l.remaining ?? 0n)} ${shareUnit(sel?.l.remaining ?? 0n)} are available.` : "";
   const buyPayout = sel ? (faceShare(sel.r) * buyRaw) / 10n ** 18n : 0n;
   const walletReason = !c.account ? "Connect your wallet to continue." : c.gated ? "Switch to Portaldot V3 before submitting." : c.busy ? "Wait for the current transaction to finish." : "";
   const sellable = c.rows.filter((r) => r.fraction && !r.settle.settled && (c.held.get(r.id) ?? 0n) > 0n);
@@ -103,7 +103,7 @@ export function Trade({ c }: { c: Ctx }) {
   const sellFace = sellRow ? n6(faceShare(sellRow), sellRow.settle.decimals || 18) : 0;
   const sellAmtOk = /^\d+(\.\d+)?$/.test(sellAmt.trim()) && Number(sellAmt) > 0;
   const sellPriceOk = /^\d+(\.\d+)?$/.test(sellPrice.trim()) && !exceedsDecimals(sellPrice, 18) && parseUnits(sellPrice.trim(), 18) > 0n;
-  const sellAmountError = !sellAmt ? "" : !sellAmtOk ? "Enter a positive share amount." : !sellRow ? "" : exceedsDecimals(sellAmt, 18) ? "Use up to 18 decimal places." : parseUnits(sellAmt.trim(), 18) > sellHeld ? `You hold only ${fmtShares(sellHeld)} shares.` : "";
+  const sellAmountError = !sellAmt ? "" : !sellAmtOk ? "Enter a positive share amount." : !sellRow ? "" : exceedsDecimals(sellAmt, 18) ? "Use up to 18 decimal places." : parseUnits(sellAmt.trim(), 18) > sellHeld ? `You hold only ${fmtShares(sellHeld)} ${shareUnit(sellHeld)}.` : "";
   const sellValid = Boolean(sellRow) && sellAmtOk && !sellAmountError && sellPriceOk;
   const sellPriceError = !sellPriceOk ? "Enter a positive price in tPOT, with at most 18 decimal places." : "";
   const sellApr = sellFace > 0 && sellRow?.dueDate && daysTo(sellRow.dueDate) > 0 ? (1 - Number(sellPrice) / sellFace) * 365 / daysTo(sellRow.dueDate) : null;
@@ -202,7 +202,7 @@ export function Trade({ c }: { c: Ctx }) {
                     const original = initialByListing.get(x.l.lid);
                     const filled = original !== undefined && original > x.l.remaining ? original - x.l.remaining : 0n;
                     const ratio = original ? Number((filled * 10_000n) / original) / 100 : null;
-                    return <div className="trade-my-row" key={x.l.lid}><div><b>KIT#{x.r.id}</b><small>{x.r.note}</small></div><span>{num(x.price)} tPOT</span><strong className="trade-row-apr">{x.apr === null ? "—" : pct(x.apr)}</strong><div className="trade-fill"><i style={{ width: `${ratio ?? 0}%` }} /></div><small>{ratio === null ? `${fmtShares(x.l.remaining)} shares remaining · fill data unavailable` : `${ratio.toFixed(0)}% · ${units(filled)}/${units(original!)} filled`}</small><button className="btn sm" disabled={dis} title={walletReason || "Cancel and return remaining shares"} onClick={() => void c.run(`cancel${x.l.lid}`, async () => { const h = await cancelListing(c.ready(), c.market as Address, x.l.lid); c.note("Listing cancelled", `#${x.l.lid}`, h); })}>Cancel</button></div>;
+                    return <div className="trade-my-row" key={x.l.lid}><div><b>KIT#{x.r.id}</b><small>{x.r.note}</small></div><span>{num(x.price)} tPOT</span><strong className="trade-row-apr">{x.apr === null ? "—" : pct(x.apr)}</strong><div className="trade-fill"><i style={{ width: `${ratio ?? 0}%` }} /></div><small>{ratio === null ? `${fmtShares(x.l.remaining)} ${shareUnit(x.l.remaining)} remaining · fill data unavailable` : `${ratio.toFixed(0)}% · ${units(filled)}/${units(original!)} filled`}</small><button className="btn sm" disabled={dis} title={walletReason || "Cancel and return remaining shares"} onClick={() => void c.run(`cancel${x.l.lid}`, async () => { const h = await cancelListing(c.ready(), c.market as Address, x.l.lid); c.note("Listing cancelled", `#${x.l.lid}`, h); })}>Cancel</button></div>;
                   })}
                 </div>}
               </div>
@@ -247,9 +247,9 @@ export function Trade({ c }: { c: Ctx }) {
                   throw new Error(`Quick buy stopped after ${filled} of ${quote.length} confirmed fills. Earlier fills remain on-chain. ${error instanceof Error ? error.message : "The remaining listings were not confirmed."}`);
                 }
               }
-              toast({ kind: "ok", title: "Quick buy complete", detail: `${fmtShares(quoteShares)} shares bought for ${fmt(quoteCost, 18)} tPOT across ${filled} listing${filled === 1 ? "" : "s"}.` });
+              toast({ kind: "ok", title: "Quick buy complete", detail: `${fmtShares(quoteShares)} ${shareUnit(quoteShares)} bought for ${fmt(quoteCost, 18)} tPOT across ${filled} listing${filled === 1 ? "" : "s"}.` });
             });
-          }}>{!c.market ? "Market not configured" : !c.account ? "Connect wallet" : c.gated ? "Switch network" : c.busy === "quick-buy" ? "Confirm in wallet…" : !quote.length ? "No affordable listings" : `Buy ${fmtShares(quoteShares)} shares`}</button>
+          }}>{!c.market ? "Market not configured" : !c.account ? "Connect wallet" : c.gated ? "Switch network" : c.busy === "quick-buy" ? "Confirm in wallet…" : !quote.length ? "No affordable listings" : `Buy ${fmtShares(quoteShares)} ${shareUnit(quoteShares)}`}</button>
           <Why text={!c.market ? "Deploy PotKit from Issue before buying shares." : !c.account || c.gated ? "" : !quote.length ? "No affordable open listing at this spend amount." : c.native !== null && quoteCost > c.usdRaw ? "Your tPOT balance is lower than this quote." : c.busy ? "Another transaction is waiting for your wallet." : ""} />
           <p className="apr-note" role="note">APR (annualised return) and payout figures are estimates that assume the debtor pays in full and on time. Payment is not guaranteed.</p>
         </section>}

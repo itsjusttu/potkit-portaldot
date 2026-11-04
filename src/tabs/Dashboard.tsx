@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { fmt, KINDS, units } from "../lib/chain";
-import { eventText, fmtShares } from "../lib/shares";
+import { eventText, fmtShares, shareUnit } from "../lib/shares";
 import { CountUp, Empty, Ico, toast } from "../AppUi";
 import type { Ctx } from "./ctx";
 import { day, fmtDay, SettleBadge, Term } from "./shared";
@@ -89,7 +89,7 @@ export function Dashboard({ c }: { c: Ctx }) {
         </article>
 
         <div className="nv-kpis">
-          <button type="button" className="nv-card nv-kpi" style={{ "--i": 7 } as React.CSSProperties} onClick={() => c.setTab("trade")}><span>Open listings</span><b className="num">{c.loading ? "—" : open.length}</b><small>{fmtShares(sharesForSale)} shares listed{closedListings ? ` · ${closedListings} closed, past due` : ""}</small></button>
+          <button type="button" className="nv-card nv-kpi" style={{ "--i": 7 } as React.CSSProperties} onClick={() => c.setTab("trade")}><span>Open listings</span><b className="num">{c.loading ? <i className="skel kpi-skel" role="status" aria-label="Loading" /> : open.length}</b><small>{fmtShares(sharesForSale)} {shareUnit(sharesForSale)} listed{closedListings ? ` · ${closedListings} closed, past due` : ""}</small></button>
           <button type="button" className="nv-card nv-kpi" style={{ "--i": 8 } as React.CSSProperties} onClick={() => c.setTab("trade")}><span>Traded volume</span><b className="num">{c.eventsOk ? `${fmt(traded, 18)} tPOT` : "—"}</b><small>{buyEvents.length} buy{buyEvents.length === 1 ? "" : "s"} in scanned events</small></button>
           <button type="button" className="nv-card nv-kpi" style={{ "--i": 9 } as React.CSSProperties} title="Adds up every settlement payment found in the scanned events, including receipts that were redeemed afterwards. 'Paid now' counts receipts that are currently marked Settled." onClick={() => c.setTab("explore")}><span>Settled</span><b className="num">{c.eventsOk ? `${fmt(settledTotal, 18)} tPOT` : "—"}</b><small>{c.eventsOk ? `${settleEvents.length} payment${settleEvents.length === 1 ? "" : "s"} received, all cycles · ` : ""}{settledRows.length} receipt{settledRows.length === 1 ? "" : "s"} paid now</small></button>
         </div>
@@ -102,7 +102,7 @@ export function Dashboard({ c }: { c: Ctx }) {
           </article>
           <button type="button" className="nv-card nv-receipt" style={{ "--i": 10 } as React.CSSProperties} onClick={() => latest && c.setTab("verify", { id: String(latest.id) })} disabled={!latest} aria-label={latest ? `Verify latest receipt ${latest.id}` : "No receipt yet"}>
             <header><span className="nv-ico"><Ico n="shield" /></span><h2>Latest receipt</h2>{latest && <Ico n="arrow" size={14} />}</header>
-            {latest ? <div className="nv-rcard"><span className="nv-rcard-top"><img src="/potkit-p-circle-black.svg" alt="" width={18} height={18} /> PotKit receipt <b className="num">#{latest.id}</b></span><span className="nv-rcard-note">{latest.note || KINDS[latest.kind]}</span><span className="nv-rcard-foot"><span className="num">{fmt(faceValueOf(latest), 18)} tPOT</span><span className="num">{latest.dueDate ? day(latest.dueDate) : "No due date"}</span></span></div> : <p className="db-none">No receipt has been locked yet.</p>}
+            {latest ? <div className="nv-rcard"><span className="nv-rcard-top"><img src="/potkit-mark.svg" alt="" width={18} height={18} /> PotKit receipt <b className="num">#{latest.id}</b></span><span className="nv-rcard-note">{latest.note || KINDS[latest.kind]}</span><span className="nv-rcard-foot"><span className="num">{fmt(faceValueOf(latest), 18)} tPOT</span><span className="num">{latest.dueDate ? day(latest.dueDate) : "No due date"}</span></span></div> : <p className="db-none">No receipt has been locked yet.</p>}
             <span className="nv-podium" aria-hidden />
           </button>
         </div>
@@ -116,7 +116,7 @@ export function Dashboard({ c }: { c: Ctx }) {
             : <ul className="nv-rows">{shown.slice(0, 6).map((r) => { const nx = nextFor(r); return (
               <li key={r.id}>
                 <span className="nv-ev-ico num">#{r.id}</span>
-                <span className="nv-ev-t"><b>{r.note || KINDS[r.kind]}</b><small>{KINDS[r.kind]}{r.dueDate ? <> · due <span className="num">{day(r.dueDate)}</span></> : ""}{!r.fraction ? " · not locked yet" : r.settle.settled && r.supply === 0n ? " · all shares claimed" : <> · <span className="num">{fmtShares(r.supply)}</span> shares</>}</small></span>
+                <span className="nv-ev-t"><b>{r.note || KINDS[r.kind]}</b><small>{KINDS[r.kind]}{r.dueDate ? <> · due <span className="num">{day(r.dueDate)}</span></> : ""}{!r.fraction ? " · not locked yet" : r.settle.settled && r.supply === 0n ? " · all shares claimed" : <> · <span className="num">{fmtShares(r.supply)}</span> {shareUnit(r.supply)}</>}</small></span>
                 <span className="nv-row-status"><SettleBadge r={r} terms={false} /></span>
                 <span className="nv-row-v num">{faceValueOf(r) ? `${fmt(faceValueOf(r), r.settle.decimals)} tPOT` : "—"}</span>
                 <span className="nv-row-act">

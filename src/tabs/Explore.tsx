@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { fmt, KINDS, short, units, type ChainEvent, type Row } from "../lib/chain";
-import { eventText, fmtShares } from "../lib/shares";
+import { eventText, fmtShares, shareUnit } from "../lib/shares";
 import { Addr, CountUp, Empty, Ico } from "../AppUi";
 import { faceShare, type Ctx } from "./ctx";
 import { day, fmtDate, pct } from "./shared";
@@ -89,7 +89,7 @@ export function Explore({ c }: { c: Ctx }) {
                     <div className="inv-art"><ReceiptArt id={r.id} kind={KINDS[r.kind]} face={face ? `${fmt(face, r.settle.decimals)} ${r.settle.symbol}` : "Terms pending"} status={word} /><span className="inv-badge" data-status={word}>{word}{!redeemed && !isSettled(r) && dueDate ? ` · ${fmtDate(new Date(dueDate * 1000))}` : ""}</span></div>
                     <div className="inv-body">
                       <h3><span className="num">#{r.id}</span> {r.note || KINDS[r.kind]}</h3>
-                      <ul className="inv-chips" aria-label="Receipt details"><li>{KINDS[r.kind]}</li><li>{redeemed && totalShares > 0n ? `${fmtShares(totalShares)} shares issued` : totalShares > 0n ? `${fmtShares(totalShares)} shares` : r.fraction && isSettled(r) ? "All claimed" : "No shares yet"}</li>{selfPaid && <li title="The wallet that issued this invoice also paid it. Nothing on-chain shows the debtor and the issuer are different people.">Paid from the issuer's own wallet</li>}{!redeemed && totalShares > 0n && <li className={onMkt > 0n ? "on-mkt" : ""}>{onMkt > 0n ? `${fmtShares(onMkt)} listed` : "Not listed"}</li>}</ul>
+                      <ul className="inv-chips" aria-label="Receipt details"><li>{KINDS[r.kind]}</li><li>{redeemed && totalShares > 0n ? `${fmtShares(totalShares)} ${shareUnit(totalShares)} issued` : totalShares > 0n ? `${fmtShares(totalShares)} ${shareUnit(totalShares)}` : r.fraction && isSettled(r) ? "All claimed" : "No shares yet"}</li>{selfPaid && <li title="The wallet that issued this invoice also paid it. Nothing on-chain shows the debtor and the issuer are different people.">Paid from the issuer's own wallet</li>}{!redeemed && totalShares > 0n && <li className={onMkt > 0n ? "on-mkt" : ""}>{onMkt > 0n ? `${fmtShares(onMkt)} listed` : "Not listed"}</li>}</ul>
                       <dl className="inv-facts">
                         <div><dt>Face value</dt><dd>{face ? `${fmt(face, r.settle.decimals)} ${r.settle.symbol}` : "Terms pending"}</dd></div>
                         <div><dt>Due</dt><dd>{dueDate ? fmtDate(new Date(dueDate * 1000)) : redeemed ? "No due date" : "—"}</dd></div>
@@ -132,7 +132,7 @@ export function Explore({ c }: { c: Ctx }) {
 
         <aside className="ex-side">
                     <section className="card feed">
-            <p className="kicker">Recent activity</p>
+            <h2 className="h-sub">Recent activity</h2>
             {(c.loading || c.eventsLoading) && !c.events.length ? <p className="muted" role="status">Reading events…</p>
               : !c.events.length ? <p className="muted">{c.eventsOk ? "No events in the scanned block range." : "History unavailable: the RPC refused the event scan."}</p>
               : <ol className="feed-list">

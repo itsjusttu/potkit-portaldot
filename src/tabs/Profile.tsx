@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState, type CSSProperties } from "react";
 import type { Address } from "viem";
 import { fmt, formatNative, KINDS, mappedAddress, short, units, type ChainEvent, type Row } from "../lib/chain";
-import { fmtShares } from "../lib/shares";
+import { fmtShares, shareUnit } from "../lib/shares";
 import { Addr, Ico, toast } from "../AppUi";
 import { FaucetButton } from "../Faucet";
 import { profileShareUrl } from "../routes";
@@ -151,7 +151,7 @@ export function Profile({ c }: { c: Ctx }) {
               ? (!issued.length ? <p className="pr-empty">No invoice issuance events in the readable range.</p> : <ul className="pr-list">{issued.slice(0, 8).map((id) => { const r = c.rows.find((x) => x.id === id); const st = statusFor(id, r); return (
                 <li key={id}><button type="button" onClick={() => c.setTab("verify", { id: String(id) })}><span className="pr-ico"><Ico n={st === "Settled" ? "check" : "terms"} size={15} /></span><span className="pr-li-t"><b>{r?.note || `${KINDS[r?.kind ?? 0] ?? "Invoice"} #${id}`}</b><small>#{id} · {r?.settle.faceValue ? `${fmt(r.settle.faceValue, 18)} tPOT face value` : "Terms in event record"}</small></span><span className={`pr-st st-${st.toLowerCase()}`}>{st}</span></button></li>); })}</ul>)
               : (!bought.length ? <p className="pr-empty">No share purchases found in the readable event range.</p> : <ul className="pr-list">{bought.slice(0, 8).map(([id, value]) => { const r = c.rows.find((x) => x.id === id); return (
-                <li key={id}><div><span className="pr-ico"><Ico n="swap" size={15} /></span><span className="pr-li-t"><b>{r?.note || `Invoice #${id}`}</b><small>#{id} · <span className="num">{fmtShares(value.shares)}</span> shares bought</small></span><span className="pr-cost num">{fmt(value.cost, 18)} tPOT</span></div></li>); })}</ul>)}
+                <li key={id}><div><span className="pr-ico"><Ico n="swap" size={15} /></span><span className="pr-li-t"><b>{r?.note || `Invoice #${id}`}</b><small>#{id} · <span className="num">{fmtShares(value.shares)}</span> {shareUnit(value.shares)} bought</small></span><span className="pr-cost num">{fmt(value.cost, 18)} tPOT</span></div></li>); })}</ul>)}
             {c.eventsLoading && <p className="pr-warn" role="status">Reading on-chain activity. Counts may change.</p>}
             {!c.eventsLoading && !c.eventsOk && <p className="pr-warn">The RPC could not read the full event range, so this list may be incomplete.</p>}
           </section>

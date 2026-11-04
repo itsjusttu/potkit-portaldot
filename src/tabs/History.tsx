@@ -60,7 +60,7 @@ export function History({ c }: { c: Ctx }) {
   const unavailable = !c.eventsOk && !c.eventsLoading;
   if (!all.length && c.eventsLoading) return <div className="history" role="status"><p>Reading your on-chain history…</p></div>;
   if (!all.length && unavailable) return <><header className="tab-title"><h1>History</h1></header><Empty icon="◷" title="History unavailable" tone="warn" body="The RPC could not read the full event range. Try refreshing later; this is not proof that no transactions occurred." /></>;
-  if (!all.length) return <><header className="tab-title"><h1>History</h1></header><Empty icon="◷" title="No activity found" body="No wallet activity was found in the scanned range. Earlier transactions may be outside that range." /></>;
+  if (!all.length) return <><header className="tab-title"><h1>History</h1></header><Empty icon="◷" title={me ? "No activity found" : "Connect a wallet to see your history"} body={me ? "No wallet activity was found in the scanned range. Earlier transactions may be outside that range." : "History lists what your wallet did on this contract: issuing, trading, settling and claiming. Browsing the rest of the app needs no wallet."}>{me ? <><button className="btn primary" onClick={() => c.setTab("issue")}>Issue an invoice</button><button className="btn" onClick={() => c.setTab("trade")}>Browse Trade</button></> : <button className="btn primary" onClick={c.connect}>Connect wallet</button>}</Empty></>;
   const kindLabel: Record<string, string> = { mint: "Issue", lock: "Lock", terms: "Terms", due: "Due date", settle: "Settle", claim: "Claim", redeem: "Redeem", list: "List", buy: "Trade", cancel: "Cancel", other: "Wallet" };
   return (
     <div className="history">

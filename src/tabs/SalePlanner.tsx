@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { units } from "../lib/chain";
-import { fmtShares } from "../lib/shares";
+import { fmtShares, shareUnit } from "../lib/shares";
 import { Ico, toast } from "../AppUi";
 import { faceShare, daysTo, type Ctx } from "./ctx";
 import { Needle } from "./charts";
@@ -61,7 +61,7 @@ export function SalePlanner({ c, open, onClose }: { c: Ctx; open: boolean; onClo
             <div className="nv-rule">
               <div className="nv-node"><span>Sell</span>
                 <select aria-label="Receipt to sell" value={row?.id ?? ""} onChange={(e) => setId(Number(e.target.value))}>{sellable.map((r) => <option key={r.id} value={r.id}>#{r.id} · {r.note.slice(0, 24) || "Receipt"}</option>)}</select>
-                <small>You hold <b className="num">{fmtShares(held)}</b> shares</small></div>
+                <small>You hold <b className="num">{fmtShares(held)}</b> {shareUnit(held)}</small></div>
               <i className="nv-link-dot" aria-hidden />
               <div className="nv-node"><span>Amount</span>
                 <div className="nv-seg" role="group" aria-label="Share of your position">{PCTS.map((p) => <button key={p} type="button" aria-pressed={pct === p} onClick={() => setPct(p)}>{p}%</button>)}</div>

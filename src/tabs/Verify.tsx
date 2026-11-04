@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { explain, fmt, KINDS, loadRows, PAY_SYMBOL, readTokenUri, short, units, type ChainEvent, type Row } from "../lib/chain";
-import { fmtShares } from "../lib/shares";
+import { fmtShares, shareUnit } from "../lib/shares";
 import { Addr, Ico } from "../AppUi";
 import { type Ctx } from "./ctx";
 import { blockUrl, day } from "./shared";
@@ -84,7 +84,7 @@ export function Verify({ c }: { c: Ctx }) {
   ] : r ? [
     { ok: true, k: "Receipt exists on-chain", v: <>{res!.name}{res!.kind ? ` · ${res!.kind}` : ""}</> },
     { ok: r.fraction ? vaultHeld : null, k: "NFT locked in PotKit", v: vaultHeld ? <Addr a={r.owner} label="PotKit" /> : r.fraction ? <>Held by <Addr a={r.owner} /></> : "Not locked, still a plain NFT" },
-    { ok: r.fraction ? true : null, k: "Share token issued", v: r.fraction ? <><Addr a={r.fraction} label={`KIT${r.id}`} /> {fmtShares(r.supply)} shares</> : "No shares" },
+    { ok: r.fraction ? true : null, k: "Share token issued", v: r.fraction ? <><Addr a={r.fraction} label={`KIT${r.id}`} /> {fmtShares(r.supply)} {shareUnit(r.supply)}</> : "No shares" },
     { ok: r.settle.faceValue > 0n ? true : null, k: "Payment terms on-chain", v: r.settle.faceValue > 0n ? <>{fmt(r.settle.faceValue, r.settle.decimals)} {r.settle.symbol}{r.dueDate ? ` · due ${day(r.dueDate)}` : ""}</> : "No terms set" },
     { ok: r.settle.settled ? true : r.status === "Overdue" ? false : null, credit: true, k: "Debtor payment", v: r.settle.settled ? <>Paid {fmt(r.settle.amount, r.settle.decimals)} {r.settle.symbol} · {fmt(r.settle.paidOut, r.settle.decimals)} claimed</> : r.status === "Overdue" ? "Overdue, not paid" : "Not yet due" },
     { ok: r.settle.settled ? r.settle.amount >= r.settle.faceValue : null, k: "Paid at least face value", v: r.settle.settled ? (r.settle.amount >= r.settle.faceValue ? "Yes" : "Short-paid") : "—" },
@@ -109,7 +109,7 @@ export function Verify({ c }: { c: Ctx }) {
         </form>
       </div>
       {msg && <p className="banner err" role="alert">{msg}</p>}
-      {loading && !res && <p className="muted" role="status">Reading Portaldot…</p>}
+      {loading && !res && <div className="verify-skel" role="status" aria-busy="true" aria-label="Reading Portaldot"><i className="skel h3 w40" /><i className="skel w80" /><i className="skel w60" /><i className="skel h3 w100" /><i className="skel w70" /></div>}
       {!res && !loading && !msg && <p className="muted verify-empty">Enter a receipt id to inspect its current on-chain state. Share-token address lookup covers loaded receipts only.</p>}
       {res && r && (
         <div className="verify-result" aria-live="polite">
@@ -134,6 +134,15 @@ export function Verify({ c }: { c: Ctx }) {
               <div><dt>RECEIPT OWNER</dt><dd><Addr a={r.owner} /></dd></div>
             </dl>
             {redeemedPaid && <div className="cert-summary"><Ico n="check" size={16} /><span>Settled {fmt(paidEv?.value ?? faceValue, 18)} {PAY_SYMBOL} · {sharesIssued}/{sharesIssued} shares paid out · Lifecycle complete</span></div>}
+            <section className="cert-checks" aria-labelledby="cert-checks-t">
+              <h3 id="cert-checks-t" className="h-sub">On-chain state checks</h3>
+              <ul className="vchecks">{checks.map((x) => (
+                <li key={x.k} className={x.ok === true ? "pass" : x.ok === false ? "fail" : "na"}>
+                  <span className="vc-i"><Ico n={x.ok === true ? "check" : x.ok === false ? "x" : "dash"} /></span>
+                  <span className="vc-k">{x.k}<span className="sr-only">: {x.ok === true ? "pass" : x.ok === false ? "fail" : "not applicable"}</span><small>{x.v}</small></span>
+                </li>
+              ))}</ul>
+            </section>
             <footer className="cert-foot">
               <div className="cert-contract"><span>CONTRACT</span><Addr a={c.addrs!.vault} label="PotKit · Portaldot V3" /></div>
               <button className="btn" onClick={() => void copy(link, "proof")}><Ico n={copied === "proof" ? "check" : "link"} /> {copied === "proof" ? "Link copied" : "Share proof"}</button>
@@ -153,12 +162,6 @@ export function Verify({ c }: { c: Ctx }) {
                 </div>
               </li>
             ))}</ol>
-            <details className="proof-checks"><summary>On-chain state checks</summary><ul className="vchecks">{checks.map((x) => (
-              <li key={x.k} className={x.ok === true ? "pass" : x.ok === false ? "fail" : "na"}>
-                <span className="vc-i"><Ico n={x.ok === true ? "check" : x.ok === false ? "x" : "dash"} /></span>
-                <span className="vc-k">{x.k}<span className="sr-only">: {x.ok === true ? "pass" : x.ok === false ? "fail" : "not applicable"}</span><small>{x.v}</small></span>
-              </li>
-            ))}</ul></details>
           </aside>
         </div>
       )}

@@ -22,6 +22,9 @@ type EventLike = { kind: string; id: number; amount?: bigint; text: string };
 /** One-line text of an on-chain event. Listings and buys are rebuilt here so the share amount is rounded for display;
     every other kind keeps the text produced when the event was read. */
 export function eventText(e: EventLike): string {
-  if ((e.kind === "list" || e.kind === "buy") && e.amount !== undefined) return `${fmtShares(e.amount)} shares of #${e.id} ${e.kind === "list" ? "listed" : "bought"}`;
+  if ((e.kind === "list" || e.kind === "buy") && e.amount !== undefined) return `${fmtShares(e.amount)} ${shareUnit(e.amount)} of #${e.id} ${e.kind === "list" ? "listed" : "bought"}`;
   return e.text;
 }
+
+/** "share" for exactly one share, "shares" otherwise (zero and fractions read as plural: 0.5 shares). */
+export const shareUnit = (raw: bigint, decimals = 18): "share" | "shares" => (raw === 10n ** BigInt(decimals) ? "share" : "shares");

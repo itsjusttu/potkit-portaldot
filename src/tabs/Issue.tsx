@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { parseUnits } from "viem";
 import { deployKit, fmt, fractionalize, KINDS, mint, PAY_SYMBOL, short, units } from "../lib/chain";
-import { fmtShares } from "../lib/shares";
+import { fmtShares, shareUnit } from "../lib/shares";
 import { Addr, Empty, Ico } from "../AppUi";
 import { type Ctx } from "./ctx";
 import { day, fmtDate, SettleBadge, Term } from "./shared";
@@ -27,7 +27,9 @@ export function Issue({ c }: { c: Ctx }) {
     const selected = c.rows.find((r) => r.id === id && !r.fraction && (r.owner.toLowerCase() === c.account.toLowerCase() || r.depositor.toLowerCase() === c.account.toLowerCase()));
     if (selected) { setWizId(id); setKind(selected.kind); setNote(selected.note); }
   }, [requestedId, c.account, c.loading, c.rows]);
-  const row = c.rows.find((r) => r.id === wizId);
+  // the wizard only follows a receipt that belongs to the connected wallet: a saved id from an earlier session must not show "live" to a visitor without one
+  const wizRow = c.rows.find((r) => r.id === wizId);
+  const row = c.account && wizRow && [wizRow.owner, wizRow.depositor].some((a) => a && a.toLowerCase() === c.account.toLowerCase()) ? wizRow : undefined;
   // the wizard follows the receipt's real on-chain state once minted
   const chainStep = !wizId || !row ? null : !row.fraction ? 2 : 3;
   const cur = chainStep ?? 0;
@@ -121,7 +123,7 @@ export function Issue({ c }: { c: Ctx }) {
             <div className="wiz-pane wiz-done">
               <span className="done-ico"><Ico n="check" size={22} /></span>
               <h2>Invoice #{row.id} is live</h2>
-              <p className="muted">{fmtShares(row.supply)} shares, {fmt(row.settle.faceValue, row.settle.decimals)} {row.settle.symbol} due{row.dueDate ? ` ${day(row.dueDate)}` : ""}. Sell shares for cash today, or share the verification link.</p>
+              <p className="muted">{fmtShares(row.supply)} {shareUnit(row.supply)}, {fmt(row.settle.faceValue, row.settle.decimals)} {row.settle.symbol} due{row.dueDate ? ` ${day(row.dueDate)}` : ""}. Sell shares for cash today, or share the verification link.</p>
               <div className="row">
                 <button className="btn primary" onClick={() => c.setTab("trade", { sell: String(row.id) })}>List these shares on Trade <Ico n="arrow" /></button>
                 <button className="btn" onClick={() => c.setTab("verify", { id: String(row.id) })}><Ico n="shield" /> Verify</button>
