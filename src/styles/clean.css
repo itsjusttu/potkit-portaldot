@@ -91,8 +91,6 @@ html[data-route="app"][data-theme="light"] .shell :is(.chip .count, .chip b, .se
 html[data-route="app"][data-theme="light"] .shell .issue-steps li.active { background: #F1ECE2 !important; border-color: var(--bk-line) !important; }
 html[data-route="app"][data-theme="light"] .shell :is(.issue-steps li.active, .wiz-preview, .trade-bar) { box-shadow: none !important; }
 
-/* the mark is already navy on ivory: no inversion */
-html[data-route="app"] .shell :is(.top-brand, .side-brand, .nv-rcard-top) img { filter: none !important; border-radius: 8px; }
 /* phone: the three headline figures read as one ruled block, not cards inside a card */
 @media (max-width: 52rem) {
   html[data-route="app"][data-theme="light"] .shell .nv .nv-kpis { background: var(--bk-surface); border: 1px solid var(--bk-line); border-radius: var(--bk-radius-card); }

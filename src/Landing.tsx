@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { L, app, ext, page } from "./docs/Chrome";
 import { KIT, useLive } from "./lp/useLive";
 import { Bento } from "./lp/Bento";
+import { MegaNav, type MegaMenu } from "./lp/Mega";
 import { Count, Words, smooth, useActiveStep, useCrossProgress, usePinProgress } from "./lp/fx";
 import "./styles/brand.css";
 import "./lp/lp.css";
@@ -89,7 +90,40 @@ export function Landing() {
   }, []);
 
   const closeMenu = () => setMenu(false);
-  const NAV: [string, string][] = [["Product", "#testnet"], ["How it works", "#how"], ["Verify", tab("verify")], ["Docs", page("/help")], ["GitHub", REPO]];
+  const MENUS: MegaMenu[] = [
+    { id: "products", label: "Products", groups: [
+        { label: "Issue and trade", items: [
+          { title: "Issue", desc: "Turn an unpaid invoice into tradeable shares.", href: tab("issue"), icon: "plus" },
+          { title: "Trade", desc: "Buy discounted shares or sell yours for tPOT.", href: tab("trade"), icon: "swap" },
+          { title: "Portfolio", desc: "Your shares, value at settlement and payouts.", href: tab("portfolio"), icon: "case" } ] },
+        { label: "Look and check", items: [
+          { title: "Dashboard", desc: "Receipts, market activity and quick actions.", href: tab("dashboard"), icon: "grid" },
+          { title: "Explore", desc: "Every receipt and listing on this contract.", href: tab("explore"), icon: "search" },
+          { title: "Verify", desc: "Read a receipt straight from the chain. No wallet.", href: tab("verify"), icon: "shield" } ] } ],
+      preview: { pos: "14% 50%", caption: "Open the app", cta: ["Launch App", launch] } },
+    { id: "resources", label: "Resources", groups: [ { items: [
+        { title: "How it works", desc: "The lifecycle from mint to claim.", href: page("/how-it-works"), icon: "book" },
+        { title: "Protocol", desc: "Contract reference, storage and events.", href: page("/protocol"), icon: "code" },
+        { title: "Security", desc: "What is and is not enforced on-chain.", href: page("/security"), icon: "lock" },
+        { title: "Help", desc: "Guides, FAQ and how to reach the builder.", href: page("/help"), icon: "help" } ] } ],
+      preview: { pos: "58% 40%", caption: "Read the docs", cta: ["How it works", page("/how-it-works")] } },
+    { id: "ecosystem", label: "Ecosystem", groups: [
+        { label: "Portaldot", items: [
+          { title: "Portaldot", desc: "The network PotKit runs on.", href: L.website, icon: "globe", ext: true },
+          { title: "V3 testnet guide", desc: "Map your account and get gas.", href: L.guide, icon: "link", ext: true },
+          { title: "Developer docs", desc: "Build on Portaldot.", href: L.docs, icon: "code", ext: true } ] },
+        { label: "Community", items: [
+          { title: "Whitepaper", desc: "Network design.", href: L.whitepaper, icon: "file", ext: true },
+          { title: "Portaldot Discord", desc: "Ask questions, meet builders.", href: L.discord, icon: "user", ext: true },
+          { title: "Hacker House 2026", desc: "The hackathon PotKit was built for.", href: L.hackathon, icon: "flag", ext: true } ] } ],
+      preview: { pos: "86% 36%", caption: "Built on Portaldot V3", cta: ["Portaldot", L.website] } },
+    { id: "about", label: "About", groups: [ { items: [
+        { title: "GitHub", desc: "Source code, MIT licence.", href: REPO, icon: "git", ext: true },
+        { title: "Testnet evidence", desc: "Transaction hashes you can look up.", href: REPO + "#testnet-evidence", icon: "file", ext: true },
+        { title: "DoraHacks page", desc: "The hackathon submission.", href: L.hackathon, icon: "flag", ext: true },
+        { title: "The builder", desc: "One person: itsjusttu on GitHub.", href: "https://github.com/itsjusttu", icon: "user", ext: true } ] } ],
+      preview: { pos: "40% 70%", caption: "Open source", cta: ["View the repository", REPO] } },
+  ];
   const PANELS = [
     { id: "receipts", title: "Receipts", blurb: "Each invoice becomes an ERC-721 receipt, locked in the contract with a face value and a due date. A fixed supply of ERC-20 shares is issued against it.", cta: ["Explore receipts", tab("explore")] as [string, string] },
     { id: "market", title: "Market", blurb: "Shares are listed at a discount on an escrow market and bought in native tPOT. Sellers set the price; buyers can take any amount.", cta: ["Open the market", tab("trade")] as [string, string] },
@@ -108,11 +142,8 @@ export function Landing() {
           <a href={REPO} {...ext}>View the repository<span aria-hidden> →</span></a>
         </div></div>
         <header className="lp-head"><div className="lp-wrap lp-head-in">
-          <a className="lp-logo" href="/" aria-label="PotKit home"><svg viewBox="0 0 32 32" width="26" height="26" aria-hidden><rect width="32" height="32" rx="7" fill="currentColor" opacity=".18" /><path d="M11 24V8h6.4a5.1 5.1 0 0 1 0 10.2H11" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" /></svg><span>PotKit</span></a>
-          <nav id="lp-nav" className="lp-nav" aria-label="Main">
-            {NAV.map(([label, href]) => <a key={label} href={href} onClick={closeMenu} {...(href.startsWith("http") ? ext : {})}>{label}</a>)}
-            <a className="lp-btn solid lp-nav-cta" href={launch}>Launch App</a>
-          </nav>
+          <a className="lp-logo" href="/" aria-label="PotKit home"><img src="/potkit-p-mark-white.svg" alt="" width={28} height={28} /><span>PotKit</span></a>
+          <MegaNav menus={MENUS} launch={launch} photo={hero1600} onNavigate={closeMenu} />
           <a className="lp-btn solid lp-head-cta" href={launch}>Launch App</a>
           <button type="button" className="lp-burger" aria-label={menu ? "Close menu" : "Open menu"} aria-expanded={menu} aria-controls="lp-nav" onClick={() => setMenu(!menu)}><i /><i /></button>
         </div></header>
@@ -291,7 +322,7 @@ export function Landing() {
       <footer className="lp-foot">
         <div className="lp-wrap">
           <div className="lp-foot-cols">
-            <div className="lp-foot-brand"><a className="lp-logo" href="/" aria-label="PotKit home"><svg viewBox="0 0 32 32" width="24" height="24" aria-hidden><rect width="32" height="32" rx="7" fill="currentColor" opacity=".18" /><path d="M11 24V8h6.4a5.1 5.1 0 0 1 0 10.2H11" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" /></svg><span>PotKit</span></a><p>Invoice financing on Portaldot V3. Testnet demo built by one person.</p></div>
+            <div className="lp-foot-brand"><a className="lp-logo" href="/" aria-label="PotKit home"><img src="/potkit-p-mark-white.svg" alt="" width={24} height={24} /><span>PotKit</span></a><p>Invoice financing on Portaldot V3. Testnet demo built by one person.</p></div>
             <nav aria-label="Product"><h4>Product</h4><a href={launch}>Launch App</a><a href={tab("verify")}>Verify a receipt</a><a href={tab("trade")}>Trade</a></nav>
             <nav aria-label="Learn"><h4>Docs</h4><a href={page("/how-it-works")}>How it works</a><a href={page("/protocol")}>Protocol</a><a href={page("/security")}>Security</a><a href={page("/help")}>Help</a></nav>
             <nav aria-label="Project"><h4>Project</h4><a href={REPO} {...ext}>GitHub</a><a href={L.hackathon} {...ext}>DoraHacks page</a><a href={L.discord} {...ext}>Portaldot Discord</a></nav>

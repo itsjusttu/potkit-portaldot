@@ -292,7 +292,7 @@ export function App() {
       <aside className={`side ${mobileNavOpen ? "mobile-open" : ""}`}>
         <div className="side-mobile-head"><span>All sections</span><button type="button" onClick={() => setMobileNavOpen(false)} aria-label="Close navigation"><Ico n="x" /></button></div>
         <a className="side-brand" href={homeUrl()} aria-label="PotKit home" data-tip="Home">
-          <img src="/potkit-mark.svg" alt="" width={34} height={34} aria-hidden />
+          <img src="/potkit-p-circle-black.svg" alt="" width={34} height={34} aria-hidden />
           <span><b>Pot<span className="grad">Kit</span></b><small>Invoice protocol</small></span>
         </a>
         <button type="button" className="side-collapse" aria-pressed={sideSmall} aria-label={sideSmall ? "Expand sidebar" : "Collapse sidebar"} title={sideSmall ? "Expand sidebar" : "Collapse sidebar"} onClick={toggleSide}><svg viewBox="0 0 24 24" width="16" height="16" aria-hidden fill="none" stroke="currentColor" strokeWidth="1.6"><rect x="3.5" y="4.5" width="17" height="15" rx="2" /><path d="M9 4.5v15" /></svg></button>
@@ -334,7 +334,7 @@ export function App() {
       </aside>
       <main>
         <header className="top">
-          <a className="top-brand" href={homeUrl()} aria-label="PotKit home"><img src="/potkit-mark.svg" alt="" width={30} height={30} aria-hidden /><b>PotKit</b></a>
+          <a className="top-brand" href={homeUrl()} aria-label="PotKit home"><img src="/potkit-p-circle-black.svg" alt="" width={30} height={30} aria-hidden /><b>PotKit</b></a>
           <nav className="top-tabs" aria-label="Sections">
             {(["dashboard", "issue", "trade", "explore", "portfolio"] as Tab[]).map((t) => (
               <button key={t} type="button" className={tab === t ? "on" : ""} aria-current={tab === t ? "page" : undefined} onClick={() => setTab(t)}><TabIco t={t} /><span>{TITLES[t][0]}</span></button>

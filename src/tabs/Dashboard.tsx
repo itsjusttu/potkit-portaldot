@@ -102,7 +102,7 @@ export function Dashboard({ c }: { c: Ctx }) {
           </article>
           <button type="button" className="nv-card nv-receipt" style={{ "--i": 10 } as React.CSSProperties} onClick={() => latest && c.setTab("verify", { id: String(latest.id) })} disabled={!latest} aria-label={latest ? `Verify latest receipt ${latest.id}` : "No receipt yet"}>
             <header><span className="nv-ico"><Ico n="shield" /></span><h2>Latest receipt</h2>{latest && <Ico n="arrow" size={14} />}</header>
-            {latest ? <div className="nv-rcard"><span className="nv-rcard-top"><img src="/potkit-mark.svg" alt="" width={18} height={18} /> PotKit receipt <b className="num">#{latest.id}</b></span><span className="nv-rcard-note">{latest.note || KINDS[latest.kind]}</span><span className="nv-rcard-foot"><span className="num">{fmt(faceValueOf(latest), 18)} tPOT</span><span className="num">{latest.dueDate ? day(latest.dueDate) : "No due date"}</span></span></div> : <p className="db-none">No receipt has been locked yet.</p>}
+            {latest ? <div className="nv-rcard"><span className="nv-rcard-top"><img src="/potkit-p-circle-black.svg" alt="" width={18} height={18} /> PotKit receipt <b className="num">#{latest.id}</b></span><span className="nv-rcard-note">{latest.note || KINDS[latest.kind]}</span><span className="nv-rcard-foot"><span className="num">{fmt(faceValueOf(latest), 18)} tPOT</span><span className="num">{latest.dueDate ? day(latest.dueDate) : "No due date"}</span></span></div> : <p className="db-none">No receipt has been locked yet.</p>}
             <span className="nv-podium" aria-hidden />
           </button>
         </div>
