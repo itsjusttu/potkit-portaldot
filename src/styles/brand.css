@@ -1,0 +1,21 @@
+/* PotKit brand tokens: one source for the landing page and the app (light is the default, dark is an optional app theme).
+   Accent is one deep navy; bronze is a highlight for key numbers and links, used sparingly. Only status is coloured:
+   settled green, overdue red, open/pending grey-navy. No gradients on text or buttons, no glow, no glass. */
+:root {
+  --bk-bg: #F6F2EA;        /* ivory canvas */
+  --bk-surface: #FFFFFF;
+  --bk-ink: #14181F;
+  --bk-muted: #5B6370;
+  --bk-line: #E3DDD0;
+  --bk-navy: #16233B;      /* the accent */
+  --bk-navy-2: #22365A;    /* hover */
+  --bk-bronze: #B07A3A;    /* highlight for large numbers and rules */
+  --bk-bronze-text: #8A5A22; /* bronze for small text and links: 5:1 on ivory */
+  --bk-ok: #2F6B4F;        /* settled */
+  --bk-late: #A8412F;      /* overdue */
+  --bk-open: #4A5A78;      /* pending / open */
+  --bk-serif: "Fraunces", "Newsreader", Georgia, "Times New Roman", serif;
+  --bk-sans: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --bk-mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --bk-radius: 6px;
+}
