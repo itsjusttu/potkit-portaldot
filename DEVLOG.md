@@ -210,6 +210,8 @@ The contract, API and script files first appear in `04cfd1c`; `contracts/` and `
 - Layout between 768 and 1100 px (31 Oct): from 900 to 1100 px the old 56 px icon rail appeared next to the bottom tab bar and the wallet block was clipped inside it. The rail is no longer drawn below 1100 px (the bottom bar and the sections sheet carry navigation). Checked at 768, 820, 900, 1024, 1099, 1100 and 1101 px, and with the sheet open at 390 and 900 px. The Verify button no longer overflows its 44 px box above phone width
 - Test count after these changes: 72 (slide, README and DoraHacks text updated, deck PDF re-exported)
 
+- Final recount before submission (4 Nov, 05:03 UTC, block 315886): still 28 state-changing transactions from 2 wallets, both the builder's; 72 tests pass; the live app and the repository carry the same commits (`0c7904f`). Dates in the deck, outline and DoraHacks text updated to 4 Nov; the deck PDF was exported again
+
 ## How the work is checked
 
 - `npm test` compiles the contracts and runs the suite in `test/` (contract behaviour on a local Ganache chain, faucet logic, network switching, transaction errors, settle and trade input checks, receipt history, dashboard figures).
