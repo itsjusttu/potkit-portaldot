@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Ico } from "./AppUi";
-import { listWallets, onWalletsChanged, startDiscovery, type WalletOption } from "./lib/wallets";
+import { listWallets, onWalletsChanged, rememberedId, startDiscovery, type WalletOption } from "./lib/wallets";
 
 export function WalletIcon({ w, size = 28 }: { w: Pick<WalletOption, "icon" | "badge" | "name">; size?: number }) {
   if (w.icon) return <img className="w-ico" src={w.icon} alt="" width={size} height={size} />;
@@ -33,7 +33,7 @@ export function WalletModal({ open, wallets, busyId, onPick, onClose }: { open: 
     if (!open) return;
     const opener = document.activeElement as HTMLElement | null;
     const items = () => [...(box.current?.querySelectorAll<HTMLElement>("button:not(:disabled), a[href]") ?? [])];
-    (box.current?.querySelector<HTMLElement>(".wm-row:not(.off)") ?? items()[0])?.focus();
+    (box.current?.querySelector<HTMLElement>(".wm2-row:not(.off)") ?? items()[0])?.focus();
     const k = (e: KeyboardEvent) => {
       if (e.key === "Escape") { e.preventDefault(); onClose(); return; }
       if (e.key !== "Tab") return;
@@ -46,28 +46,42 @@ export function WalletModal({ open, wallets, busyId, onPick, onClose }: { open: 
     return () => { window.removeEventListener("keydown", k); opener?.focus?.(); };
   }, [open, onClose]);
   if (!open) return null;
-  const found = wallets.filter((w) => w.provider), rest = wallets.filter((w) => !w.provider);
+  const last = rememberedId();
+  // detected wallets first, the one used last at the top; wallets that are not installed fold into "Other wallets"
+  const found = wallets.filter((w) => w.provider).sort((x, y) => Number(y.id === last) - Number(x.id === last));
+  const rest = wallets.filter((w) => !w.provider);
   return (
     <div className="wm-back" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
-      <div className="wm" role="dialog" aria-modal="true" aria-labelledby="wm-t" ref={box}>
-        <i className="wm-c tl" /><i className="wm-c tr" /><i className="wm-c bl" /><i className="wm-c br" />
-        <header><div><p className="kicker">Select wallet</p><h3 id="wm-t">Connect a wallet</h3></div>
-          <button className="icon-btn" onClick={onClose} aria-label="Close wallet picker"><Ico n="x" /></button></header>
-        {found.length === 0 && <p className="muted wm-note">No wallet is available in this tab. Open PotKit in a browser with an enabled wallet extension, or install one below and reload.</p>}
-        <ul className="wm-list">
+      <div className="wm wm2" role="dialog" aria-modal="true" aria-labelledby="wm-t" ref={box}>
+        <button className="wm2-x" onClick={onClose} aria-label="Close wallet picker"><Ico n="x" /></button>
+        <div className="wm2-head">
+          <img className="wm2-logo" src="/potkit-p-circle-black.svg" alt="" width={44} height={44} />
+          <h3 id="wm-t">Connect a wallet</h3>
+          <p>Choose the wallet you use on Portaldot V3.</p>
+        </div>
+        {found.length === 0 && <p className="wm2-note">No wallet is available in this tab. Install one below, enable it for this site, then reload.</p>}
+        {found.length > 0 && <ul className="wm2-list">
           {found.map((w) => (
-            <li key={w.id}><button className={`wm-row ${busyId === w.id ? "loading" : ""}`} disabled={Boolean(busyId)} onClick={() => onPick(w)}>
-              <WalletIcon w={w} /><span className="wm-name">{w.name}</span>
-              <span className="wm-tag ok">{busyId === w.id ? "Connecting…" : "Detected"}</span>
+            <li key={w.id}><button className={`wm2-row ${busyId === w.id ? "busy" : ""}`} disabled={Boolean(busyId)} onClick={() => onPick(w)}>
+              <span className="wm2-ico"><WalletIcon w={w} size={30} /><i className="dot" aria-hidden /></span>
+              <span className="wm2-name">{w.name}<span className="sr-only"> (installed)</span></span>
+              {busyId === w.id ? <span className="wm2-busy"><i className="spin" aria-hidden />Confirm in {w.name}</span>
+                : w.id === last ? <span className="wm2-pill">Last used</span> : null}
             </button></li>
           ))}
-          {rest.map((w) => (
-            <li key={w.id}><a className="wm-row off" href={w.install} target="_blank" rel="noreferrer">
-              <WalletIcon w={w} /><span className="wm-name">{w.name}</span><span className="wm-tag">Install <Ico n="ext" size={12} /></span><span className="sr-only"> (opens the official site in a new tab)</span>
-            </a></li>
-          ))}
-        </ul>
-        <p className="muted wm-note">PotKit only asks for your address and the Portaldot V3 network (chain 420420777). New to wallets? Any EVM wallet works.</p>
+        </ul>}
+        {rest.length > 0 && <details className="wm2-more" open={found.length === 0}>
+          <summary><span className="wm2-ico gen"><Ico n="wallet" /></span><span className="wm2-name">Other wallets</span><span className="wm2-chev" aria-hidden /></summary>
+          <ul className="wm2-list">
+            {rest.map((w) => (
+              <li key={w.id}><a className="wm2-row off" href={w.install} target="_blank" rel="noreferrer">
+                <span className="wm2-ico"><WalletIcon w={w} size={30} /></span><span className="wm2-name">{w.name}</span>
+                <span className="wm2-pill ghost">Install <Ico n="ext" size={12} /></span><span className="sr-only"> (opens the official site in a new tab)</span>
+              </a></li>
+            ))}
+          </ul>
+        </details>}
+        <p className="wm2-foot">PotKit only asks for your address and the Portaldot V3 network (chain 420420777). It never asks for a recovery phrase.</p>
       </div>
     </div>
   );

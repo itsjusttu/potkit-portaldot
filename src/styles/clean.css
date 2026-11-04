@@ -171,3 +171,49 @@ html[data-route="app"]:not([data-theme="light"]) .ms-pin[data-status="Overdue"] 
 html[data-route="app"]:not([data-theme="light"]) .shell :is(.nv-split i.open, .d-open) { background: #9FB0CC !important; }
 html[data-route="app"]:not([data-theme="light"]) .shell :is(.nv-split i.ok, .d-ok) { background: #5FB389 !important; }
 html[data-route="app"]:not([data-theme="light"]) .shell :is(.nv-split i.late, .d-late) { background: #E58B78 !important; }
+
+/* ---- wallet picker: a calm black-and-white sheet. The modal sits outside .shell, so it carries its own colours for both themes. ---- */
+html[data-route="app"] .wm-back { background: rgba(14, 18, 24, .5) !important; backdrop-filter: none !important; -webkit-backdrop-filter: none !important; animation: wm2-fade .18s ease; }
+html[data-route="app"] .wm.wm2 { --w-bg: #FFFFFF; --w-ink: #14181F; --w-muted: #5B6370; --w-line: #E3DDD0; --w-row: #FFFFFF; --w-hover: #F6F2EA; --w-pill: #F1ECE2;
+  position: relative; width: min(400px, calc(100vw - 24px)); max-height: calc(100vh - 32px); overflow: auto; padding: 28px 22px 20px; border: 1px solid var(--w-line) !important; border-radius: 24px !important;
+  background: var(--w-bg) !important; background-image: none !important; color: var(--w-ink); box-shadow: 0 30px 80px -30px rgba(8, 13, 23, .45) !important; font-family: var(--bk-sans); animation: wm2-in .26s cubic-bezier(.2, .7, .2, 1); }
+html[data-route="app"]:not([data-theme="light"]) .wm.wm2 { --w-bg: #11161D; --w-ink: #ECE7DD; --w-muted: #A3AAB5; --w-line: rgba(226, 220, 206, .14); --w-row: #141A22; --w-hover: #1A212B; --w-pill: #212935; box-shadow: 0 30px 80px -30px rgba(0, 0, 0, .7) !important; }
+@keyframes wm2-in { from { opacity: 0; transform: translateY(10px) scale(.98); } to { opacity: 1; transform: none; } }
+@keyframes wm2-fade { from { opacity: 0; } to { opacity: 1; } }
+html[data-route="app"] .wm2-x { position: absolute; top: 14px; right: 14px; display: grid; place-items: center; width: 34px; height: 34px; border: 0; border-radius: 50%; background: var(--w-pill); color: var(--w-ink); cursor: pointer; }
+html[data-route="app"] .wm2-x:hover { filter: brightness(.96); }
+html[data-route="app"] .wm2-head { display: grid; justify-items: center; text-align: center; gap: .35rem; margin: 2px 0 20px; }
+html[data-route="app"] .wm2-logo { border-radius: 50%; margin-bottom: .4rem; }
+html[data-route="app"]:not([data-theme="light"]) .wm2-logo { filter: invert(1); }
+html[data-route="app"] .wm2-head h3 { margin: 0; font: 500 1.35rem/1.2 var(--bk-sans); color: var(--w-ink); }
+html[data-route="app"] .wm2-head p { margin: 0; font-size: .88rem; color: var(--w-muted); }
+html[data-route="app"] .wm2-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+html[data-route="app"] .wm2-row { width: 100%; display: flex; align-items: center; gap: 12px; min-height: 56px; padding: 10px 14px; border: 1px solid var(--w-line); border-radius: 14px; background: var(--w-row); color: var(--w-ink); font: 500 .98rem var(--bk-sans); text-decoration: none; cursor: pointer; transition: background .15s, border-color .15s; }
+html[data-route="app"] .wm2-row:hover:not(:disabled), html[data-route="app"] .wm2-row:focus-visible { background: var(--w-hover); border-color: var(--w-muted); outline: none; }
+html[data-route="app"] .wm2-row:disabled { cursor: wait; }
+html[data-route="app"] .wm2-row:disabled:not(.busy) { opacity: .55; }
+html[data-route="app"] .wm2-row.off { color: var(--w-ink); }
+html[data-route="app"] .wm2-ico { position: relative; flex: none; display: grid; place-items: center; width: 36px; height: 36px; border-radius: 10px; background: var(--w-pill); }
+html[data-route="app"] .wm2-ico .w-ico { width: 26px; height: 26px; border-radius: 6px; }
+html[data-route="app"] .wm2-ico .dot { position: absolute; top: -2px; right: -2px; width: 9px; height: 9px; border-radius: 50%; background: #2F9E6A; box-shadow: 0 0 0 2px var(--w-row); }
+html[data-route="app"] .wm2-ico.gen svg { width: 18px; height: 18px; color: var(--w-ink); }
+html[data-route="app"] .wm2-name { flex: 1; text-align: left; }
+html[data-route="app"] .wm2-pill { display: inline-flex; align-items: center; gap: .3rem; padding: .3rem .6rem; border-radius: 8px; background: var(--w-pill); color: var(--w-ink); font: 500 .76rem/1 var(--bk-sans); white-space: nowrap; }
+html[data-route="app"] .wm2-pill.ghost { background: transparent; border: 1px solid var(--w-line); color: var(--w-muted); }
+html[data-route="app"] .wm2-busy { display: inline-flex; align-items: center; gap: .45rem; font-size: .8rem; color: var(--w-muted); white-space: nowrap; }
+html[data-route="app"] .wm2-busy .spin { width: 14px; height: 14px; border-radius: 50%; border: 2px solid var(--w-line); border-top-color: var(--w-ink); animation: wm2-spin .8s linear infinite; }
+@keyframes wm2-spin { to { transform: rotate(360deg); } }
+html[data-route="app"] .wm2-more { margin-top: 8px; }
+html[data-route="app"] .wm2-more > summary { display: flex; align-items: center; gap: 12px; min-height: 56px; padding: 10px 14px; border: 1px solid var(--w-line); border-radius: 14px; background: var(--w-row); color: var(--w-ink); font: 500 .98rem var(--bk-sans); cursor: pointer; list-style: none; }
+html[data-route="app"] .wm2-more > summary::-webkit-details-marker { display: none; }
+html[data-route="app"] .wm2-more > summary:hover { background: var(--w-hover); }
+html[data-route="app"] .wm2-chev { width: 9px; height: 9px; border-right: 1.5px solid var(--w-muted); border-bottom: 1.5px solid var(--w-muted); transform: rotate(45deg) translateY(-2px); transition: transform .2s; }
+html[data-route="app"] .wm2-more[open] .wm2-chev { transform: rotate(225deg) translate(-2px, -1px); }
+html[data-route="app"] .wm2-more[open] > .wm2-list { margin-top: 8px; animation: wm2-fade .2s ease; }
+html[data-route="app"] .wm2-note { margin: 0 0 12px; font-size: .84rem; color: var(--w-muted); text-align: center; }
+html[data-route="app"] .wm2-foot { margin: 18px 0 0; font-size: .76rem; line-height: 1.5; color: var(--w-muted); text-align: center; }
+@media (prefers-reduced-motion: reduce) { html[data-route="app"] :is(.wm.wm2, .wm-back, .wm2-busy .spin) { animation: none; } }
+
+/* Explore empty state: the body text sat centred under a left-aligned title */
+html[data-route="app"] .shell :is(.trade-unconfigured, .t-explore > .empty) > p { justify-self: start; margin: 0 !important; text-align: left !important; }
+html[data-route="app"] .wm2-row.off, html[data-route="app"] .wm2-row.off .wm2-name { color: var(--w-ink) !important; }
