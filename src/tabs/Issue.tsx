@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { parseUnits } from "viem";
 import { deployKit, fmt, fractionalize, KINDS, mint, PAY_SYMBOL, short, units } from "../lib/chain";
+import { fmtShares } from "../lib/shares";
 import { Addr, Empty, Ico } from "../AppUi";
 import { type Ctx } from "./ctx";
 import { day, fmtDate, SettleBadge, Term } from "./shared";
@@ -120,7 +121,7 @@ export function Issue({ c }: { c: Ctx }) {
             <div className="wiz-pane wiz-done">
               <span className="done-ico"><Ico n="check" size={22} /></span>
               <h2>Invoice #{row.id} is live</h2>
-              <p className="muted">{units(row.supply)} shares, {fmt(row.settle.faceValue, row.settle.decimals)} {row.settle.symbol} due{row.dueDate ? ` ${day(row.dueDate)}` : ""}. Sell shares for cash today, or share the verification link.</p>
+              <p className="muted">{fmtShares(row.supply)} shares, {fmt(row.settle.faceValue, row.settle.decimals)} {row.settle.symbol} due{row.dueDate ? ` ${day(row.dueDate)}` : ""}. Sell shares for cash today, or share the verification link.</p>
               <div className="row">
                 <button className="btn primary" onClick={() => c.setTab("trade", { sell: String(row.id) })}>List these shares on Trade <Ico n="arrow" /></button>
                 <button className="btn" onClick={() => c.setTab("verify", { id: String(row.id) })}><Ico n="shield" /> Verify</button>
@@ -137,7 +138,7 @@ export function Issue({ c }: { c: Ctx }) {
             <h2 className="h-sub">{row?.note || note || "Your invoice title"}</h2>
             <p className="ir-sub">Issuer-provided invoice record · Portaldot V3</p>
             <div className="ir-face"><strong>{row?.settle.faceValue ? fmt(row.settle.faceValue, row.settle.decimals) : face || "—"}<i> tPOT</i></strong><small>FACE VALUE</small></div>
-            <dl className="ir-facts"><div><dt>DUE DATE</dt><dd>{row?.dueDate ? day(row.dueDate) : due ? fmtDate(new Date(due + "T12:00:00")) : "—"}</dd></div><div><dt>SHARES</dt><dd>{row?.supply ? units(row.supply) : supply || "—"}</dd></div></dl>
+            <dl className="ir-facts"><div><dt>DUE DATE</dt><dd>{row?.dueDate ? day(row.dueDate) : due ? fmtDate(new Date(due + "T12:00:00")) : "—"}</dd></div><div><dt>SHARES</dt><dd>{row?.supply ? fmtShares(row.supply) : supply || "—"}</dd></div></dl>
             <div className="ir-foot"><span>{row?.depositor || row?.owner || c.account ? short(row?.depositor || row?.owner || c.account) : "ISSUER WALLET NOT CONNECTED"}</span><span className="ir-state"><i />{row?.settle.settled ? "SETTLED" : cur >= 3 ? "LIVE · TERMS ON-CHAIN" : cur >= 2 ? "MINTED" : c.account ? "READY TO MINT" : "DRAFT"}</span></div>
           </div>
           {cur >= 2 && <p className="wiz-minted-note"><Ico n="check" /> Mint confirmed. The receipt can now be locked and split into shares.</p>}
@@ -163,7 +164,7 @@ export function Issue({ c }: { c: Ctx }) {
                     <td data-label="Invoice"><b>#{r.id} · {KINDS[r.kind]}</b><span className="muted r-note">{r.note}</span></td>
                     <td data-label="Status"><div className="tags">{isRedeemed ? <span className="tag issue-redeemed-tag">REDEEMED</span> : <SettleBadge r={r} terms={false} />}</div></td>
                     <td data-label="Face value" className="num">{face > 0n ? `${fmt(face, r.settle.decimals)} ${r.settle.symbol}` : <span className="muted">—</span>}</td>
-                    <td data-label="Sold" className="num">{isRedeemed && totalShares > 0n ? <b>{units(totalShares)}/{units(totalShares)}</b> : r.fraction && totalShares > 0n ? <><b>{sold}%</b><span className="muted"> of {units(totalShares)}</span></> : <span className="muted">—</span>}</td>
+                    <td data-label="Sold" className="num">{isRedeemed && totalShares > 0n ? <b>{fmtShares(totalShares)}/{fmtShares(totalShares)}</b> : r.fraction && totalShares > 0n ? <><b>{sold}%</b><span className="muted"> of {fmtShares(totalShares)}</span></> : <span className="muted">—</span>}</td>
                     <td data-label="Next" className="acts"><div className="row">
                       {next === "view" && <button className="btn sm" onClick={() => c.setTab("verify", { id: String(r.id) })}>View <Ico n="arrow" /></button>}
                       {next === "lock" && <button className="btn sm primary" onClick={() => resume(r.id)}>Lock &amp; issue <Ico n="arrow" /></button>}

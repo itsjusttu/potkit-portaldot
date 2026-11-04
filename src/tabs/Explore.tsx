@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { fmt, KINDS, short, units, type ChainEvent, type Row } from "../lib/chain";
+import { eventText, fmtShares } from "../lib/shares";
 import { Addr, CountUp, Empty, Ico } from "../AppUi";
 import { faceShare, type Ctx } from "./ctx";
 import { day, fmtDate, pct } from "./shared";
@@ -88,7 +89,7 @@ export function Explore({ c }: { c: Ctx }) {
                     <div className="inv-art"><ReceiptArt id={r.id} kind={KINDS[r.kind]} face={face ? `${fmt(face, r.settle.decimals)} ${r.settle.symbol}` : "Terms pending"} status={word} /><span className="inv-badge" data-status={word}>{word}{!redeemed && !isSettled(r) && dueDate ? ` · ${fmtDate(new Date(dueDate * 1000))}` : ""}</span></div>
                     <div className="inv-body">
                       <h3><span className="num">#{r.id}</span> {r.note || KINDS[r.kind]}</h3>
-                      <ul className="inv-chips" aria-label="Receipt details"><li>{KINDS[r.kind]}</li><li>{redeemed && totalShares > 0n ? `${units(totalShares)} shares issued` : totalShares > 0n ? `${units(totalShares)} shares` : r.fraction && isSettled(r) ? "All claimed" : "No shares yet"}</li>{selfPaid && <li title="The wallet that issued this invoice also paid it. Nothing on-chain shows the debtor and the issuer are different people.">Paid from the issuer's own wallet</li>}{!redeemed && totalShares > 0n && <li className={onMkt > 0n ? "on-mkt" : ""}>{onMkt > 0n ? `${units(onMkt)} listed` : "Not listed"}</li>}</ul>
+                      <ul className="inv-chips" aria-label="Receipt details"><li>{KINDS[r.kind]}</li><li>{redeemed && totalShares > 0n ? `${fmtShares(totalShares)} shares issued` : totalShares > 0n ? `${fmtShares(totalShares)} shares` : r.fraction && isSettled(r) ? "All claimed" : "No shares yet"}</li>{selfPaid && <li title="The wallet that issued this invoice also paid it. Nothing on-chain shows the debtor and the issuer are different people.">Paid from the issuer's own wallet</li>}{!redeemed && totalShares > 0n && <li className={onMkt > 0n ? "on-mkt" : ""}>{onMkt > 0n ? `${fmtShares(onMkt)} listed` : "Not listed"}</li>}</ul>
                       <dl className="inv-facts">
                         <div><dt>Face value</dt><dd>{face ? `${fmt(face, r.settle.decimals)} ${r.settle.symbol}` : "Terms pending"}</dd></div>
                         <div><dt>Due</dt><dd>{dueDate ? fmtDate(new Date(dueDate * 1000)) : redeemed ? "No due date" : "—"}</dd></div>
@@ -113,7 +114,7 @@ export function Explore({ c }: { c: Ctx }) {
                     <td data-label="Status"><div className="tags">{isRedeemed(r) ? <span className="tag explore-redeemed-tag">REDEEMED</span> : <SettleBadge r={r} terms={false} />}</div></td>
                     <td data-label="Face value" className="num">{faceValueOf(r) > 0n ? `${fmt(faceValueOf(r), r.settle.decimals)} ${r.settle.symbol}` : "—"}</td>
                     <td data-label="Due">{dueDateOf(r) ? day(dueDateOf(r)) : "—"}</td>
-                    <td data-label="Shares" className="num">{supplyOf(r) > 0n ? units(supplyOf(r)) : "—"}</td>
+                    <td data-label="Shares" className="num" title={supplyOf(r) > 0n ? units(supplyOf(r)) : undefined}>{supplyOf(r) > 0n ? fmtShares(supplyOf(r)) : "—"}</td>
                     <td data-label="Best ask" className="num">{(() => { const p = ask.get(r.id); if (p === undefined) return "—"; const f = supplyOf(r) > 0n ? faceValueOf(r) * 10n ** 18n / supplyOf(r) : faceShare(r); return <>{fmt(p, 18)}{f > 0n && <span className="pos small ba-disc">{pct(1 - Number(p) / Number(f))} off</span>}</>; })()}</td>
                     <td className="acts"><div className="row">
                       <button className="btn sm" aria-label={`Verify receipt ${r.id}`} onClick={() => c.setTab("verify", { id: String(r.id) })}><Ico n="shield" /> Verify</button>
@@ -137,7 +138,7 @@ export function Explore({ c }: { c: Ctx }) {
               : <ol className="feed-list">
                 {c.events.slice(0, 14).map((e) => (
                   <li key={`${e.hash}-${e.logIndex}-${e.kind}`}><span className={`fi k-${e.kind}`}><Ico n={EV_ICON[e.kind]} size={14} /></span>
-                    <div><b>{e.text}</b><span className="muted small">{e.actors[0] ? `${short(e.actors[0])} · ` : ""}{ago(e.time) || `block ${e.block}`}</span></div></li>
+                    <div><b>{eventText(e)}</b><span className="muted small">{e.actors[0] ? `${short(e.actors[0])} · ` : ""}{ago(e.time) || `block ${e.block}`}</span></div></li>
                 ))}
               </ol>}
           </section>

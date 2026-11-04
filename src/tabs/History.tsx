@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { fmt, short, type ChainEvent } from "../lib/chain";
+import { eventText } from "../lib/shares";
 import { Empty, Ico } from "../AppUi";
 import { type Ctx } from "./ctx";
 import { EV_ICON } from "./Explore";
@@ -37,7 +38,7 @@ export function History({ c }: { c: Ctx }) {
     chainItems.push({
       key: `${e.hash}-${e.logIndex}-${e.kind}`, t: e.time * 1000, block: e.block, approx: e.timeApprox, icon: EV_ICON[e.kind], tone: e.kind,
       title: isOwnSettle ? `Your invoice #${e.id} was settled` : e.kind === "buy" && e.actors[0] !== me ? "Your shares were bought" : LABEL[e.kind],
-      detail: isOwnSettle ? `${fmt(e.value ?? 0n, 18)} tPOT paid` : e.text,
+      detail: isOwnSettle ? `${fmt(e.value ?? 0n, 18)} tPOT paid` : eventText(e),
       ...(amount !== undefined ? { money: amount } : {}),
       hash: e.hash, src: "chain",
     });

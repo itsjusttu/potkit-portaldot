@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import type { Address } from "viem";
 import { fmt, KINDS, units } from "../lib/chain";
+import { fmtShares } from "../lib/shares";
 import { checkAck, signAck } from "../lib/ack";
 import { Addr, Empty, Ico, toast } from "../AppUi";
 import type { Ctx } from "./ctx";
@@ -59,7 +60,7 @@ export function Pay({ c }: { c: Ctx }) {
             <div><dt>Issuer</dt><dd>{r.depositor ? <Addr a={r.depositor} /> : <Addr a={r.owner} />}</dd></div>
             <div><dt>Issuer record</dt><dd>{recordLabel(rec)}</dd></div>
             <div><dt>Due date</dt><dd className="num">{r.dueDate ? day(r.dueDate) : "No due date"}</dd></div>
-            <div><dt><Term k="share">Shares</Term></dt><dd className="num">{r.fraction ? units(r.supply) : "Not issued"}</dd></div>
+            <div><dt><Term k="share">Shares</Term></dt><dd className="num">{r.fraction ? fmtShares(r.supply) : "Not issued"}</dd></div>
             <div><dt>Contract</dt><dd><Addr a={c.addrs.vault} /></dd></div>
           </dl>
           <p className="pay-scope">Issuer-provided record. PotKit shows what is on-chain; it does not verify the invoice itself.</p>

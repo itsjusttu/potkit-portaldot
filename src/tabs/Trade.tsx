@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { parseUnits, type Address } from "viem";
 import { buyShares, cancelListing, fmt, KINDS, listingCost, listShares, short, units, type Listing, type Row } from "../lib/chain";
+import { eventText, fmtShares } from "../lib/shares";
 import { FaucetButton } from "../Faucet";
 import { Addr, Drawer, Empty, Ico, toast } from "../AppUi";
 import { daysTo, faceShare, type Ctx } from "./ctx";
@@ -74,7 +75,7 @@ export function Trade({ c }: { c: Ctx }) {
       if (!start || start >= r.dueDate) start = Math.min(now, r.dueDate) - 30 * 86400;
       progress = Math.max(0, Math.min(1, (now - start) / (r.dueDate - start)));
     }
-    const state: Card["state"] = r.settle.settled ? "Settled" : days <= 0 && r.dueDate ? "Overdue" : days <= 30 && r.dueDate ? "Due soon" : "Open";
+    const state: Card["state"] = r.settle.settled ? "Settled" : days <= 0 && r.dueDate ? "Overdue" : days <= 3 && r.dueDate ? "Due soon" : "Open";
     const discount = face > 0 ? 1 - price / face : 0;
     return [{ l, r, price, face, discount, ret, apr: face > 0 && days > 0 ? discount * 365 / days : null, days, progress, state }];
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -93,7 +94,7 @@ export function Trade({ c }: { c: Ctx }) {
   const buyValid = Boolean(sel) && buyRaw > 0n && buyRaw <= (sel?.l.remaining ?? 0n);
   let buyCost = 0n;
   if (sel && buyValid) buyCost = listingCost(sel.l.price, buyRaw);
-  const buyError = !amt ? "" : buyPrecisionError ? "Use up to 18 decimal places." : buyRaw <= 0n ? "Enter a positive share amount." : buyRaw > (sel?.l.remaining ?? 0n) ? `Only ${units(sel?.l.remaining ?? 0n)} shares are available.` : "";
+  const buyError = !amt ? "" : buyPrecisionError ? "Use up to 18 decimal places." : buyRaw <= 0n ? "Enter a positive share amount." : buyRaw > (sel?.l.remaining ?? 0n) ? `Only ${fmtShares(sel?.l.remaining ?? 0n)} shares are available.` : "";
   const buyPayout = sel ? (faceShare(sel.r) * buyRaw) / 10n ** 18n : 0n;
   const walletReason = !c.account ? "Connect your wallet to continue." : c.gated ? "Switch to Portaldot V3 before submitting." : c.busy ? "Wait for the current transaction to finish." : "";
   const sellable = c.rows.filter((r) => r.fraction && !r.settle.settled && (c.held.get(r.id) ?? 0n) > 0n);
@@ -102,7 +103,7 @@ export function Trade({ c }: { c: Ctx }) {
   const sellFace = sellRow ? n6(faceShare(sellRow), sellRow.settle.decimals || 18) : 0;
   const sellAmtOk = /^\d+(\.\d+)?$/.test(sellAmt.trim()) && Number(sellAmt) > 0;
   const sellPriceOk = /^\d+(\.\d+)?$/.test(sellPrice.trim()) && !exceedsDecimals(sellPrice, 18) && parseUnits(sellPrice.trim(), 18) > 0n;
-  const sellAmountError = !sellAmt ? "" : !sellAmtOk ? "Enter a positive share amount." : !sellRow ? "" : exceedsDecimals(sellAmt, 18) ? "Use up to 18 decimal places." : parseUnits(sellAmt.trim(), 18) > sellHeld ? `You hold only ${units(sellHeld)} shares.` : "";
+  const sellAmountError = !sellAmt ? "" : !sellAmtOk ? "Enter a positive share amount." : !sellRow ? "" : exceedsDecimals(sellAmt, 18) ? "Use up to 18 decimal places." : parseUnits(sellAmt.trim(), 18) > sellHeld ? `You hold only ${fmtShares(sellHeld)} shares.` : "";
   const sellValid = Boolean(sellRow) && sellAmtOk && !sellAmountError && sellPriceOk;
   const sellPriceError = !sellPriceOk ? "Enter a positive price in tPOT, with at most 18 decimal places." : "";
   const sellApr = sellFace > 0 && sellRow?.dueDate && daysTo(sellRow.dueDate) > 0 ? (1 - Number(sellPrice) / sellFace) * 365 / daysTo(sellRow.dueDate) : null;
@@ -174,7 +175,7 @@ export function Trade({ c }: { c: Ctx }) {
               <Empty icon="⇄" title="No open listings" body="Nobody is selling shares right now. List yours from the panel to get cash today." />
               {!cards.length && recentTrades.length > 0 && <section className="card trade-recent" aria-label="Recent trades">
                 <header><div><p className="kicker">On-chain activity</p><h2 className="h-sub">Recent trades</h2></div><span className="trade-recent-live"><i />From chain events</span></header>
-                <ol>{recentTrades.map((e) => <li key={`${e.hash}-${e.logIndex}-${e.kind}`}><span className="trade-recent-icon"><Ico n="cart" size={16} /></span><b>{e.text}</b><small>Block {e.block.toString()}</small></li>)}</ol>
+                <ol>{recentTrades.map((e) => <li key={`${e.hash}-${e.logIndex}-${e.kind}`}><span className="trade-recent-icon"><Ico n="cart" size={16} /></span><b>{eventText(e)}</b><small>Block {e.block.toString()}</small></li>)}</ol>
               </section>}
             </>
             : (
@@ -192,7 +193,7 @@ export function Trade({ c }: { c: Ctx }) {
                       <span className="trade-row-discount">{x.face ? pct(x.discount) : "—"}</span>
                       <span className="trade-row-apr">{x.apr !== null ? pct(x.apr) : "—"}</span>
                       <span className="trade-row-due">{due}</span>
-                      <span className="trade-row-units">{units(x.l.remaining)}</span>
+                      <span className="trade-row-units" title={units(x.l.remaining)}>{fmtShares(x.l.remaining)}</span>
                       <span className="trade-act"><span className="trade-act-row"><WatchBtn on={watch.has(x.r.id)} id={x.r.id} onToggle={() => watch.toggle(x.r.id)} /><button type="button" className="btn sm trade-buy" disabled={!tradable || x.l.seller === c.account} aria-describedby={!tradable || x.l.seller === c.account ? `why-${x.l.lid}` : undefined} onClick={() => openBuy(x)}>{x.l.seller === c.account ? "Yours" : tradable ? "Buy" : "Closed"}</button></span>{(!tradable || x.l.seller === c.account) && <small className="why" id={`why-${x.l.lid}`}>{x.l.seller === c.account ? "Your own listing" : x.state === "Settled" ? "Already paid" : "Past due, unpaid"}</small>}</span>
                     </div>;
                   })}
@@ -201,7 +202,7 @@ export function Trade({ c }: { c: Ctx }) {
                     const original = initialByListing.get(x.l.lid);
                     const filled = original !== undefined && original > x.l.remaining ? original - x.l.remaining : 0n;
                     const ratio = original ? Number((filled * 10_000n) / original) / 100 : null;
-                    return <div className="trade-my-row" key={x.l.lid}><div><b>KIT#{x.r.id}</b><small>{x.r.note}</small></div><span>{num(x.price)} tPOT</span><strong className="trade-row-apr">{x.apr === null ? "—" : pct(x.apr)}</strong><div className="trade-fill"><i style={{ width: `${ratio ?? 0}%` }} /></div><small>{ratio === null ? `${units(x.l.remaining)} shares remaining · fill data unavailable` : `${ratio.toFixed(0)}% · ${units(filled)}/${units(original!)} filled`}</small><button className="btn sm" disabled={dis} title={walletReason || "Cancel and return remaining shares"} onClick={() => void c.run(`cancel${x.l.lid}`, async () => { const h = await cancelListing(c.ready(), c.market as Address, x.l.lid); c.note("Listing cancelled", `#${x.l.lid}`, h); })}>Cancel</button></div>;
+                    return <div className="trade-my-row" key={x.l.lid}><div><b>KIT#{x.r.id}</b><small>{x.r.note}</small></div><span>{num(x.price)} tPOT</span><strong className="trade-row-apr">{x.apr === null ? "—" : pct(x.apr)}</strong><div className="trade-fill"><i style={{ width: `${ratio ?? 0}%` }} /></div><small>{ratio === null ? `${fmtShares(x.l.remaining)} shares remaining · fill data unavailable` : `${ratio.toFixed(0)}% · ${units(filled)}/${units(original!)} filled`}</small><button className="btn sm" disabled={dis} title={walletReason || "Cancel and return remaining shares"} onClick={() => void c.run(`cancel${x.l.lid}`, async () => { const h = await cancelListing(c.ready(), c.market as Address, x.l.lid); c.note("Listing cancelled", `#${x.l.lid}`, h); })}>Cancel</button></div>;
                   })}
                 </div>}
               </div>
@@ -214,7 +215,7 @@ export function Trade({ c }: { c: Ctx }) {
         {sel && detailsOpen && <section className="card trade-selection-panel" aria-label="Selected listing details">
           <header><div><p className="kicker">Selected listing</p><h2 className="h-sub">#{sel.r.id} · {sel.r.note}</h2></div><button type="button" className="btn sm" onClick={() => { setDetailsOpen(false); setOpen(null); }}>Close</button></header>
           <div className="tags"><SettleBadge r={sel.r} /></div>
-          <dl className="facts compact"><div><dt>Price / share</dt><dd className="num">{num(sel.price)} tPOT</dd></div><div><dt>Face / share</dt><dd className="num">{sel.face ? `${num(sel.face)} tPOT` : "no terms"}</dd></div><div><dt>Discount</dt><dd className="num">{sel.face ? pct(sel.discount) : "—"}</dd></div><div><dt><Term k="apr">Est. APR</Term></dt><dd className="num">{sel.apr !== null ? <>{pct(sel.apr)} <small className="muted">estimate</small></> : "—"}</dd></div><div><dt>Issuer record</dt><dd>{recordLabel(recordOf(sel))}</dd></div><div><dt>Due</dt><dd>{sel.r.dueDate ? day(sel.r.dueDate) : "—"}</dd></div><div><dt>Available</dt><dd className="num">{units(sel.l.remaining)}</dd></div></dl>
+          <dl className="facts compact"><div><dt>Price / share</dt><dd className="num">{num(sel.price)} tPOT</dd></div><div><dt>Face / share</dt><dd className="num">{sel.face ? `${num(sel.face)} tPOT` : "no terms"}</dd></div><div><dt>Discount</dt><dd className="num">{sel.face ? pct(sel.discount) : "—"}</dd></div><div><dt><Term k="apr">Est. APR</Term></dt><dd className="num">{sel.apr !== null ? <>{pct(sel.apr)} <small className="muted">estimate</small></> : "—"}</dd></div><div><dt>Issuer record</dt><dd>{recordLabel(recordOf(sel))}</dd></div><div><dt>Due</dt><dd>{sel.r.dueDate ? day(sel.r.dueDate) : "—"}</dd></div><div><dt>Available</dt><dd className="num">{fmtShares(sel.l.remaining)}</dd></div></dl>
                     {sel.l.seller === c.account ? <button className="btn block" onClick={() => openBuy(sel)}>Manage listing</button> : sel.state === "Settled" || sel.state === "Overdue" ? <ClosedWhy state={sel.state} onPortfolio={() => c.setTab("portfolio")} /> : <button className="btn block" onClick={() => openBuy(sel)}>Buy shares</button>}
         </section>}
         {c.market && <div className="trade-panel-tabs" role="tablist" aria-label="Trade actions">{([["quick", "Quick buy"], ["sell", "Sell"]] as const).map(([k, label]) => <button key={k} type="button" role="tab" id={`tab-${k}`} aria-selected={panel === k} aria-controls={k === "quick" ? "quick-buy" : "sell"} className={panel === k ? "on" : ""} onClick={() => setPanel(k)}>{label}</button>)}</div>}
@@ -236,7 +237,7 @@ export function Trade({ c }: { c: Ctx }) {
                 try {
                   const h = await buyShares(c.ready(), c.market as Address, allocation.item.l, units(allocation.amount));
                   filled += 1;
-                  c.note("Quick buy filled", `${units(allocation.amount)} KIT${allocation.item.r.id} for ${fmt(allocation.cost, 18)} tPOT`, h);
+                  c.note("Quick buy filled", `${fmtShares(allocation.amount)} KIT${allocation.item.r.id} for ${fmt(allocation.cost, 18)} tPOT`, h);
                 } catch (error) {
                   if (!filled) throw error;
                   if (isUserRejected(error)) {
@@ -246,9 +247,9 @@ export function Trade({ c }: { c: Ctx }) {
                   throw new Error(`Quick buy stopped after ${filled} of ${quote.length} confirmed fills. Earlier fills remain on-chain. ${error instanceof Error ? error.message : "The remaining listings were not confirmed."}`);
                 }
               }
-              toast({ kind: "ok", title: "Quick buy complete", detail: `${units(quoteShares)} shares bought for ${fmt(quoteCost, 18)} tPOT across ${filled} listing${filled === 1 ? "" : "s"}.` });
+              toast({ kind: "ok", title: "Quick buy complete", detail: `${fmtShares(quoteShares)} shares bought for ${fmt(quoteCost, 18)} tPOT across ${filled} listing${filled === 1 ? "" : "s"}.` });
             });
-          }}>{!c.market ? "Market not configured" : !c.account ? "Connect wallet" : c.gated ? "Switch network" : c.busy === "quick-buy" ? "Confirm in wallet…" : !quote.length ? "No affordable listings" : `Buy ${units(quoteShares)} shares`}</button>
+          }}>{!c.market ? "Market not configured" : !c.account ? "Connect wallet" : c.gated ? "Switch network" : c.busy === "quick-buy" ? "Confirm in wallet…" : !quote.length ? "No affordable listings" : `Buy ${fmtShares(quoteShares)} shares`}</button>
           <Why text={!c.market ? "Deploy PotKit from Issue before buying shares." : !c.account || c.gated ? "" : !quote.length ? "No affordable open listing at this spend amount." : c.native !== null && quoteCost > c.usdRaw ? "Your tPOT balance is lower than this quote." : c.busy ? "Another transaction is waiting for your wallet." : ""} />
           <p className="apr-note" role="note">APR (annualised return) and payout figures are estimates that assume the debtor pays in full and on time. Payment is not guaranteed.</p>
         </section>}
@@ -260,10 +261,10 @@ export function Trade({ c }: { c: Ctx }) {
               <label htmlFor="s-id">Receipt</label>
               <select id="s-id" value={sellId} onChange={(e) => setSellId(e.target.value)}>
                 <option value="">Choose…</option>
-                {sellable.map((r) => <option key={r.id} value={r.id}>#{r.id} · {r.note.slice(0, 30)} · {units(c.held.get(r.id) ?? 0n)} held</option>)}
+                {sellable.map((r) => <option key={r.id} value={r.id}>#{r.id} · {r.note.slice(0, 30)} · {fmtShares(c.held.get(r.id) ?? 0n)} held</option>)}
               </select>
               <div className="row fields">
-                <div><label htmlFor="s-amt">Shares <span className="muted">· {sellRow ? `${units(sellHeld)} available` : "select a receipt"}</span></label><input id="s-amt" inputMode="decimal" value={sellAmt} aria-invalid={Boolean(sellAmountError)} aria-describedby={sellAmountError ? "s-amt-error" : undefined} onChange={(e) => setSellAmt(e.target.value)} />
+                <div><label htmlFor="s-amt">Shares <span className="muted">· {sellRow ? `${fmtShares(sellHeld)} available` : "select a receipt"}</span></label><input id="s-amt" inputMode="decimal" value={sellAmt} aria-invalid={Boolean(sellAmountError)} aria-describedby={sellAmountError ? "s-amt-error" : undefined} onChange={(e) => setSellAmt(e.target.value)} />
                   {sellAmountError && <small id="s-amt-error" className="field-error" role="alert">{sellAmountError}</small>}
                   {sellRow && <div className="trade-amount-presets" aria-label="Choose share amount">{[25, 50, 100].map((p) => <button type="button" key={p} onClick={() => setSellAmt(units((sellHeld * BigInt(p)) / 100n))}>{p === 100 ? "Max" : `${p}%`}</button>)}</div>}
                 </div>
@@ -332,7 +333,7 @@ export function Trade({ c }: { c: Ctx }) {
               <div><dt><Term k="discount">Discount</Term></dt><dd className="num pos">{sel.face ? pct(sel.discount) : "—"}</dd></div>
               <div><dt><Term k="apr">Est. APR</Term></dt><dd className="num">{sel.apr !== null ? <><span className="yield-text">{pct(sel.apr)}</span> <small className="muted">estimate, not promised</small></> : "—"}</dd></div>
               <div><dt>Due</dt><dd>{sel.r.dueDate ? day(sel.r.dueDate) : "—"}</dd></div>
-              <div><dt>Available</dt><dd className="num">{units(sel.l.remaining)} of {units(sel.r.supply)}</dd></div>
+              <div><dt>Available</dt><dd className="num" title={`${units(sel.l.remaining)} of ${units(sel.r.supply)}`}>{fmtShares(sel.l.remaining)} of {fmtShares(sel.r.supply)}</dd></div>
               <div><dt>Seller</dt><dd>{sel.l.seller === c.account ? "You" : <Addr a={sel.l.seller} />}</dd></div>
               <div><dt>Share token</dt><dd><Addr a={sel.l.fraction} label={`KIT${sel.r.id}`} /></dd></div>
             </dl>

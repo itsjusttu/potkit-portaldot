@@ -1,6 +1,7 @@
 import { useState } from "react";
 import type { Address } from "viem";
 import { cancelListing, claim, fmt, KINDS, redeem, transferUnits, units, type Row } from "../lib/chain";
+import { fmtShares } from "../lib/shares";
 import { Empty, Ico, toast } from "../AppUi";
 import { faceShare, type Ctx } from "./ctx";
 import { day, download, SettleBadge, Term, txBlock, Why } from "./shared";
@@ -97,7 +98,7 @@ export function Portfolio({ c }: { c: Ctx }) {
         <section className="pf2-sec pf2-claim" aria-labelledby="pf-claim">
           <div className="pf2-sec-head"><div><h2 id="pf-claim">Ready to claim</h2><p className="muted">These receipts are settled. Claiming sends your pro-rata payout in tPOT and burns those shares.</p></div>{claimable.length > 1 && <div><button className="btn sm primary" disabled={dis} onClick={claimAll}>{c.busy === "claim-all" ? "Claiming…" : `Claim all · ${fmt(claimTotal, dec)} tPOT`}</button><small className="why">{claimable.length} separate wallet transactions, one per receipt.</small></div>}</div>
           <div className="tscroll"><table className="rtable"><thead><tr><th scope="col">Receipt</th><th scope="col" className="num">Your shares</th><th scope="col" className="num">Your payout</th><th scope="col"><span className="sr-only">Action</span></th></tr></thead><tbody>
-            {claimable.map((r) => <tr key={r.id}><td data-label="Receipt"><div className="rcell"><ReceiptThumb id={r.id} status={r.status} /><div><b>#{r.id} · {r.note || KINDS[r.kind]}</b><small className="muted">Settled · {fmt(r.settle.amount, r.settle.decimals)} tPOT paid</small></div></div></td><td data-label="Your shares" className="num">{units(c.held.get(r.id) ?? 0n)}</td><td data-label="Your payout" className="num"><b className="pos">{fmt(c.claims.get(r.id) ?? 0n, r.settle.decimals)} tPOT</b></td><td className="acts">{claimBtn(r)}<Why text={why} /></td></tr>)}
+            {claimable.map((r) => <tr key={r.id}><td data-label="Receipt"><div className="rcell"><ReceiptThumb id={r.id} status={r.status} /><div><b>#{r.id} · {r.note || KINDS[r.kind]}</b><small className="muted">Settled · {fmt(r.settle.amount, r.settle.decimals)} tPOT paid</small></div></div></td><td data-label="Your shares" className="num">{fmtShares(c.held.get(r.id) ?? 0n)}</td><td data-label="Your payout" className="num"><b className="pos">{fmt(c.claims.get(r.id) ?? 0n, r.settle.decimals)} tPOT</b></td><td className="acts">{claimBtn(r)}<Why text={why} /></td></tr>)}
           </tbody></table></div>
         </section>
       )}
@@ -113,7 +114,7 @@ export function Portfolio({ c }: { c: Ctx }) {
                 <tr key={r.id}>
                   <td data-label="Receipt"><div className="rcell"><ReceiptThumb id={r.id} status={r.status} /><div><b>#{r.id} · {r.note || KINDS[r.kind]}</b><small className="muted">{KINDS[r.kind]}{r.dueDate ? ` · due ${day(r.dueDate)}` : ""}</small></div></div></td>
                   <td data-label="Status"><div className="tags"><SettleBadge r={r} terms={false} /></div></td>
-                  <td data-label="Your shares" className="num"><b>{units(bal)}</b><small className="muted"> {r.supply > 0n ? ((Number((bal * 10000n) / r.supply)) / 100).toFixed(1) : 0}% of {units(r.supply)}</small>{listedOf(r.id) > 0n && <small className="muted">+{units(listedOf(r.id))} listed</small>}</td>
+                  <td data-label="Your shares" className="num" title={units(bal)}><b>{fmtShares(bal)}</b><small className="muted"> {r.supply > 0n ? ((Number((bal * 10000n) / r.supply)) / 100).toFixed(1) : 0}% of {fmtShares(r.supply)}</small>{listedOf(r.id) > 0n && <small className="muted">+{fmtShares(listedOf(r.id))} listed</small>}</td>
                   <td data-label="Face-value estimate" className="num">{v ? `${fmt(v, dec)} tPOT` : "—"}</td>
                   <td data-label="Bought for" className="num">{b ? `${fmt(b.cost, dec)} tPOT` : <span className="muted">Issued to you</span>}</td>
                   <td data-label="Next step"><span className="pf2-step">{step.text}</span></td>
@@ -128,7 +129,7 @@ export function Portfolio({ c }: { c: Ctx }) {
                         <button className="btn sm" disabled={dis} onClick={() => void c.run(`send${r.id}`, async () => {
                           const h = await transferUnits(c.ready(), r.fraction as Address, to.trim(), amt.trim()); c.note("Shares sent", `${amt} KIT${r.id} → ${to.slice(0, 8)}…`, h);
                         })}><Ico n="send" /> Send</button>
-                        {bal === r.supply && bal > 0n ? <button className="btn sm" disabled={dis} onClick={() => void c.run(`red${r.id}`, async () => { const h = await redeem(c.ready(), c.addrs!.vault, r.id); c.note("Redeemed", `#${r.id} back to you`, h); })}>Redeem NFT</button> : <small className="muted">Redeeming the receipt needs every share ({units(r.supply)}).</small>}
+                        {bal === r.supply && bal > 0n ? <button className="btn sm" disabled={dis} onClick={() => void c.run(`red${r.id}`, async () => { const h = await redeem(c.ready(), c.addrs!.vault, r.id); c.note("Redeemed", `#${r.id} back to you`, h); })}>Redeem NFT</button> : <small className="muted">Redeeming the receipt needs every share ({fmtShares(r.supply)}).</small>}
                         <Why text={why} />
                       </div>
                     )}
@@ -146,7 +147,7 @@ export function Portfolio({ c }: { c: Ctx }) {
           <div className="pf2-sec-head"><div><h2 id="pf-listings">Your open listings</h2><p className="muted">Shares in escrow on the market. Cancel to get the remaining shares back.</p></div></div>
           <div className="tscroll"><table className="rtable"><thead><tr><th scope="col">Receipt</th><th scope="col" className="num">Remaining</th><th scope="col" className="num">Price / share</th><th scope="col" className="num">Asking total</th><th scope="col"><span className="sr-only">Action</span></th></tr></thead><tbody>
             {myListings.map((l) => { const r = c.rows.find((x) => x.id === l.receiptId); return (
-              <tr key={l.lid}><td data-label="Receipt"><div className="rcell"><ReceiptThumb id={l.receiptId} status={r?.status ?? "Pending"} /><div><b>#{l.receiptId} · {r?.note}</b><small className="muted">Listing {l.lid}</small></div></div></td><td data-label="Remaining" className="num">{units(l.remaining)}</td><td data-label="Price / share" className="num">{fmt(l.price, 18)} tPOT</td><td data-label="Asking total" className="num">{fmt((l.price * l.remaining) / 10n ** 18n, 18)} tPOT</td>
+              <tr key={l.lid}><td data-label="Receipt"><div className="rcell"><ReceiptThumb id={l.receiptId} status={r?.status ?? "Pending"} /><div><b>#{l.receiptId} · {r?.note}</b><small className="muted">Listing {l.lid}</small></div></div></td><td data-label="Remaining" className="num" title={units(l.remaining)}>{fmtShares(l.remaining)}</td><td data-label="Price / share" className="num">{fmt(l.price, 18)} tPOT</td><td data-label="Asking total" className="num">{fmt((l.price * l.remaining) / 10n ** 18n, 18)} tPOT</td>
                 <td className="acts"><button className="btn sm" disabled={dis} onClick={() => void c.run(`cancel${l.lid}`, async () => { const h = await cancelListing(c.ready(), c.market as Address, l.lid); c.note("Listing cancelled", `#${l.lid}`, h); })}>{c.busy === `cancel${l.lid}` ? "Cancelling…" : "Cancel listing"}</button><Why text={why} /></td></tr>
             ); })}
           </tbody></table></div>
@@ -166,7 +167,7 @@ export function Portfolio({ c }: { c: Ctx }) {
                 <td data-label="Status"><div className="tags">{isRedeemed(r.id) ? <span className="tag paid">Redeemed</span> : <SettleBadge r={r} terms={false} />}</div></td>
                 <td data-label="Face value" className="num">{face ? `${fmt(face, r.settle.decimals)} tPOT` : "—"}</td>
                 <td data-label="Due">{due ? day(due) : "—"}</td>
-                <td data-label="Shares" className="num">{supply > 0n ? units(supply) : "—"}</td>
+                <td data-label="Shares" className="num" title={supply > 0n ? units(supply) : undefined}>{supply > 0n ? fmtShares(supply) : "—"}</td>
                 <td data-label="Next step"><span className="pf2-step">{step.text}</span></td>
                 <td className="acts">{step.act}</td></tr>;
             })}

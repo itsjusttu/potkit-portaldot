@@ -5,10 +5,11 @@ type Ev = { kind: string; id: number; actors: string[]; time: number; value?: bi
 type RowLite = { id: number; depositor: string; dueDate: number; status: string; settle: { settled: boolean } };
 const same = (a?: string, b?: string) => Boolean(a && b && a.toLowerCase() === b.toLowerCase());
 
-export type Record = { issued: number; rated: number; onTime: number; late: number };
+export type Record = { issued: number; rated: number; onTime: number; late: number; unpaid: number };
 
-/** On-time record of one issuer: a dated receipt counts once it is settled (on time if paid by the due date) or
-    is overdue and unpaid. Receipts without a due date or still open are not rated. */
+/** On-time record of one issuer, counted in invoices (receipts), not payments: a dated receipt counts once it is settled
+    (on time if paid by the due date) or is overdue and unpaid. Receipts without a due date or still open are not rated.
+    A receipt that was paid in an earlier cycle and is unpaid now is judged by its current cycle, like the Dashboard does. */
 export function issuerRecord(issuer: string, rows: RowLite[], events: Ev[]): Record {
   const ids = new Set<number>([...rows.filter((r) => same(r.depositor, issuer)).map((r) => r.id), ...events.filter((e) => e.kind === "lock" && same(e.actors[0], issuer)).map((e) => e.id)]);
   const due = new Map<number, number>();
@@ -16,17 +17,18 @@ export function issuerRecord(issuer: string, rows: RowLite[], events: Ev[]): Rec
   for (const r of rows) if (ids.has(r.id) && r.dueDate && !due.has(r.id)) due.set(r.id, r.dueDate);
   const paidAt = new Map<number, number>();
   for (const e of events) if (e.kind === "settle" && ids.has(e.id) && e.time) paidAt.set(e.id, e.time);
-  let onTime = 0, late = 0;
+  let onTime = 0, late = 0, unpaid = 0;
   for (const id of ids) {
     const d = due.get(id); if (!d) continue;
+    const row = rows.find((r) => r.id === id);
+    if (row && !row.settle.settled) { if (row.status === "Overdue") { late++; unpaid++; } continue; }
     const p = paidAt.get(id);
     if (p) { if (p <= d) onTime++; else late++; }
-    else if (rows.find((r) => r.id === id)?.status === "Overdue") late++;
   }
-  return { issued: ids.size, rated: onTime + late, onTime, late };
+  return { issued: ids.size, rated: onTime + late, onTime, late, unpaid };
 }
 
-export const recordLabel = (r: Record) => (r.rated ? `${r.onTime}/${r.rated} paid on time` : r.issued ? "No rated invoices yet" : "New issuer");
+export const recordLabel = (r: Record) => (r.rated ? `${r.onTime} of ${r.rated} invoices paid on time${r.unpaid ? `, ${r.unpaid} overdue unpaid` : ""}` : r.issued ? "No rated invoices yet" : "New issuer");
 
 type RowFull = RowLite & { fraction: string; settle: { settled: boolean; faceValue?: bigint } };
 

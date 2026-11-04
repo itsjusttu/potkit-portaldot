@@ -163,3 +163,19 @@ html[data-route="app"] .shell .nv-gauge-v .nv-gauge-s { margin-left: .3rem; }
 /* the wallet block fills the sections sheet instead of being a fixed-width box */
 html[data-route="app"] .shell .side.mobile-open .side-wallet { width: auto; max-width: none; box-sizing: border-box; }
 html[data-route="app"] .shell .side-wallet :is(.sw-facts dd, .sw-addr, .sw-note) { overflow-wrap: anywhere; }
+/* Trade board: the list sits next to the buy panel, so its own width (not the window's) decides when the columns stack
+   into the two-column card used on phones. Without this the Discount header wraps and the price runs into its neighbour. */
+html[data-route="app"] .shell .t-trade .trade-market-card { container-type: inline-size; }
+@container (max-width: 46rem) {
+  html[data-route="app"] .shell .t-trade .trade-row-head { display: none; }
+  html[data-route="app"] .shell .t-trade .trade-row { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: .4rem .9rem; padding: .85rem 1rem; }
+  html[data-route="app"] .shell .t-trade .trade-row .trade-row-invoice { grid-column: 1 / -1; }
+  html[data-route="app"] .shell .t-trade .trade-row:not(.trade-row-head) > span:nth-child(n+2):nth-child(-n+6) { grid-column: auto; display: flex; justify-content: flex-end; align-items: baseline; gap: .35rem; padding: 0; text-align: right; white-space: normal; font-size: 1.05rem; line-height: 1.25; }
+  html[data-route="app"] .shell .t-trade .trade-row > span:nth-child(n+2):nth-child(-n+6)::before { color: var(--muted); font-size: .68rem; line-height: 1; text-align: left; margin-right: auto; }
+  html[data-route="app"] .shell .t-trade .trade-row-price::before { content: "Price"; }
+  html[data-route="app"] .shell .t-trade .trade-row-discount::before { content: "Discount"; }
+  html[data-route="app"] .shell .t-trade .trade-row-apr::before { content: "Est. APR"; }
+  html[data-route="app"] .shell .t-trade .trade-row-due::before { content: "Due in"; }
+  html[data-route="app"] .shell .t-trade .trade-row-units::before { content: "Available"; }
+  html[data-route="app"] .shell .t-trade .trade-row .trade-buy { grid-column: 1 / -1; grid-row: auto; width: 100%; min-height: 44px; }
+}

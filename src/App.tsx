@@ -15,6 +15,7 @@ import {
   addr, CONSOLE, explain, fmt, GUIDE, KINDS, kitAddrs, loadBalances, loadClaimables, loadEvents,
   loadListings, loadMeta, loadRows, nativeBalance, ENV_FROM_BLOCK, isNoCode, NATIVE, NO_CODE, PAY_SYMBOL, receiptCount, type DeployStep, portaldot, settle, short, switchToPortaldot, units, type Addrs, type ChainEvent, type Listing, type Row,
 } from "./lib/chain";
+import { fmtShares } from "./lib/shares";
 import { TABS, type Ctx, type Log, type Tab } from "./tabs/ctx";
 import { SettleBadge, Term } from "./tabs/shared";
 import { QuickVerify } from "./tabs/QuickVerify";
@@ -445,7 +446,7 @@ export function App() {
             <dl className="facts">
               <div><dt>Kind</dt><dd>{KINDS[payRow.kind]}</dd></div>
               <div><dt><Term k="face">Face value</Term></dt><dd className="num">{`${fmt(payRow.settle.faceValue, payRow.settle.decimals)} ${payRow.settle.symbol}`}</dd></div>
-              <div><dt><Term k="share">Shares</Term></dt><dd className="num">{units(payRow.supply)}</dd></div>
+              <div><dt><Term k="share">Shares</Term></dt><dd className="num">{fmtShares(payRow.supply)}</dd></div>
               <div><dt>Paid in</dt><dd>{PAY_SYMBOL} (native)</dd></div>
             </dl>
             <label htmlFor="pay-amt">Amount ({PAY_SYMBOL})</label>

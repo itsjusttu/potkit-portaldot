@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { explain, fmt, KINDS, loadRows, PAY_SYMBOL, readTokenUri, short, units, type ChainEvent, type Row } from "../lib/chain";
+import { fmtShares } from "../lib/shares";
 import { Addr, Ico } from "../AppUi";
 import { type Ctx } from "./ctx";
 import { blockUrl, day } from "./shared";
@@ -60,15 +61,15 @@ export function Verify({ c }: { c: Ctx }) {
   const currentLock = Boolean(r && r.fraction && vaultHeld);
   const faceValue = r && r.settle.faceValue > 0n ? r.settle.faceValue : termsEv?.value ?? 0n;
   const dueDate = r?.dueDate || termsEv?.dueDate || 0;
-  const sharesIssued = r?.supply && r.supply > 0n ? units(r.supply) : lockEv?.amount?.toString() ?? "";
+  const sharesIssued = r?.supply && r.supply > 0n ? fmtShares(r.supply) : lockEv?.amount?.toString() ?? "";
   type ProofStep = { key: string; title: string; done: boolean; fallback: string; event?: ChainEvent; rank: number };
   const proofSteps: ProofStep[] = r ? [
     { key: "mint", title: "Receipt minted", done: true, fallback: "Receipt exists on-chain", event: hist.find((e) => e.kind === "mint"), rank: 0 },
     { key: "lock", title: "Receipt locked", done: vaultHeld || Boolean(lockEv), fallback: "Receipt is not currently held by PotKit", event: lockEv, rank: 1 },
     { key: "settle", title: "Debtor payment settled", done: Boolean(r.settle.settled || receiptHistory?.settled), fallback: "No settlement recorded", event: paidEv, rank: 2 },
     { key: "redeem", title: "Receipt redeemed", done: redeemed, fallback: "Not redeemed", event: lastRedeem, rank: 5 },
-    ...hist.filter((e) => e.kind === "list").map((event, i) => ({ key: `list-${event.hash}-${i}`, title: `Shares listed · ${units(event.amount ?? 0n)}`, done: true, fallback: "", event, rank: 3 })),
-    ...hist.filter((e) => e.kind === "buy").map((event, i) => ({ key: `buy-${event.hash}-${i}`, title: `Shares sold · ${units(event.amount ?? 0n)}`, done: true, fallback: "", event, rank: 3 })),
+    ...hist.filter((e) => e.kind === "list").map((event, i) => ({ key: `list-${event.hash}-${i}`, title: `Shares listed · ${fmtShares(event.amount ?? 0n)}`, done: true, fallback: "", event, rank: 3 })),
+    ...hist.filter((e) => e.kind === "buy").map((event, i) => ({ key: `buy-${event.hash}-${i}`, title: `Shares sold · ${fmtShares(event.amount ?? 0n)}`, done: true, fallback: "", event, rank: 3 })),
     ...hist.filter((e) => e.kind === "claim").map((event, i) => ({ key: `claim-${event.hash}-${i}`, title: `Payout claimed${event.value ? ` · +${fmt(event.value, 18)} ${PAY_SYMBOL}` : ""}`, done: true, fallback: "", event, rank: 4 })),
   ].sort((a, b) => a.event && b.event
     ? a.event.block === b.event.block ? a.event.logIndex - b.event.logIndex : a.event.block < b.event.block ? -1 : 1
@@ -83,7 +84,7 @@ export function Verify({ c }: { c: Ctx }) {
   ] : r ? [
     { ok: true, k: "Receipt exists on-chain", v: <>{res!.name}{res!.kind ? ` · ${res!.kind}` : ""}</> },
     { ok: r.fraction ? vaultHeld : null, k: "NFT locked in PotKit", v: vaultHeld ? <Addr a={r.owner} label="PotKit" /> : r.fraction ? <>Held by <Addr a={r.owner} /></> : "Not locked, still a plain NFT" },
-    { ok: r.fraction ? true : null, k: "Share token issued", v: r.fraction ? <><Addr a={r.fraction} label={`KIT${r.id}`} /> {units(r.supply)} shares</> : "No shares" },
+    { ok: r.fraction ? true : null, k: "Share token issued", v: r.fraction ? <><Addr a={r.fraction} label={`KIT${r.id}`} /> {fmtShares(r.supply)} shares</> : "No shares" },
     { ok: r.settle.faceValue > 0n ? true : null, k: "Payment terms on-chain", v: r.settle.faceValue > 0n ? <>{fmt(r.settle.faceValue, r.settle.decimals)} {r.settle.symbol}{r.dueDate ? ` · due ${day(r.dueDate)}` : ""}</> : "No terms set" },
     { ok: r.settle.settled ? true : r.status === "Overdue" ? false : null, credit: true, k: "Debtor payment", v: r.settle.settled ? <>Paid {fmt(r.settle.amount, r.settle.decimals)} {r.settle.symbol} · {fmt(r.settle.paidOut, r.settle.decimals)} claimed</> : r.status === "Overdue" ? "Overdue, not paid" : "Not yet due" },
     { ok: r.settle.settled ? r.settle.amount >= r.settle.faceValue : null, k: "Paid at least face value", v: r.settle.settled ? (r.settle.amount >= r.settle.faceValue ? "Yes" : "Short-paid") : "—" },
