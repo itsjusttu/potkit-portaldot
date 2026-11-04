@@ -17,7 +17,8 @@ export const shortAddr = (a: string) => `${a.slice(0, 6)}…${a.slice(-4)}`;
 export function useLinks() {
   const judge = new URLSearchParams(location.search);
   const hasJudge = ["kit", "vault", "receipt"].some((k) => judge.has(k));
-  const launch = app(hasJudge ? location.search : "");
+  // always name the contract: a build without VITE_KIT (a local clone) would otherwise open an app with no market
+  const launch = app(hasJudge ? location.search : `?kit=${KIT}`);
   const tab = (t: string, extra = "") => app(`?${hasJudge ? `${location.search.slice(1)}&` : `kit=${KIT}&`}tab=${t}${extra}`);
   return { hasJudge, launch, tab };
 }

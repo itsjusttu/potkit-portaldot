@@ -393,7 +393,7 @@ export function App() {
         </div>
 
         {(notice || wallet.embedded) && <p className="banner" role="status">{notice || "Wallets cannot attach inside an embedded preview. Open this page in a full browser tab."}</p>}
-        {needsWallet && (wallet.noWallet || !account) && <h1 className="sr-only">{TITLES[tab][0]}</h1>}
+        {needsWallet && (wallet.noWallet || !account) && <header className="tab-title wallet-gate-title"><h1>{TITLES[tab][0]}</h1><p className="muted">{TITLES[tab][1]}</p></header>}
         {needsWallet && wallet.noWallet ? (
           <Empty icon="◇" title="No wallet detected" tone="warn" body={wallet.embedded ? "Wallets can't attach inside an embedded preview. Open this page in a full browser tab." : "Install any EVM browser wallet (OKX, Rabby, MetaMask, Coinbase and more), then reload. Explore and Verify work without a wallet."}>
             <button className="btn primary" onClick={wallet.open}>Choose a wallet</button>

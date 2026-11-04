@@ -97,3 +97,33 @@ html[data-route="app"][data-theme="light"] .shell :is(.issue-steps li.active, .w
   html[data-route="app"][data-theme="light"] .shell .nv .nv-kpis .nv-kpi { background: transparent !important; border: 0 !important; border-top: 1px solid var(--bk-line) !important; border-radius: 0 !important; }
   html[data-route="app"][data-theme="light"] .shell .nv .nv-kpis .nv-kpi:first-child { border-top: 0 !important; }
 }
+
+/* empty states with an action (Trade without a market, Explore without receipts): icon, title and text on the left, the
+   button on the right; on phones the button drops under the text. The title used to share a column with the button. */
+html[data-route="app"] .shell :is(.trade-unconfigured, .t-explore > .empty) { display: grid !important; grid-template-columns: auto minmax(0, 1fr) auto; column-gap: 1rem; row-gap: .25rem; align-items: center; text-align: left; }
+html[data-route="app"] .shell :is(.trade-unconfigured, .t-explore > .empty) > .e-ico { grid-column: 1; grid-row: 1 / span 2; margin: 0; }
+html[data-route="app"] .shell :is(.trade-unconfigured, .t-explore > .empty) > :is(h2, h3) { grid-column: 2; grid-row: 1; margin: 0; text-align: left; }
+html[data-route="app"] .shell :is(.trade-unconfigured, .t-explore > .empty) > p { grid-column: 2; grid-row: 2; margin: 0; text-align: left; }
+html[data-route="app"] .shell :is(.trade-unconfigured, .t-explore > .empty) > .row { grid-column: 3; grid-row: 1 / span 2; margin: 0; justify-content: flex-end !important; }
+@media (max-width: 52rem) {
+  html[data-route="app"] .shell :is(.trade-unconfigured, .t-explore > .empty) { grid-template-columns: auto minmax(0, 1fr); }
+  html[data-route="app"] .shell :is(.trade-unconfigured, .t-explore > .empty) > .row { grid-column: 1 / -1; grid-row: 3; margin-top: .6rem; justify-content: flex-start !important; }
+}
+
+/* dark theme: violet text on the near-black cards measured 4.49:1, just under AA; a lighter violet reads 5.5:1.
+   The Verify seal takes the status colour, as it does in the light theme. */
+html[data-route="app"]:not([data-theme="light"]) .shell :is(.proof-trail header span, .proof-tx code, .cert .seal b) { color: #9a84ff; }
+html[data-route="app"]:not([data-theme="light"]) .shell .cert.good .seal, html[data-route="app"]:not([data-theme="light"]) .shell .cert.good .seal b { color: #4ade80 !important; }
+html[data-route="app"]:not([data-theme="light"]) .shell .cert.bad .seal, html[data-route="app"]:not([data-theme="light"]) .shell .cert.bad .seal b { color: #f58d9c !important; }
+html[data-route="app"]:not([data-theme="light"]) .shell .cert.warn .seal, html[data-route="app"]:not([data-theme="light"]) .shell .cert.warn .seal b { color: #e8c15a !important; }
+html[data-route="app"] .shell :is(.trade-unconfigured, .t-explore > .empty) > :is(h2, h3) { justify-self: start; text-align: left !important; }
+html[data-route="app"] .shell .wallet-gate-title { margin: 1.4rem 0 1rem; }
+html[data-route="app"] .shell .wallet-gate-title p { margin-top: .35rem; }
+
+/* dark theme Verify: the seal ring takes the status colour too, and the four facts form one ruled table like the light theme */
+html[data-route="app"]:not([data-theme="light"]) .shell .cert .seal svg { stroke: currentColor !important; filter: none !important; }
+html[data-route="app"]:not([data-theme="light"]) .shell .cert .seal { filter: none !important; box-shadow: none !important; }
+html[data-route="app"]:not([data-theme="light"]) .shell .cert-facts { border: 1px solid var(--line); border-radius: 8px; overflow: hidden; gap: 0; }
+html[data-route="app"]:not([data-theme="light"]) .shell .cert-facts > div { border: 0 !important; border-top: 1px solid var(--line) !important; border-radius: 0; margin: 0; }
+html[data-route="app"]:not([data-theme="light"]) .shell .cert-facts > div:nth-child(-n+2) { border-top: 0 !important; }
+html[data-route="app"]:not([data-theme="light"]) .shell .cert-facts > div:nth-child(even) { border-left: 1px solid var(--line) !important; }
