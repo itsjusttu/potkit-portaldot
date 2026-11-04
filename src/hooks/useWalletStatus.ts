@@ -5,6 +5,9 @@ import { anyWallet, connect, disconnectWallet, ethereum, explain, inFrame, porta
 import { toast } from "../AppUi";
 import { useWallets } from "../WalletUi";
 
+/** Pauses (ms) before each re-ask of a remembered wallet that has not given an account yet; stops at the first account. */
+const RESTORE_RETRY_MS = [500, 1500, 3500, 7000];
+
 /** One explicit wallet state instead of several loose booleans. Priority: connecting > ready/wrong-network > no-wallet > disconnected. */
 export type WalletStatus = "no-wallet" | "disconnected" | "connecting" | "wrong-network" | "ready";
 
@@ -33,16 +36,22 @@ export function useWalletStatus() {
   useEffect(() => {
     const eth = ethereum();
     if (!eth) { setAccount(""); setChainOk(null); return; }
-    let dead = false;
+    let dead = false, got = false;
     const sync = async () => {
-      const acc = await silentAccount().catch(() => "" as const);
+      const acc = await silentAccount().catch(() => null);
+      if (acc === null) return; // the wallet did not answer (an extension can still be waking up): keep what is shown, a retry follows
       const ok = acc ? (await walletChainId().catch(() => 0)) === portaldot.id : null;
       if (dead) return; // a newer provider or unmount superseded this read
+      got = Boolean(acc);
       setAccount(acc); setChainOk(ok);
     };
     void sync();
+    // A wallet the user connected before can fail or answer with no account on the first calls after a reload, so ask again a few times
+    const retries = rememberedId() ? RESTORE_RETRY_MS.map((ms) => setTimeout(() => { if (!dead && !got) void sync(); }, ms)) : [];
+    const onFocus = () => { if (!dead && !got && rememberedId()) void sync(); }; // coming back to the tab is another natural moment to ask
+    window.addEventListener("focus", onFocus);
     eth.on?.("accountsChanged", sync); eth.on?.("chainChanged", sync);
-    return () => { dead = true; eth.removeListener?.("accountsChanged", sync); eth.removeListener?.("chainChanged", sync); };
+    return () => { dead = true; retries.forEach(clearTimeout); window.removeEventListener("focus", onFocus); eth.removeListener?.("accountsChanged", sync); eth.removeListener?.("chainChanged", sync); };
   }, [tick]);
 
   const noWallet = embedded || (!anyWallet() && !wallets.some((w) => w.provider));
