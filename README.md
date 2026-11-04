@@ -162,7 +162,7 @@ VITE_RPC_URL=http://localhost:8545 npm run dev        # open /app?kit=0x… (imp
 Requires Node.js 20+.
 ```bash
 npm install
-npm test        # compiles the contracts, then runs the whole suite in test/ (80 tests as of 4 Nov 2026: PotKit on local Ganache, faucet, network switch, transaction errors, settle and trade input checks, receipt history, the event-scan window, share-amount display format, dashboard and issuer-record figures, the `set-minter` script)
+npm test        # compiles the contracts, then runs the whole suite in test/ (81 tests as of 4 Nov 2026: PotKit on local Ganache, faucet, network switch, transaction errors, settle and trade input checks, receipt history, the event-scan window, share-amount display format, dashboard and issuer-record figures, the `set-minter` script)
 npm run dev     # open the URL Vite prints (http://localhost:8080 by default)
 npm run build   # type-check + production build into dist/
 ```
@@ -297,7 +297,7 @@ No third-party Solidity/Yul code is used in the contracts (`PotKit.yul`, `Lens.s
 | solc (solc-js) | 0.8.28 | MIT | compiling Yul / Solidity |
 | ganache | 7.9 | MIT | local test chain |
 
-Assets: wallet logos are bundled locally (see `src/assets/wallets/SOURCES.md`: web3icons MIT, simple-icons CC0; trademarks belong to their owners). Fonts Hanken Grotesk, Newsreader and IBM Plex Mono are loaded from Google Fonts (SIL Open Font License). Landing and dApp visuals were created for this project; layout ideas came from public design references, and no code, images, logos or text were copied.
+Assets: wallet logos are bundled locally (see `src/assets/wallets/SOURCES.md`: web3icons MIT, simple-icons CC0; trademarks belong to their owners). Fonts Fraunces, Inter and IBM Plex Mono are loaded from Google Fonts (SIL Open Font License; the docs pages still use Hanken Grotesk and Newsreader). Hero photo (the Dragon Bridge, Da Nang, at dusk, used on the landing page, the social image and the video thumbnail): own work of the author, exported to WebP with all metadata removed; tone is adjusted in CSS only, never in the file. Landing and dApp visuals were created for this project; layout ideas came from public design references, and no code, images, logos or text were copied.
 
 ## For Portaldot builders
 What building PotKit taught us about V3 (pallet-revive), in the order it shaped the design. Figures come from `scripts/measure.mjs` (see the cost table above).

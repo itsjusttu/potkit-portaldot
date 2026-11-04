@@ -110,7 +110,7 @@ Read-only mode: Explore and Verify work without a wallet through a direct RPC cl
 Yul + Solidity 0.8.28 (solc-js, pinned) · custom compile script (no Hardhat) · node:test + ganache · React 19 + TypeScript + Vite 7 ·
 viem 2 · lenis (smooth scroll on the docs pages) · canvas 2D intro animation. No database: every screen reads the chain directly (the only server code is the optional gas faucet and the `tokenURI` JSON endpoint).
 
-## What's tested (`npm test`: 80 tests as of 4 Nov 2026)
+## What's tested (`npm test`: 81 tests as of 4 Nov 2026)
 - ERC-721 compliance (ERC-165, approve, operators, transferFrom, safeTransferFrom with receiver contracts and rejection), mint permissions, unknown ids revert
 - Notes of every length 1–140 stored losslessly; metadata JSON escapes quotes, backslashes and control characters
 - Lock: owner-only, terms set in the same call, whole supply to the owner; share tokens are identical 82-byte forwarders and their events cannot be spoofed
@@ -185,7 +185,7 @@ No third-party Solidity/Yul code is used in the contracts (`PotKit.yul`, `Lens.s
 | solc (solc-js) | 0.8.28 | MIT | compiling Yul / Solidity |
 | ganache | 7.9 | MIT | local test chain |
 
-Assets: wallet logos are bundled locally (see `src/assets/wallets/SOURCES.md`: web3icons MIT, simple-icons CC0; trademarks belong to their owners). Fonts Hanken Grotesk, Newsreader and IBM Plex Mono are loaded from Google Fonts (SIL Open Font License). Landing and dApp visuals were created for this project; layout ideas came from public design references, and no code, images, logos or text were copied.
+Assets: wallet logos are bundled locally (see `src/assets/wallets/SOURCES.md`: web3icons MIT, simple-icons CC0; trademarks belong to their owners). Fonts Fraunces, Inter and IBM Plex Mono are loaded from Google Fonts (SIL Open Font License; the docs pages still use Hanken Grotesk and Newsreader). Hero photo (the Dragon Bridge, Da Nang, at dusk, used on the landing page, the social image and the video thumbnail): own work of the author, exported to WebP with all metadata removed; tone is adjusted in CSS only, never in the file. Landing and dApp visuals were created for this project; layout ideas came from public design references, and no code, images, logos or text were copied.
 
 
 ## Links

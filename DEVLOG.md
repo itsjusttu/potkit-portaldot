@@ -219,6 +219,14 @@ The contract, API and script files first appear in `04cfd1c`; `contracts/` and `
   - Trade listings between about 1100 and 1400 px wide: the list sits beside the buy panel, so the Discount header wrapped and the price touched the next column. The board now stacks its columns by the width of the list itself (a container query in `night-app.css`), checked at 1280, 1600, 900 and 390 px in dark and light.
   - Tests: 8 new (6 for the share format and event text, 2 for the issuer record), 80 pass. Slide 7, the README and the DoraHacks text carry 80; the deck PDF was re-exported.
 
+- UI redesign on branch `ui-redesign` (4 Nov; UI only, `contracts/`, `api/`, `src/lib/chain.ts` and the transaction flow untouched):
+  - One token set for landing and app (`src/styles/brand.css`): ivory #F6F2EA, white surfaces, ink #14181F, navy #16233B accent, bronze highlight, status-only colours; Fraunces headings, Inter text. No gradients, glow or glass.
+  - Landing rebuilt (`src/Landing.tsx`, `src/lp/`): photo hero (own photo, WebP exports with no EXIF, tone only in CSS), CSS-only marquee of real facts, how it works, live testnet figures read from the contract (a dash or a dated snapshot when the RPC does not answer), honest limits, closing band, footer with the photo credit. The doc pages keep the older system.
+  - Brand assets: mark and wordmark SVG, favicon set, OG image 1200x630, video thumbnail 1280x720, new meta tags.
+  - App: light by default (dark is the optional switch), flat `clean.css` layer on top of the older night layers, serif page titles, tabular figures, sidebar that scrolls and never clips its sections at 700 px height, receipt state checks inside the Verify card, `1 share` singular (`shareUnit`), a heading for Explore activity, History empty state with a next step, Issue ignores a saved receipt id when no wallet is connected, skeleton loaders on Verify and the Dashboard figures. The animated intro screen is no longer mounted.
+  - Test count after the redesign: 81 (one new test for the singular share unit); README, DoraHacks text and slide 7 carry 81.
+  - Wallet restore after a reload: see the commit before the branch (ask the remembered wallet again after a failed or empty first answer and when the tab regains focus).
+
 ## How the work is checked
 
 - `npm test` compiles the contracts and runs the suite in `test/` (contract behaviour on a local Ganache chain, faucet logic, network switching, transaction errors, settle and trade input checks, receipt history, dashboard figures).

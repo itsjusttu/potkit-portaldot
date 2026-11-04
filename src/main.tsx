@@ -25,7 +25,6 @@ import "./styles/night-app.css";
 import "./styles/night-light.css";
 import "./styles/brand.css";
 import "./styles/clean.css";
-import { Intro } from "./Intro";
 
 migrateHashRoute();
 const app = isAppRoute();
@@ -38,9 +37,10 @@ const App = lazy(() => import("./App").then((m) => ({ default: m.App })));
 const Docs = lazy(() => import("./docs/Docs").then((m) => ({ default: m.Docs })));
 const doc = app ? null : docRoute();
 const Landing = lazy(() => import("./Landing").then((m) => ({ default: m.Landing })));
+// The animated intro (src/Intro.tsx) is no longer mounted: its dark globe and fake progress bar do not belong to the calm light look.
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
-    {app ? <><Intro /><Suspense fallback={<div className="route-loading" aria-busy="true" />}><App /></Suspense></>
+    {app ? <Suspense fallback={<div className="route-loading" aria-busy="true" />}><App /></Suspense>
       : <Suspense fallback={<div className="route-loading" aria-busy="true" />}>{doc ? <Docs path={doc} /> : <Landing />}</Suspense>}
   </StrictMode>,
 );

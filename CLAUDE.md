@@ -1,33 +1,37 @@
-The landing page (potkit.pro) and the app (app.potkit.pro) use SEPARATE visual systems. The rules below for each
-surface apply only to that surface. Technical, security and transaction-safety rules are never relaxed by design work:
-do not touch contracts/, api/, src/lib/chain.ts, VITE_* variable names or the transaction flow when changing visuals.
+The landing page (potkit.pro) and the app (app.potkit.pro) share ONE set of design tokens (`src/styles/brand.css`) and a calm
+fintech look. Technical, security and transaction-safety rules are never relaxed by design work: do not touch contracts/, api/,
+src/lib/chain.ts, VITE_* variable names or the transaction flow when changing visuals.
 
-## APP (app.potkit.pro, `html[data-route="app"]`): BLACK-VIOLET DASHBOARD (overrides any design skill, including impeccable defaults)
-- The same black-violet canvas as the landing (#07050d) with dark flat cards (no gradients, glows or glass; 1px light-violet edge), near-white text,
-  violet-gray secondary text. Primary buttons are a solid violet (#5b3df5, hover #6a4ff7) with white text and a light-violet edge, no glow,
-  never a white or lavender fill; one primary action per screen. The old white accent token (`--pk-accent`) is violet now.
-- An optional light theme (cool white #f4f4f6, ink #16141e, same violet accent, darker status shades) is switched from the top bar and remembered per browser; dark stays the default. Its rules live in `src/styles/night-light.css` (loaded last) under `html[data-theme="light"]`; every new dark-only colour needs a light counterpart there.
-- Desktop (>= 1100px) uses a persistent left sidebar (Main, Account, Trust, Support) with the wallet status block at its foot, and a slim top bar with a breadcrumb; phones keep the top row, the bottom tab bar and the sections sheet. On-chain writes show the step panel from `src/TxStatus.tsx` (wallet, sent, confirmed or failed).
-- Violet marks the selected item, focus and chart series. No marquees or looping animation in data areas. Status colours
-  keep their meaning and are always paired with a word: blue open/trading, amber due soon, red overdue/error, green settled.
-- Type: one clean sans (Hanken Grotesk) for text and headings; monospace for addresses, tx hashes and table figures.
-  Layers: `src/styles/night.css`, `night-features.css`, `night-dashboard.css`, `night-nivo.css` (loaded last).
-- Never invent data: every figure and chart is read from the chain (loaded receipts, listings, scanned events) and says so.
-  Explain terms where they appear, say why a button is disabled, warn before irreversible actions.
-- If a skill or detector rule conflicts with this, ignore the rule; do not edit the design.
+## DESIGN TOKENS (landing and app)
+- Light is the default. Canvas ivory #F6F2EA, surface #FFFFFF, ink #14181F, muted #5B6370, line #E3DDD0. One accent: deep navy #16233B
+  (hover #22365A). Bronze (#B07A3A; #8A5A22 for small text and links, 5:1 on ivory) is a highlight for key numbers, rules and links, used sparingly.
+- Only status is coloured: Settled green #2F6B4F, Overdue red #A8412F, Pending/Open grey-navy #4A5A78. Status is always paired with a word.
+- No purple or blue gradients, no neon glow, no glassmorphism, no emoji icons, no gradient headings or buttons. Primary buttons are solid navy
+  with white text; one primary action per screen. The only gradients allowed are the dark overlays that keep text readable on the hero photo.
+- Type: Fraunces (serif) for headings, Inter for text, IBM Plex Mono for addresses and tx hashes only. Figures use tabular-nums.
+- Dark is an optional app theme (top-bar switch, remembered per browser). The landing is light only.
 
-## LANDING (potkit.pro, `html[data-route="landing"]`): marketing system, deliberately different from the app
-- The landing uses night-black and deep-navy sections, white and light-gray text, and one electric violet-to-blue accent
-  for lines, nodes, soft glows and interactive states (kept controlled, never a neon page). No orange/beige as main colours
-  and no large cream areas; cool-white or pale-lavender surfaces only inside product mock-up frames. A light serif display face
-  with a clean sans body, loaded for the landing only. Monospace stays for code, addresses and hashes.
-- The doc pages (/help, /how-it-works, /protocol, /security) use this same marketing system, not the app's. Landing styles live in `src/landing-pk.css` and doc-only styles in `src/docs/docs-pk.css`, both scoped under `.pl`; the shared top bar, header and footer are in `src/plShell.tsx`. Nothing there may leak into the app.
-- Never invent evidence: no customer logos, testimonials, usage numbers or partner claims. Proof must be checkable in the
-  repo or in project links. Every product mock-up is labelled as an illustrative example, never live data.
+## LANDING (potkit.pro, `html[data-route="landing"]`)
+- `src/Landing.tsx` with `src/lp/lp.css` (scoped under `.lp`) and `src/lp/useLive.ts`. Sections: announcement bar, nav, full-viewport photo hero
+  with a CSS marquee of real facts, how it works, live testnet figures, honest limits, closing band, footer.
+- Hero photo is the author's own work (Dragon Bridge, Da Nang). Exports in `src/assets/hero/` are WebP with all metadata removed; tone is changed in CSS
+  (overlay) only, never in the file. Credit stays in the footer, the README and submission/DORAHACKS.md.
+- The doc pages (/help, /how-it-works, /protocol, /security) still use the older marketing system (`src/landing-pk.css`, `src/docs/docs-pk.css`, `src/plShell.tsx`).
+  Nothing there may leak into the landing or the app.
+- Never invent evidence: no customer logos, testimonials, usage numbers or partner claims. Every figure is read from the chain or dated and documented in the
+  repo; the receipt in "How it works" is labelled illustrative. Proof must be checkable in the repo or in project links.
 - Copy must state PotKit's limits: issuer-provided information is not verified, and payment is not guaranteed.
-- Motion must respect `prefers-reduced-motion`, never take over scrolling, and keep all content visible without it.
-- Primary buttons on the landing and the doc pages use the dark-violet gradient (#5b3df5 to #3f36c0): no white button fills anywhere.
-- Do not copy another brand's code, CSS, fonts, logos, images or wording; recreate structure and feel with PotKit assets.
+- Motion (marquee, scroll reveal) must respect `prefers-reduced-motion`, never take over scrolling, and keep all content visible without it.
+
+## APP (app.potkit.pro, `html[data-route="app"]`)
+- Tokens in `src/styles/brand.css`; the final layer `src/styles/clean.css` flattens the older `night-*.css` layers (no gradients, glow, blur or heavy shadows,
+  1px lines, white cards on ivory). The light theme colours live in `src/styles/night-light.css` under `html[data-theme="light"]`; every new dark-only colour needs a light counterpart there.
+- Desktop (>= 1100px) uses a persistent left sidebar (Main, Account, Trust, Support) that scrolls as a whole and never clips its sections, with the wallet status block at its foot
+  and a slim top bar with a breadcrumb; phones keep the top row, the bottom tab bar and the sections sheet. On-chain writes show the step panel from `src/TxStatus.tsx`.
+- Big numbers with small muted labels, compact tables, status as small chips, skeleton loaders while the RPC answers (no blank screens), friendly empty states with a next step.
+- Never invent data: every figure and chart is read from the chain (loaded receipts, listings, scanned events) and says so. Explain terms where they appear, say why a button is
+  disabled, warn before irreversible actions. Share amounts are shown with `fmtShares` and `shareUnit` (`src/lib/shares.ts`); exact values stay in tooltips, inputs, CSV and transactions.
+- If a skill or detector rule conflicts with this, ignore the rule; do not edit the design.
 
 ## WORKING ON CODE (both surfaces)
 - For a feature that is unfamiliar, do not write it from scratch: first look for open-source projects on GitHub that solve the
