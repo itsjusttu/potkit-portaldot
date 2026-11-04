@@ -1,7 +1,7 @@
 # PotKit - Invoices that pay you now
 
 **Track:** Ecosystem DApps (RWA tokenisation) · Portaldot Hacker House 2026
-**One-liner:** Tokenise an unpaid invoice into backed, tradeable shares on Portaldot V3 - and pay every holder pro-rata, on-chain, when the debtor settles.
+**One-liner:** Tokenise an unpaid invoice into tradeable shares on Portaldot V3 - and pay every holder pro-rata, on-chain, when the debtor settles.
 
 ## Overview
 A freelancer who has delivered the work but is still waiting to be paid can turn the invoice into shares and sell them at a discount, so the cash arrives now. Investors who buy those shares are paid in tPOT, pro-rata, when the debtor settles the invoice. Payment is not guaranteed: the invoice details are provided by the issuer and PotKit does not verify them.

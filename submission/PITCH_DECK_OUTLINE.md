@@ -6,7 +6,7 @@ The final submission requires a pitch deck as a **PDF or a publicly accessible l
 
 | # | Slide | Content (source in this repo) |
 |---|---|---|
-| 1 | **Title** | PotKit: invoices that pay you now. One line: *tokenise an unpaid invoice into backed, tradeable shares on Portaldot V3 and pay every holder pro-rata, on-chain, when the debtor settles.* Track 4 · Ecosystem DApps (RWA). Links: app, repo, video. Team: Tu - Builder, PotKit (GitHub `itsjusttu`; the Git author `Tu` is the same person). |
+| 1 | **Title** | PotKit: invoices that pay you now. One line: *tokenise an unpaid invoice into tradeable shares on Portaldot V3 and pay every holder pro-rata, on-chain, when the debtor settles.* Track 4 · Ecosystem DApps (RWA). Links: app, repo, video. Team: Tu - Builder, PotKit (GitHub `itsjusttu`; the Git author `Tu` is the same person). |
 | 2 | **Problem** | Freelancers and small businesses wait for payment; factoring is opaque and closed to small invoices; investors have no simple, verifiable way to fund a slice of a receivable. No numeric waiting time is used: no reliable source was found for "30–90 days", so the figure was removed from the submission text and the docs page. |
 | 3 | **Solution** | One flow, one contract: mint receipt (ERC-721) → lock and issue fixed-supply ERC-20 shares → trade on an escrow market → debtor settles in native tPOT → holders claim pro-rata → redeem. Use the lifecycle diagram from the README. |
 | 4 | **It works: proof** | Deployed kit `0x3c26…0fb7`, block 97421 (2026-10-19). The 9-transaction run with UTC times (README → Testnet evidence). Screenshots of Dashboard, Trade and Verify. State plainly which data is real testnet data. Add the new demo video link. |
