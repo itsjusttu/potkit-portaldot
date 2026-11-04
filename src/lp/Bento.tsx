@@ -52,7 +52,7 @@ export function LineChart({ values, on, label }: { values: number[]; on: boolean
 }
 
 type Panel = { id: string; title: string; blurb: string; cta: [string, string] };
-const num = (v: ReactNode, loading: boolean, cls = "") => (v === null || v === undefined ? <b className={loading ? "lp-skel lp-skel-n" : "dim"}>{loading ? " " : "—"}</b> : <b className={`num ${cls}`}>{v}</b>);
+const num = (v: ReactNode, loading: boolean, cls = "") => (v === null || v === undefined ? <b className={loading ? "lp-skel lp-skel-n" : "dim"}>{loading ? " " : "—"}</b> : <b key={String(v)} className={`num flash ${cls}`}>{v}</b>);
 
 export function Bento({ live, idx, panels }: { live: Live; idx: number; panels: Panel[] }) {
   const loading = live.phase !== "done";
@@ -68,7 +68,7 @@ export function Bento({ live, idx, panels }: { live: Live; idx: number; panels: 
       <article className="lp-bc big"><span>Receipts minted</span>{num(live.receipts, loading)}<i className="lp-cap">Transactions on the contract over time, cumulative</i>
         {s ? <DotChart values={s.tx} on={idx === 0} label={`State-changing transactions, cumulative: ${last(s.tx)} by the last day`} /> : <Empty loading={loading} />}
       </article>
-      <article className="lp-bc"><span>State-changing transactions</span><b className="num">{live.txs ?? SNAPSHOT.txs}</b><small>{live.txsLive ? "Counted from the event logs just now. All from two wallets, both the builder's." : `Snapshot, counted ${SNAPSHOT.date}. All from two wallets, both the builder's.`}</small></article>
+      <article className="lp-bc"><span>State-changing transactions</span><b key={live.txs ?? SNAPSHOT.txs} className="num flash">{live.txs ?? SNAPSHOT.txs}</b><small>{live.txsLive ? "Counted from the event logs just now. All from two wallets, both the builder's." : `Snapshot, counted ${SNAPSHOT.date}. All from two wallets, both the builder's.`}</small></article>
       <article className="lp-bc"><span>Receipts by status</span>
         <div className="lp-tiles" aria-label="Receipts by status">{live.rows.length ? live.rows.map((r) => <i key={r.id} className={`lp-tile ${tone(r.status)}`} title={`Receipt #${r.id}: ${r.status}`}><b className="num">#{r.id}</b></i>) : <Empty loading={loading} />}</div>
         <small>Open, settled or overdue, read from the contract now.</small></article>

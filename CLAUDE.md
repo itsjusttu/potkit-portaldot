@@ -18,7 +18,7 @@ src/lib/chain.ts, VITE_* variable names or the transaction flow when changing vi
   Scroll effects only read the scroll position and write CSS variables (`--e`, `--s`, `--p`, `--c`); the page always scrolls natively, and below 900px or with reduced motion nothing is pinned.
 - Hero photo is the author's own work (Dragon Bridge, Da Nang). Exports in `src/assets/hero/` are WebP with all metadata removed; tone is changed in CSS
   (overlay) only, never in the file. Credit stays in the footer, the README and submission/DORAHACKS.md.
-- The doc pages (/help, /how-it-works, /protocol, /security) still use the older marketing system (`src/landing-pk.css`, `src/docs/docs-pk.css`, `src/plShell.tsx`).
+- /help uses the landing system (`src/Help.tsx`, shared chrome `src/lp/Shell.tsx`). The other doc pages (/how-it-works, /protocol, /security) still use the older marketing system (`src/landing-pk.css`, `src/docs/docs-pk.css`, `src/plShell.tsx`).
   Nothing there may leak into the landing or the app.
 - Never invent evidence: no customer logos, testimonials, usage numbers or partner claims. Every figure is read from the chain or dated and documented in the
   repo; the receipt in "How it works" is labelled illustrative. Proof must be checkable in the repo or in project links.
