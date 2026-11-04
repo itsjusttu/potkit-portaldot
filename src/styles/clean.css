@@ -127,3 +127,47 @@ html[data-route="app"]:not([data-theme="light"]) .shell .cert-facts { border: 1p
 html[data-route="app"]:not([data-theme="light"]) .shell .cert-facts > div { border: 0 !important; border-top: 1px solid var(--line) !important; border-radius: 0; margin: 0; }
 html[data-route="app"]:not([data-theme="light"]) .shell .cert-facts > div:nth-child(-n+2) { border-top: 0 !important; }
 html[data-route="app"]:not([data-theme="light"]) .shell .cert-facts > div:nth-child(even) { border-left: 1px solid var(--line) !important; }
+
+/* ---- dark theme: ink canvas, warm ivory text, one bronze accent. Replaces the old violet; flat, no glow or gradients. ---- */
+html[data-route="app"]:not([data-theme="light"]) {
+  --pk-bg: #0E1218; --pk-surface: #141A22; --pk-surface-2: #1A212B; --pk-border: rgba(226, 220, 206, .12);
+  --pk-text: #ECE7DD; --pk-muted: #A3AAB5; --pk-accent: #ECE7DD; --pk-accent-text: #14181F; --pk-accent-hover: #FFFFFF;
+  --pk-success: #5FB389; --pk-danger: #E58B78; --pk-warning: #D9A862;
+  --n-violet: #D4A15E; --n-violet-l: #E3C48F; --n-info: #9FB0CC;
+  --fg: #ECE7DD; --muted: #A3AAB5; --grey-1: #A3AAB5; --line: rgba(226, 220, 206, .12); --line-strong: rgba(226, 220, 206, .24);
+  --nv-card: #141A22; --nv-edge: rgba(226, 220, 206, .14); --nv-cta: #ECE7DD; --nv-cta-hi: #FFFFFF;
+  --g-surface: #141A22; --g-line: rgba(226, 220, 206, .14);
+  --focus-ring: 0 0 0 2px #0E1218, 0 0 0 4px #D4A15E;
+  --st-open: #9FB0CC; --st-soon: #D9A862; --st-late: #E58B78; --st-paid: #5FB389; --st-none: #A3AAB5;
+  --shadow-1: none; --shadow-2: none;
+}
+html[data-route="app"]:not([data-theme="light"]) body, html[data-route="app"]:not([data-theme="light"]) .shell { background: #0E1218 !important; background-image: none !important; }
+html[data-route="app"]:not([data-theme="light"]) .shell > main { background: #11161D !important; background-image: none !important; }
+html[data-route="app"]:not([data-theme="light"]) .shell .side { background: #0E1218 !important; }
+html[data-route="app"]:not([data-theme="light"]) .shell .top { background: transparent !important; background-image: none !important; backdrop-filter: none !important; -webkit-backdrop-filter: none !important; }
+html[data-route="app"]:not([data-theme="light"]) .shell :is(.card, .nv-card, .db-card, .pf2-sec, .trade-market-card, .quick-buy-panel, .sell-panel, .inv-card, .explore-card, .wiz-pane, .pr-card, .trade-kpis, .trade-bar, .cert) { background: #141A22 !important; background-image: none !important; box-shadow: none !important; }
+/* primary actions: warm ivory with ink text, the one bright thing on the page */
+html[data-route="app"]:not([data-theme="light"]) .shell :is(.btn.primary, .cw-btn:not(.on), .bn-main) { background: #ECE7DD !important; background-image: none !important; border: 1px solid #ECE7DD !important; color: #14181F !important; box-shadow: none !important; }
+html[data-route="app"]:not([data-theme="light"]) .shell :is(.btn.primary, .cw-btn:not(.on), .bn-main) * { color: #14181F !important; }
+html[data-route="app"]:not([data-theme="light"]) .shell :is(.btn.primary, .cw-btn:not(.on)):hover:not(:disabled) { background: #FFFFFF !important; }
+html[data-route="app"]:not([data-theme="light"]) .shell .btn.primary:disabled { background: #2B3441 !important; border-color: #2B3441 !important; color: #8A929E !important; }
+/* selected and current items: a quiet warm tint and ivory text, never a coloured fill */
+html[data-route="app"]:not([data-theme="light"]) .shell :is(.side-item.on, .on, [aria-pressed="true"], [aria-current="page"], [aria-selected="true"]):not(.btn.primary):not(.cw-btn):not(.bn-main):not(.lp-tile) { background: rgba(226, 220, 206, .08) !important; background-image: none !important; border-color: rgba(226, 220, 206, .2) !important; color: #ECE7DD !important; box-shadow: none !important; }
+html[data-route="app"]:not([data-theme="light"]) .shell .grad { background: none !important; -webkit-text-fill-color: currentColor !important; color: inherit !important; }
+html[data-route="app"]:not([data-theme="light"]) .shell :is(.nv-histo i, .nv-segs i.on, .nv-link-dot) { background: #D4A15E !important; box-shadow: none !important; }
+html[data-route="app"]:not([data-theme="light"]) .shell .nv-histo i.past { background: #E58B78 !important; }
+html[data-route="app"]:not([data-theme="light"]) .shell :is(.proof-trail header span, .proof-tx code, .cert .seal b) { color: #E3C48F; }
+html[data-route="app"]:not([data-theme="light"]) .shell .cert .seal { color: #9FB0CC; }
+html[data-route="app"]:not([data-theme="light"]) .shell .cert.good .seal, html[data-route="app"]:not([data-theme="light"]) .shell .cert.good .seal b { color: #5FB389 !important; }
+html[data-route="app"]:not([data-theme="light"]) .shell .cert.bad .seal, html[data-route="app"]:not([data-theme="light"]) .shell .cert.bad .seal b { color: #E58B78 !important; }
+html[data-route="app"]:not([data-theme="light"]) .shell a:not(.btn):not(.side-item):not(.top-brand):not(.side-brand) { color: #E3C48F; }
+html[data-route="app"]:not([data-theme="light"]) ::selection { background: rgba(212, 161, 94, .35); color: #ECE7DD; }
+html[data-route="app"]:not([data-theme="light"]) { caret-color: #D4A15E; accent-color: #D4A15E; color-scheme: dark; }
+html[data-route="app"]:not([data-theme="light"]) .shell :is(.cert-facts dt, .cert-contract > span, .cert-disclaimer, .trade-row-price small, .trade-row-units small) { color: #A9B0BA !important; }
+/* dark theme status colours, quieter to match the ink palette; each still sits next to its word */
+html[data-route="app"]:not([data-theme="light"]) .ms-pin[data-status="Pending"] { --c: #9FB0CC; }
+html[data-route="app"]:not([data-theme="light"]) .ms-pin[data-status="Due soon"] { --c: #D9A862; }
+html[data-route="app"]:not([data-theme="light"]) .ms-pin[data-status="Overdue"] { --c: #E58B78; }
+html[data-route="app"]:not([data-theme="light"]) .shell :is(.nv-split i.open, .d-open) { background: #9FB0CC !important; }
+html[data-route="app"]:not([data-theme="light"]) .shell :is(.nv-split i.ok, .d-ok) { background: #5FB389 !important; }
+html[data-route="app"]:not([data-theme="light"]) .shell :is(.nv-split i.late, .d-late) { background: #E58B78 !important; }

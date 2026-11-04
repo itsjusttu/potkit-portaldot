@@ -2,17 +2,17 @@
    No gradients, glows or glass; violet stays only for selection, focus, primary actions and data. */
 html[data-route="app"] {
   --g-gap: 1rem;
-  --g-surface: #0e0b1c;
-  --g-line: rgba(187, 168, 255, .16);
+  --g-surface: #141A22;
+  --g-line: rgba(226, 220, 206, .16);
   --g-ease: cubic-bezier(0.22, 1, 0.36, 1);
-  --nv-cta: #5b3df5;
-  --nv-cta-hi: #6a4ff7;
+  --nv-cta: #D4A15E;
+  --nv-cta-hi: #DEAE6D;
 }
 
 /* primary buttons: solid violet, no glow */
-html[data-route="app"] .shell .btn.primary { background: #5b3df5; border-color: rgba(187, 168, 255, .45); box-shadow: none; transition: background-color 180ms var(--g-ease); }
-html[data-route="app"] .shell .btn.primary:hover:not(:disabled) { background: #6a4ff7; box-shadow: none; }
-html[data-route="app"] .bottom-nav .bn-main { background: #5b3df5; box-shadow: none; }
+html[data-route="app"] .shell .btn.primary { background: #D4A15E; border-color: rgba(226, 220, 206, .45); box-shadow: none; transition: background-color 180ms var(--g-ease); }
+html[data-route="app"] .shell .btn.primary:hover:not(:disabled) { background: #DEAE6D; box-shadow: none; }
+html[data-route="app"] .bottom-nav .bn-main { background: #D4A15E; box-shadow: none; }
 
 /* flat surfaces everywhere in the app: one tone step and a 1px line, no shadow */
 html[data-route="app"] .shell :is(.card, .db-card, .nv-card, .pf2-sec, .pf2-balances, .ex-stats, .trade-market-card, .wiz-pane, .wiz-preview, .verify-cert, .pay-doc, .pay-panel, .issue-steps, .tour, .rd-attention, .empty, .kpi, .trade-kpis, .history-table, .verify-lookup, .db-wallet) {
@@ -23,7 +23,7 @@ html[data-route="app"] .shell :is(.card, .db-card, .nv-card, .pf2-sec, .pf2-bala
 /* no entrance choreography on a data screen: content is simply there */
 html[data-route="app"] .nv :is(.nv-card, .nv-rcard, .nv-segs i, .nv-histo i) { animation: none !important; }
 html[data-route="app"] .shell .nv .nv-card { border-radius: 14px !important; padding: 1.25rem; gap: .8rem; }
-html[data-route="app"] .shell .nv .nv-kpi:hover, html[data-route="app"] .shell .nv button.nv-card:hover { border-color: rgba(187, 168, 255, .38) !important; transition: border-color 180ms var(--g-ease); }
+html[data-route="app"] .shell .nv .nv-kpi:hover, html[data-route="app"] .shell .nv button.nv-card:hover { border-color: rgba(226, 220, 206, .38) !important; transition: border-color 180ms var(--g-ease); }
 
 /* the wrappers dissolve so every card sits on one grid; rows end level */
 html[data-route="app"] .nv .nv-grid { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: var(--g-gap); align-items: stretch; margin-bottom: var(--g-gap); }
@@ -51,7 +51,7 @@ html[data-route="app"] .nv .nv-chip { background: transparent; }
 /* settlement record: the count, then one flat split bar with words under it */
 html[data-route="app"] .nv .nv-gauge { justify-items: stretch; text-align: left; align-content: start; }
 html[data-route="app"] .shell .nv .nv-gauge-v { justify-self: start; font-size: 1.6rem; font-family: var(--n-mono, ui-monospace, monospace); }
-html[data-route="app"] .nv .nv-split { display: flex; gap: 2px; height: 10px; overflow: hidden; border-radius: 3px; background: rgba(187, 168, 255, .08); }
+html[data-route="app"] .nv .nv-split { display: flex; gap: 2px; height: 10px; overflow: hidden; border-radius: 3px; background: rgba(226, 220, 206, .08); }
 html[data-route="app"] .nv .nv-split i { flex-basis: 0; min-width: 4px; }
 html[data-route="app"] .nv .nv-split i.ok { background: #3ecf8e; }
 html[data-route="app"] .nv .nv-split i.late { background: #ff6b72; }
@@ -62,17 +62,17 @@ html[data-route="app"] .nv .nv-gauge footer i.d-ok { background: #3ecf8e; } html
 
 /* progress: flat segments */
 html[data-route="app"] .nv .nv-prog-box { background: transparent; border-color: var(--g-line); }
-html[data-route="app"] .nv .nv-segs i { background: rgba(187, 168, 255, .12); }
-html[data-route="app"] .nv .nv-segs i.on { background: #7b5cff; }
+html[data-route="app"] .nv .nv-segs i { background: rgba(226, 220, 206, .12); }
+html[data-route="app"] .nv .nv-segs i.on { background: #D4A15E; }
 
 /* latest receipt: a flat stub instead of a glowing violet card */
 html[data-route="app"] .nv .nv-receipt { align-content: start; }
 html[data-route="app"] .nv .nv-podium { display: none; }
-html[data-route="app"] .nv .nv-rcard { width: 100%; aspect-ratio: auto; margin: 0; padding: 1rem; border: 1px dashed rgba(187, 168, 255, .35); border-radius: 10px; background: transparent; box-shadow: none; color: #fff; }
-html[data-route="app"] .shell .nv .nv-receipt:hover .nv-rcard { transform: none; border-color: rgba(187, 168, 255, .6); }
-html[data-route="app"] .nv .nv-rcard-top { color: #bba8ff; }
+html[data-route="app"] .nv .nv-rcard { width: 100%; aspect-ratio: auto; margin: 0; padding: 1rem; border: 1px dashed rgba(226, 220, 206, .35); border-radius: 10px; background: transparent; box-shadow: none; color: #fff; }
+html[data-route="app"] .shell .nv .nv-receipt:hover .nv-rcard { transform: none; border-color: rgba(226, 220, 206, .6); }
+html[data-route="app"] .nv .nv-rcard-top { color: #E3C48F; }
 html[data-route="app"] .nv .nv-rcard-top img { filter: none; }
-html[data-route="app"] .nv .nv-rcard-foot { padding-top: .6rem; border-top: 1px dashed rgba(187, 168, 255, .3); font-family: var(--n-mono, ui-monospace, monospace); opacity: 1; }
+html[data-route="app"] .nv .nv-rcard-foot { padding-top: .6rem; border-top: 1px dashed rgba(226, 220, 206, .3); font-family: var(--n-mono, ui-monospace, monospace); opacity: 1; }
 
 /* empty and list surfaces inside cards: one tone, no inner boxes */
 html[data-route="app"] .shell .nv .db-none { background: transparent; border-style: dashed; }
@@ -121,18 +121,18 @@ html[data-route="app"] .nv .nv-receipt > .nv-rcard { align-self: center; }
 html[data-route="app"] .cw-btn:not(.on) { box-shadow: none !important; }
 
 /* ---------- drawn invoice (ReceiptThumb) ---------- */
-html[data-route="app"] .rthumb { --st: #8f86b4; flex: none; display: block; overflow: visible; }
+html[data-route="app"] .rthumb { --st: #8A929E; flex: none; display: block; overflow: visible; }
 html[data-route="app"] .rthumb[data-status="Pending"] { --st: #6f8bff; }
 html[data-route="app"] .rthumb[data-status="Due soon"] { --st: #f1b64a; }
 html[data-route="app"] .rthumb[data-status="Overdue"] { --st: #ff6b72; }
 html[data-route="app"] .rthumb[data-status="Settled"] { --st: #3ecf8e; }
-html[data-route="app"] .rthumb[data-status="Redeemed"] { --st: #8f86b4; }
-html[data-route="app"] .rthumb-sheet { fill: #151129; stroke: rgba(187, 168, 255, .45); stroke-width: 1; stroke-linejoin: round; }
-html[data-route="app"] .rthumb-fold { fill: none; stroke: rgba(187, 168, 255, .45); stroke-width: 1; stroke-linejoin: round; }
-html[data-route="app"] .rthumb-lines { stroke: rgba(187, 168, 255, .3); stroke-width: 1.6; stroke-linecap: round; }
+html[data-route="app"] .rthumb[data-status="Redeemed"] { --st: #8A929E; }
+html[data-route="app"] .rthumb-sheet { fill: #181D25; stroke: rgba(226, 220, 206, .45); stroke-width: 1; stroke-linejoin: round; }
+html[data-route="app"] .rthumb-fold { fill: none; stroke: rgba(226, 220, 206, .45); stroke-width: 1; stroke-linejoin: round; }
+html[data-route="app"] .rthumb-lines { stroke: rgba(226, 220, 206, .3); stroke-width: 1.6; stroke-linecap: round; }
 html[data-route="app"] .rthumb-total { stroke: rgba(255, 255, 255, .55); stroke-width: 1; stroke-dasharray: 2 2; }
 html[data-route="app"] .rthumb-stamp { fill: none; stroke: var(--st); stroke-width: 1.4; }
-html[data-route="app"] .rthumb-id { fill: #e9e5f1; font: 600 6.6px var(--n-mono, ui-monospace, monospace); }
+html[data-route="app"] .rthumb-id { fill: #EDECE9; font: 600 6.6px var(--n-mono, ui-monospace, monospace); }
 html[data-route="app"] .rcell { display: flex; align-items: center; gap: .75rem; min-width: 0; }
 html[data-route="app"] .rcell > div { display: grid; gap: .2rem; min-width: 0; }
 
@@ -140,7 +140,7 @@ html[data-route="app"] .rcell > div { display: grid; gap: .2rem; min-width: 0; }
 /* Trade invoice cell: title 14px, meta 12px (was 11px and 8.6px) */
 html[data-route="app"] .shell .trade-row-invoice { gap: .75rem; }
 html[data-route="app"] .shell .trade-row-invoice b { font-size: .88rem; }
-html[data-route="app"] .shell .trade-row-invoice small { font: 500 .74rem/1.35 var(--n-sans); letter-spacing: 0; color: #9a92bd; }
+html[data-route="app"] .shell .trade-row-invoice small { font: 500 .74rem/1.35 var(--n-sans); letter-spacing: 0; color: #A3AAB5; }
 html[data-route="app"] .shell .trade-row-invoice small .trade-status-tag, html[data-route="app"] .shell .trade-row-invoice small .trade-best-badge { font-size: .66rem; }
 /* Explore cards: labels 11px, values 14px (were 9.6px and 10.7px) */
 html[data-route="app"] .explore-card > header { gap: .6rem; }
@@ -162,7 +162,7 @@ html[data-route="app"] .explore-card .explore-issuer { margin: -.35rem 0 0; }
 @media (max-width: 52rem) {
   html[data-route="app"] .shell .t-explore .seg-tabs, html[data-route="app"] .shell .seg-tabs[aria-label="Filter receipts by lifecycle"] { display: flex !important; flex-wrap: nowrap; gap: .4rem; overflow-x: auto; scrollbar-width: none; grid-template-columns: none !important; padding-bottom: .2rem; }
   html[data-route="app"] .shell .seg-tabs[aria-label="Filter receipts by lifecycle"] > button { flex: none; width: auto !important; min-height: 38px; padding: 0 .8rem; border: 1px solid var(--g-line); border-radius: 999px; }
-  html[data-route="app"] .shell .seg-tabs[aria-label="Filter receipts by lifecycle"] > button[aria-pressed="true"] { border-color: rgba(187, 168, 255, .55); background: rgba(123, 92, 255, .16); }
+  html[data-route="app"] .shell .seg-tabs[aria-label="Filter receipts by lifecycle"] > button[aria-pressed="true"] { border-color: rgba(226, 220, 206, .55); background: rgba(212, 161, 94, .16); }
 }
 /* Trade on phones: the Listings heading and its toggle sit left like every other card heading */
 @media (max-width: 52rem) {

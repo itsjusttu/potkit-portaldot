@@ -9,7 +9,9 @@ src/lib/chain.ts, VITE_* variable names or the transaction flow when changing vi
 - No purple or blue gradients, no neon glow, no glassmorphism, no emoji icons, no gradient headings or buttons. Primary buttons are solid navy
   with white text; one primary action per screen. The only gradients allowed are the dark overlays that keep text readable on the hero photo.
 - Type: Fraunces (serif) for headings, Inter for text, IBM Plex Mono for addresses and tx hashes only. Figures use tabular-nums.
-- Dark is an optional app theme (top-bar switch, remembered per browser). The landing is light only.
+- Dark is an optional app theme (top-bar switch, remembered per browser): ink canvas #0E1218 with #141A22 cards, warm ivory text #ECE7DD,
+  primary buttons warm ivory with ink text, one bronze accent #D4A15E for focus, selection, links and charts; quieter status colours
+  (settled #5FB389, overdue #E58B78, open #9FB0CC). No violet anywhere. The landing is light only.
 
 ## LANDING (potkit.pro, `html[data-route="landing"]`)
 - `src/Landing.tsx` with `src/lp/lp.css` (scoped under `.lp`), `src/lp/useLive.ts` (chain reads), `src/lp/fx.tsx` (scroll helpers), `src/lp/Bento.tsx` (pinned block) and `src/lp/series.ts`.

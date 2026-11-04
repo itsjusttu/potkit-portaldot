@@ -15,30 +15,30 @@ html[data-route="app"] .shell .issue-intro > div > p:not(.kicker),
 html[data-route="app"] .shell .wizard-2 .wiz-pane:not(.wiz-done) > h2 { display: none !important; } /* the step header already names the step; the "live" pane has no other title */
 
 /* ---------- watch star ---------- */
-html[data-route="app"] .shell .watch-btn { position: relative; display: inline-grid; place-items: center; flex: none; width: 32px; height: 32px; min-height: 0; padding: 0; border: 0; border-radius: 6px; background: none; color: #7e79a0; cursor: pointer; transition: color .15s, background-color .15s; }
+html[data-route="app"] .shell .watch-btn { position: relative; display: inline-grid; place-items: center; flex: none; width: 32px; height: 32px; min-height: 0; padding: 0; border: 0; border-radius: 6px; background: none; color: #8A929E; cursor: pointer; transition: color .15s, background-color .15s; }
 html[data-route="app"] .shell .watch-btn::after { content: ""; position: absolute; inset: -6px; }
-html[data-route="app"] .shell .watch-btn:hover { color: #fff; background: rgba(178,160,255,.08); }
+html[data-route="app"] .shell .watch-btn:hover { color: #fff; background: rgba(226, 220, 206,.08); }
 html[data-route="app"] .shell .watch-btn.on { color: var(--pk-warning); }
 html[data-route="app"] .shell .ex-rid { display: inline-flex; align-items: center; gap: .3rem; margin-left: -.4rem; }
-html[data-route="app"] .shell .trade-issuer { display: block; color: #a9a4c4; }
+html[data-route="app"] .shell .trade-issuer { display: block; color: #A3AAB5; }
 
 /* ---------- lifecycle tour ---------- */
-html[data-route="app"] .tour { margin: 0 0 1.5rem; border: 1px solid rgba(143,114,255,.35); border-radius: 10px; background: var(--pk-surface); }
+html[data-route="app"] .tour { margin: 0 0 1.5rem; border: 1px solid rgba(226, 220, 206,.35); border-radius: 10px; background: var(--pk-surface); }
 html[data-route="app"] .tour > header { display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; padding: 1rem 1.1rem .7rem; }
 html[data-route="app"] .tour > header h2 { margin: 0 0 .2rem; }
 html[data-route="app"] .tour > header p { margin: 0; font-size: .85rem; }
-html[data-route="app"] .tour-meta { display: flex; align-items: center; gap: .7rem; color: #d8d4ec; }
-html[data-route="app"] .tour-bar { height: 3px; margin: 0 1.1rem; border-radius: 3px; background: rgba(178,160,255,.12); overflow: hidden; }
+html[data-route="app"] .tour-meta { display: flex; align-items: center; gap: .7rem; color: #E3E1DD; }
+html[data-route="app"] .tour-bar { height: 3px; margin: 0 1.1rem; border-radius: 3px; background: rgba(226, 220, 206,.12); overflow: hidden; }
 html[data-route="app"] .tour-bar i { display: block; height: 100%; background: var(--n-violet); transition: width .3s var(--ease); }
 html[data-route="app"] .tour ol { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); margin: .4rem 0 0; padding: 0; list-style: none; }
-html[data-route="app"] .tour li { display: grid; grid-template-columns: auto minmax(0, 1fr); align-content: start; gap: .35rem .6rem; padding: .75rem 1.1rem; border-top: 1px solid var(--line); color: #a9a4c4; }
+html[data-route="app"] .tour li { display: grid; grid-template-columns: auto minmax(0, 1fr); align-content: start; gap: .35rem .6rem; padding: .75rem 1.1rem; border-top: 1px solid var(--line); color: #A3AAB5; }
 html[data-route="app"] .tour li > :nth-child(3) { grid-column: 2; justify-self: start; }
 html[data-route="app"] .tour-n { display: grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; border: 1px solid var(--line-strong); font-size: .78rem; font-weight: 600; }
 html[data-route="app"] .tour-t { display: grid; gap: .1rem; }
-html[data-route="app"] .tour-t b { color: #d8d4ec; font-weight: 600; font-size: .9rem; }
+html[data-route="app"] .tour-t b { color: #E3E1DD; font-weight: 600; font-size: .9rem; }
 html[data-route="app"] .tour-t small { font-size: .78rem; }
 html[data-route="app"] .tour li.done .tour-n { border-color: var(--pk-success); color: var(--pk-success); }
-html[data-route="app"] .tour li.next { background: rgba(143,114,255,.08); }
+html[data-route="app"] .tour li.next { background: rgba(226, 220, 206,.08); }
 html[data-route="app"] .tour li.next .tour-n { background: var(--n-violet); color: #fff; border-color: var(--n-violet); }
 html[data-route="app"] .tour li.next b { color: #fff; }
 html[data-route="app"] .shell .tour-reopen { display: inline-flex; align-items: center; gap: .4rem; min-height: 44px; margin: 0 0 1rem; padding: 0; border: 0; background: none; color: var(--n-violet-l); font: 500 .85rem var(--n-sans); cursor: pointer; }
@@ -54,21 +54,21 @@ html[data-route="app"] .pay-doc-id { font-family: var(--n-mono); color: var(--n-
 html[data-route="app"] .shell .pay-doc h2 { margin: .6rem 0 1rem; font-size: 1.35rem; }
 html[data-route="app"] .pay-facts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 1.2rem; margin: 0; border-top: 1px solid var(--line); }
 html[data-route="app"] .pay-facts > div { display: grid; gap: .15rem; padding: .7rem 0; border-bottom: 1px solid var(--line); min-width: 0; }
-html[data-route="app"] .pay-facts dt { color: #9d98bb; font-size: .78rem; }
+html[data-route="app"] .pay-facts dt { color: #B2ACA1; font-size: .78rem; }
 html[data-route="app"] .pay-facts dd { margin: 0; color: #fff; overflow-wrap: anywhere; }
-html[data-route="app"] .pay-scope { margin: .9rem 0 0; color: #a9a4c4; font-size: .85rem; }
+html[data-route="app"] .pay-scope { margin: .9rem 0 0; color: #A3AAB5; font-size: .85rem; }
 html[data-route="app"] .pay-ack { margin-top: 1.2rem; padding-top: 1rem; border-top: 1px solid var(--line); }
 html[data-route="app"] .pay-ack h3 { margin: 0 0 .4rem; }
 html[data-route="app"] .pay-ack p { margin: 0 0 .7rem; font-size: .9rem; }
 html[data-route="app"] .pay-ack-ok { display: flex; gap: .6rem; padding: .75rem .9rem; border: 1px solid rgba(62,207,142,.4); border-radius: 8px; background: rgba(62,207,142,.07); color: #d8f5e7; }
 html[data-route="app"] .pay-ack-bad { padding: .75rem .9rem; border: 1px solid rgba(255,107,114,.45); border-radius: 8px; background: rgba(255,107,114,.07); color: #ffd3d5; }
 html[data-route="app"] .pay-ack-done { display: grid; gap: .5rem; justify-items: start; }
-html[data-route="app"] .pay-ack-done code { display: block; max-width: 100%; padding: .5rem .6rem; border-radius: 6px; background: #0b0916; color: #c9c4de; font-size: .72rem; overflow-wrap: anywhere; }
+html[data-route="app"] .pay-ack-done code { display: block; max-width: 100%; padding: .5rem .6rem; border-radius: 6px; background: #11161D; color: #D6D2CC; font-size: .72rem; overflow-wrap: anywhere; }
 html[data-route="app"] .pay-panel { display: grid; gap: .5rem; position: sticky; top: 1rem; }
-html[data-route="app"] .pay-label { color: #9d98bb; font-size: .78rem; text-transform: uppercase; letter-spacing: .04em; }
+html[data-route="app"] .pay-label { color: #B2ACA1; font-size: .78rem; text-transform: uppercase; letter-spacing: .04em; }
 html[data-route="app"] .shell .pay-amount { color: #fff; font-size: 1.9rem; font-weight: 500; line-height: 1.1; }
 html[data-route="app"] .pay-panel .btn.primary { margin-top: .6rem; min-height: 48px; }
-html[data-route="app"] .pay-warn { margin: .4rem 0 0; padding: .7rem .8rem; border: 1px solid rgba(244,181,69,.35); border-radius: 8px; background: rgba(244,181,69,.07); color: #e6e1f5; font-size: .82rem; line-height: 1.45; }
+html[data-route="app"] .pay-warn { margin: .4rem 0 0; padding: .7rem .8rem; border: 1px solid rgba(244,181,69,.35); border-radius: 8px; background: rgba(244,181,69,.07); color: #EDECE9; font-size: .82rem; line-height: 1.45; }
 html[data-route="app"] .pay-links { display: flex; gap: .5rem; flex-wrap: wrap; margin-top: .4rem; }
 
 /* ---------- portfolio tools ---------- */
