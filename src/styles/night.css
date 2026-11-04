@@ -6,7 +6,7 @@ html[data-route="app"] {
   --pk-text: #f4f2ff; --pk-muted: #9a95b8; --pk-accent: #ffffff; --pk-accent-text: #0b0918; --pk-accent-hover: #e8e5f7;
   --pk-success: #3ecf8e; --pk-danger: #ff6b72; --pk-warning: #f4b545;
   --n-violet: #8f72ff; --n-violet-l: #c3b4ff; --n-info: #8aa6ff;
-  --n-sans: "Hanken Grotesk", "Segoe UI", system-ui, -apple-system, sans-serif;
+  --n-sans: "Inter", "Segoe UI", system-ui, -apple-system, sans-serif;
   --n-serif: "Newsreader", "Iowan Old Style", Georgia, serif;
   --n-mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   --font: var(--n-sans);

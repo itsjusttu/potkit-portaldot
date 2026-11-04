@@ -1,0 +1,101 @@
+/* Clean fintech layer for the app, loaded last. Ivory canvas, white surfaces, 1px lines, one navy accent, serif page titles,
+   tabular figures. Tokens live in brand.css; the colour overrides of the light theme are in night-light.css.
+   Light is the default theme. This file removes what the older layers added on top: gradients, glow, blur and heavy shadows. */
+
+/* ---- typography, both themes ---- */
+html[data-route="app"] .shell h1 { font-family: var(--bk-serif) !important; font-weight: 400 !important; font-size: clamp(1.9rem, 3vw, 2.5rem) !important; line-height: 1.1 !important; letter-spacing: -.012em !important; }
+html[data-route="app"] .shell :is(.num, td.num, dd.num, .kpi b, .nv-kpi b, .trade-row-price, .trade-row-apr, .trade-row-due, .trade-row-units) { font-variant-numeric: tabular-nums; }
+
+/* ---- light theme (default): tokens ---- */
+html[data-route="app"][data-theme="light"] {
+  --bk-radius-card: 10px;
+  --n-violet: var(--bk-navy); --n-violet-l: var(--bk-navy-2);
+  --nv-card: #FFFFFF; --nv-edge: var(--bk-line); --nv-cta: var(--bk-navy); --nv-cta-hi: var(--bk-navy-2);
+  --focus-ring: 0 0 0 2px #FFFFFF, 0 0 0 4px var(--bk-navy);
+}
+
+/* flat chrome: no gradients, glow, blur or heavy shadows */
+html[data-route="app"][data-theme="light"] .shell .top { background: transparent !important; backdrop-filter: none !important; -webkit-backdrop-filter: none !important; box-shadow: none !important; border: 0 !important; border-bottom: 1px solid var(--bk-line) !important; border-radius: 0 !important; }
+html[data-route="app"][data-theme="light"] .shell :is(.card, .nv-card, .db-card, .btn, .side, .pf2-sec, .pf2-balances, .trade-market-card, .quick-buy-panel, .sell-panel, .cert, .inv-card, .explore-card, .nv-kpi, .wiz-pane, .pr-card, .trade-kpis, .trade-bar) { box-shadow: none !important; backdrop-filter: none !important; -webkit-backdrop-filter: none !important; }
+html[data-route="app"][data-theme="light"] .shell :is(.card, .nv-card, .db-card, .pf2-sec, .trade-market-card, .quick-buy-panel, .sell-panel, .inv-card, .explore-card, .wiz-pane, .pr-card, .trade-kpis, .trade-bar) { background: var(--bk-surface) !important; border: 1px solid var(--bk-line) !important; border-radius: var(--bk-radius-card) !important; }
+html[data-route="app"][data-theme="light"] .shell .btn { border-radius: 8px; }
+
+/* primary actions: solid navy, white text, one per screen */
+html[data-route="app"][data-theme="light"] .shell :is(.btn.primary, .cw-btn:not(.on), .bn-main) { background: var(--bk-navy) !important; border: 1px solid var(--bk-navy) !important; box-shadow: none !important; color: #FFFFFF !important; }
+html[data-route="app"][data-theme="light"] .shell :is(.btn.primary, .cw-btn:not(.on)):hover:not(:disabled) { background: var(--bk-navy-2) !important; }
+
+/* links and key numbers: bronze text on ivory is only for links; selection and focus use navy */
+html[data-route="app"][data-theme="light"] .shell :is(a:not(.btn), .nv-link, .nv-inline, .nv-next, .link, .term-q) { color: var(--bk-bronze-text) !important; }
+html[data-route="app"][data-theme="light"] .shell .side-item.on { background: #ECE7DB !important; border-color: var(--bk-line) !important; color: var(--bk-navy) !important; }
+
+/* charts and meters: solid navy, status keeps its own colour */
+html[data-route="app"][data-theme="light"] .shell .nv-histo i, html[data-route="app"][data-theme="light"] .shell .nv-segs i.on, html[data-route="app"][data-theme="light"] .shell .nv-link-dot { background: var(--bk-navy); box-shadow: none; }
+html[data-route="app"][data-theme="light"] .shell .nv-histo i.past { background: var(--bk-late); }
+html[data-route="app"][data-theme="light"] .shell .nv-ico { background: #F3EEE3; border: 1px solid var(--bk-line); box-shadow: none; color: var(--bk-navy); }
+
+/* figures are set in the sans face with tabular digits; monospace stays for addresses and hashes */
+html[data-route="app"] .shell :is(.num, td.num, dd.num, .kpi b, .nv-kpi b, .nv-big, .nv-gauge-v, .trade-row-price, .trade-row-apr, .trade-row-due, .trade-row-units, .trade-kpis strong, .pf2-balances strong, .cert-facts dd) { font-family: var(--bk-sans) !important; font-variant-numeric: tabular-nums; letter-spacing: 0; }
+
+/* light theme: the page frame is flat, the top bar has no wash, inline links are bronze, navigation links keep their colour */
+html[data-route="app"][data-theme="light"] .shell > main { border-radius: 0 !important; }
+html[data-route="app"][data-theme="light"] .shell .top { background-image: none !important; }
+html[data-route="app"][data-theme="light"] .shell :is(a:not(.btn), .nv-link, .nv-inline, .nv-next, .link, .term-q) { color: inherit !important; }
+html[data-route="app"][data-theme="light"] .shell main :is(p, td, li, small, dd, .muted) a:not(.btn):not(.side-item), html[data-route="app"][data-theme="light"] .shell :is(.nv-link, .nv-inline, .nv-next, .link, .term-q) { color: var(--bk-bronze-text) !important; }
+
+/* desktop sidebar: the whole column scrolls and the section list is never clipped; short windows drop the helper text */
+@media (min-width: 68.8rem) {
+  html[data-route="app"] .shell > .side { overflow-y: auto; overflow-x: hidden; }
+  html[data-route="app"] .shell .side .side-nav { flex: 0 0 auto; overflow: visible; }
+  html[data-route="app"] .shell .side .side-support { margin-top: auto; }
+  html[data-route="app"] .shell .side .side-wallet { flex: none; }
+}
+@media (min-width: 68.8rem) and (max-height: 800px) {
+  html[data-route="app"] .shell .side { gap: .7rem; }
+  html[data-route="app"] .shell .side .side-collapse, html[data-route="app"] .shell .side .sw-note { display: none; }
+  html[data-route="app"] .shell .side .side-group + .side-group { margin-top: .2rem; }
+}
+
+/* Verify: the receipt reads as a document; the state checks sit inside it, so the card has no empty middle */
+html[data-route="app"][data-theme="light"] .shell .cert { background: var(--bk-surface) !important; background-image: none !important; border: 1px solid var(--bk-line) !important; border-radius: var(--bk-radius-card) !important; box-shadow: none !important; }
+html[data-route="app"] .shell .cert .c-c { display: none; }
+html[data-route="app"][data-theme="light"] .shell .cert .seal { color: var(--bk-open); filter: none; }
+html[data-route="app"][data-theme="light"] .shell .cert.good .seal { color: var(--bk-ok); }
+html[data-route="app"][data-theme="light"] .shell .cert.bad .seal { color: var(--bk-late); }
+html[data-route="app"][data-theme="light"] .shell .cert.warn .seal { color: var(--bk-bronze-text); }
+html[data-route="app"][data-theme="light"] .shell .cert .seal b { font-family: var(--bk-sans); letter-spacing: .14em; }
+html[data-route="app"][data-theme="light"] .shell .cert-facts { border: 1px solid var(--bk-line); border-radius: 8px; overflow: hidden; gap: 0; }
+html[data-route="app"][data-theme="light"] .shell .cert-facts > div { border: 0; border-top: 1px solid var(--bk-line); border-radius: 0; }
+html[data-route="app"][data-theme="light"] .shell .cert-facts > div:nth-child(-n+2) { border-top: 0; }
+html[data-route="app"][data-theme="light"] .shell .cert-facts > div:nth-child(even) { border-left: 1px solid var(--bk-line); }
+html[data-route="app"] .shell .cert-checks { margin-top: 1.4rem; padding-top: 1.1rem; border-top: 1px solid var(--bk-line); }
+html[data-route="app"] .shell .cert-checks .h-sub { margin: 0 0 .6rem; font-size: 1rem; }
+html[data-route="app"] .shell .cert-checks .vchecks { margin: 0; }
+html[data-route="app"] .shell .cert-checks .vc-k { display: grid; gap: .15rem; }
+html[data-route="app"] .shell .cert-checks .vc-k small { display: block; }
+html[data-route="app"][data-theme="light"] .shell .cert .seal, html[data-route="app"][data-theme="light"] .shell .cert .seal b { color: var(--bk-open) !important; }
+html[data-route="app"][data-theme="light"] .shell .cert.good .seal, html[data-route="app"][data-theme="light"] .shell .cert.good .seal b { color: var(--bk-ok) !important; }
+html[data-route="app"][data-theme="light"] .shell .cert.bad .seal, html[data-route="app"][data-theme="light"] .shell .cert.bad .seal b { color: var(--bk-late) !important; }
+html[data-route="app"][data-theme="light"] .shell .cert.warn .seal, html[data-route="app"][data-theme="light"] .shell .cert.warn .seal b { color: var(--bk-bronze-text) !important; }
+html[data-route="app"][data-theme="light"] .shell .cert .seal svg { stroke: currentColor !important; filter: none !important; }
+
+/* skeleton loaders: a quiet pulse in the surface tone, so no screen is blank while the RPC answers */
+html[data-route="app"][data-theme="light"] .skel { background: #ECE6D9; border-radius: 4px; }
+html[data-route="app"] .skel.kpi-skel { display: inline-block; width: 5.5rem; height: 1.6rem; vertical-align: middle; }
+html[data-route="app"] .verify-skel { display: grid; gap: .8rem; padding: 1.5rem; border: 1px solid var(--bk-line); border-radius: var(--bk-radius-card, 10px); }
+@media (prefers-reduced-motion: reduce) { html[data-route="app"] .skel { animation: none; } }
+
+/* leftovers of the old violet washes: 1px ivory lines and ivory tints instead */
+html[data-route="app"][data-theme="light"] .shell :is(.term-q, .nv-rcard, .nv-rcard-foot, .ms-rail, footer) { border-color: var(--bk-line) !important; }
+html[data-route="app"][data-theme="light"] .shell .ms-rail { background: var(--bk-line) !important; }
+html[data-route="app"][data-theme="light"] .shell :is(.chip .count, .chip b, .seg-tabs .count, .tabs .count, [class*="count"]):not(.num) { background: #ECE7DB !important; color: var(--bk-navy) !important; }
+html[data-route="app"][data-theme="light"] .shell .issue-steps li.active { background: #F1ECE2 !important; border-color: var(--bk-line) !important; }
+html[data-route="app"][data-theme="light"] .shell :is(.issue-steps li.active, .wiz-preview, .trade-bar) { box-shadow: none !important; }
+
+/* the mark is already navy on ivory: no inversion */
+html[data-route="app"] .shell :is(.top-brand, .side-brand, .nv-rcard-top) img { filter: none !important; border-radius: 8px; }
+/* phone: the three headline figures read as one ruled block, not cards inside a card */
+@media (max-width: 52rem) {
+  html[data-route="app"][data-theme="light"] .shell .nv .nv-kpis { background: var(--bk-surface); border: 1px solid var(--bk-line); border-radius: var(--bk-radius-card); }
+  html[data-route="app"][data-theme="light"] .shell .nv .nv-kpis .nv-kpi { background: transparent !important; border: 0 !important; border-top: 1px solid var(--bk-line) !important; border-radius: 0 !important; }
+  html[data-route="app"][data-theme="light"] .shell .nv .nv-kpis .nv-kpi:first-child { border-top: 0 !important; }
+}
