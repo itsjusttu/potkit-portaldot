@@ -129,12 +129,12 @@ html[data-route="landing"]:has(.lp), html[data-route="landing"]:has(.lp) body { 
 
 /* reveals: fade and rise once; large type slides up out of a mask */
 .lp-rv { transition: opacity .7s ease var(--d, 0ms), transform .7s cubic-bezier(.2, .7, .2, 1) var(--d, 0ms); }
-.lp-js .lp-rv:not(.in) { opacity: 0; transform: translateY(14px); }
+[data-js] .lp-rv:not([data-in]) { opacity: 0; transform: translateY(14px); }
 .lp-line { display: block; overflow: hidden; padding-bottom: .12em; }
 .lp-line > span { display: block; transition: transform .9s cubic-bezier(.2, .7, .2, 1) .05s; }
 .lp-line.d1 > span { transition-delay: .18s; }
-.lp-js .lp-line:not(.in) > span { transform: translateY(105%); }
-@media (prefers-reduced-motion: reduce) { .lp-rv, .lp-line > span { transition: none; } .lp-js .lp-rv:not(.in) { opacity: 1; transform: none; } .lp-js .lp-line:not(.in) > span { transform: none; } }
+[data-js] .lp-line:not([data-in]) > span { transform: translateY(105%); }
+@media (prefers-reduced-motion: reduce) { .lp-rv, .lp-line > span { transition: none; } [data-js] .lp-rv:not([data-in]) { opacity: 1; transform: none; } [data-js] .lp-line:not([data-in]) > span { transform: none; } }
 
 /* ---------- pinned block: Receipts, Market, Settlement ---------- */
 .lp-pin { position: relative; height: 330vh; --p: 0; }

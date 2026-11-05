@@ -76,14 +76,26 @@ export function LpShell({ children, plain = false }: { children: ReactNode; plai
   }, []);
 
   // reveal: fade and 12px rise once; lines of large type slide up from a mask. Without JavaScript or with reduced motion everything stays visible.
+  // The state lives in data-* attributes, not in class names: React owns className and rewrites it on every render (scroll state, active step).
+  // Items that mount later (Help search results, filtered FAQ) are picked up by a MutationObserver.
   useEffect(() => {
     const el = root.current; if (!el) return;
-    const items = [...el.querySelectorAll<HTMLElement>(".lp-rv, .lp-line")];
-    if (typeof IntersectionObserver === "undefined" || matchMedia("(prefers-reduced-motion: reduce)").matches) { items.forEach((i) => i.classList.add("in")); return; }
-    el.classList.add("lp-js");
-    const io = new IntersectionObserver((es) => es.forEach((e) => { if (e.isIntersecting) { e.target.classList.add("in"); io.unobserve(e.target); } }), { rootMargin: "0px 0px -8% 0px" });
-    items.forEach((i) => io.observe(i));
-    return () => io.disconnect();
+    const all = () => [...el.querySelectorAll<HTMLElement>(".lp-rv, .lp-line")];
+    const show = (n: Element) => n.setAttribute("data-in", "");
+    if (typeof IntersectionObserver === "undefined" || matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      all().forEach(show);
+      const mo = new MutationObserver(() => all().forEach(show));
+      mo.observe(el, { childList: true, subtree: true });
+      return () => mo.disconnect();
+    }
+    el.setAttribute("data-js", "");
+    const io = new IntersectionObserver((es) => es.forEach((e) => { if (e.isIntersecting) { show(e.target); io.unobserve(e.target); } }), { rootMargin: "0px 0px -8% 0px" });
+    const seen = new WeakSet<Element>();
+    const scan = () => all().forEach((i) => { if (!seen.has(i) && !i.hasAttribute("data-in")) { seen.add(i); io.observe(i); } });
+    scan();
+    const mo = new MutationObserver(scan);
+    mo.observe(el, { childList: true, subtree: true });
+    return () => { io.disconnect(); mo.disconnect(); };
   }, []);
 
   const closeMenu = () => setMenu(false);
