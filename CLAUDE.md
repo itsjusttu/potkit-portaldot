@@ -15,7 +15,7 @@ src/lib/chain.ts, VITE_* variable names or the transaction flow when changing vi
 
 ## LANDING (potkit.pro, `html[data-route="landing"]`)
 - `src/Landing.tsx` with `src/lp/lp.css` (scoped under `.lp`), `src/lp/useLive.ts` (chain reads), `src/lp/fx.tsx` (scroll helpers), `src/lp/Bento.tsx` (pinned block) and `src/lp/series.ts`.
-  Sections: announcement bar, floating pill nav, pinned photo hero whose frame shrinks while the headline splits, word-by-word statement, pinned Receipts/Market/Settlement block with charts built from chain events,
+  Sections: floating pill nav (no announcement bar), pinned photo hero whose frame shrinks while the headline splits, word-by-word statement, pinned Receipts/Market/Settlement block with charts built from chain events,
   large counting numerals, large-type statement, how it works (active step and receipt follow the scroll), honest limits, closing band, footer. No news or testimonial sections.
   Scroll effects only read the scroll position and write CSS variables (`--e`, `--s`, `--p`, `--c`); the page always scrolls natively, and below 900px or with reduced motion nothing is pinned.
 - Hero photo is the author's own work (Dragon Bridge, Da Nang). Exports in `src/assets/hero/` are WebP with all metadata removed; tone is changed in CSS
