@@ -48,8 +48,14 @@ test("event text: listings and buys are rounded for display, other events keep t
   assert.equal(eventText({ kind: "settle", id: 4, amount: 1n, text: "#4 settled" }), "#4 settled");
 });
 
-test("share unit: singular only for exactly one share", () => {
+test("share unit follows the displayed number: singular when the amount is shown as 1", () => {
   assert.equal(shareUnit(E18), "share");
+  for (const raw of [E18 + 4n * 10n ** 15n, E18 - 10n ** 13n]) { // 1.004 and 0.99999 are both displayed as "1"
+    assert.equal(fmtShares(raw), "1");
+    assert.equal(shareUnit(raw), "share");
+  }
+  assert.equal(shareUnit(E18 + 6n * 10n ** 15n), "shares"); // 1.006 is displayed as 1.01
+  assert.equal(eventText({ kind: "buy", id: 4, amount: E18 + 4n * 10n ** 15n, text: "x" }), "1 share of #4 bought");
   assert.equal(shareUnit(0n), "shares");
   assert.equal(shareUnit(5n * 10n ** 17n), "shares");
   assert.equal(shareUnit(2n * E18), "shares");

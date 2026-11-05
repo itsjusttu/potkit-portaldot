@@ -11,8 +11,8 @@ import { buildSeries, type Series } from "./series";
 export const KIT = "0x3c26351ad8b9dc7bb4f837c5b921879c35e20fb7";
 export const DEPLOY_BLOCK = 97421n;
 export const POLL_MS = 15_000;
-/** Documented in the README and DEVLOG: state-changing transactions on the kit, counted from its event logs. */
-export const SNAPSHOT = { txs: 28, date: "2026-11-04" } as const;
+/** Documented in the README, DEVLOG and the DoraHacks text: state-changing transactions on the kit, counted from its event logs (block 328567). */
+export const SNAPSHOT = { txs: 34, date: "2026-11-05" } as const;
 
 export type LiveReceipt = { id: number; note: string; kind: string; face: string; due: number; status: string; shares: string };
 export type Live = {

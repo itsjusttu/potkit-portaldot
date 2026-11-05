@@ -26,5 +26,6 @@ export function eventText(e: EventLike): string {
   return e.text;
 }
 
-/** "share" for exactly one share, "shares" otherwise (zero and fractions read as plural: 0.5 shares). */
-export const shareUnit = (raw: bigint, decimals = 18): "share" | "shares" => (raw === 10n ** BigInt(decimals) ? "share" : "shares");
+/** "share" when the amount is shown as exactly 1 (so 1.004 and 0.99999 read "1 share", like `fmtShares` prints them), "shares" otherwise
+    (zero and fractions read as plural: 0.5 shares). */
+export const shareUnit = (raw: bigint, decimals = 18): "share" | "shares" => (fmtShares(raw, decimals) === "1" ? "share" : "shares");
