@@ -118,6 +118,7 @@ html[data-route="app"]:not([data-theme="light"]) .shell .cert.bad .seal, html[da
 html[data-route="app"]:not([data-theme="light"]) .shell .cert.warn .seal, html[data-route="app"]:not([data-theme="light"]) .shell .cert.warn .seal b { color: #e8c15a !important; }
 html[data-route="app"] .shell :is(.trade-unconfigured, .t-explore > .empty) > :is(h2, h3) { justify-self: start; text-align: left !important; }
 html[data-route="app"] .shell .wallet-gate-title { margin: 1.4rem 0 1rem; }
+html[data-route="app"] .shell:has(.wallet-gate-title) .page-head { display: none !important; } /* the gate shows the title once */
 html[data-route="app"] .shell .wallet-gate-title p { margin-top: .35rem; }
 
 /* dark theme Verify: the seal ring takes the status colour too, and the four facts form one ruled table like the light theme */
@@ -141,6 +142,25 @@ html[data-route="app"]:not([data-theme="light"]) {
   --st-open: #9FB0CC; --st-soon: #D9A862; --st-late: #E58B78; --st-paid: #5FB389; --st-none: #A3AAB5;
   --shadow-1: none; --shadow-2: none;
 }
+/* light theme: profile tiles, gas balance, mapped account and the on-time ring carried dark-only fills from night-profile.css */
+html[data-route="app"][data-theme="light"] .shell .pr :is(.pr-stats > div, .pr-gas-bal, .profile-faucet-account, .pr-ico) { background: var(--bk-bg) !important; border: 1px solid var(--bk-line) !important; box-shadow: none !important; }
+html[data-route="app"][data-theme="light"] .shell .pr :is(.pr-stats dt, .pr-gas-bal span, .pr-faucet > small) { color: var(--bk-muted) !important; }
+html[data-route="app"][data-theme="light"] .shell .pr :is(.pr-stats dd, .pr-gas-bal b) { color: var(--bk-ink) !important; }
+html[data-route="app"][data-theme="light"] .shell .pr .pr-stats dd.good { color: var(--bk-ok) !important; }
+html[data-route="app"][data-theme="light"] .shell .pr .pr-stats dd.late { color: var(--bk-late) !important; }
+html[data-route="app"][data-theme="light"] .shell .pr .profile-faucet-account code { color: var(--bk-ink) !important; }
+html[data-route="app"][data-theme="light"] .shell .pr .pr-ico { color: var(--bk-navy) !important; }
+html[data-route="app"][data-theme="light"] .shell .pr .profile-rate { background: conic-gradient(var(--bk-bronze) 0 var(--rate, 0%), var(--bk-line) var(--rate, 0%) 100%) !important; box-shadow: none !important; }
+html[data-route="app"][data-theme="light"] .shell .pr .profile-rate::before { background: var(--bk-surface) !important; }
+html[data-route="app"][data-theme="light"] .shell .pr .profile-rate b { color: var(--bk-ink) !important; }
+html[data-route="app"][data-theme="light"] .shell .pr .profile-rate small { color: var(--bk-muted) !important; }
+html[data-route="app"][data-theme="light"] .shell .pr .profile-badge { background: var(--bk-bg) !important; border: 1px solid var(--bk-line) !important; color: var(--bk-muted) !important; }
+html[data-route="app"][data-theme="light"] .shell .pr .profile-badge > i { background: var(--bk-surface) !important; border: 1px solid var(--bk-line) !important; color: var(--bk-muted) !important; }
+html[data-route="app"][data-theme="light"] .shell .pr .profile-badge > span { color: inherit !important; }
+html[data-route="app"][data-theme="light"] .shell .pr .profile-badge.earned { background: var(--bk-surface) !important; border-color: #D9C6A6 !important; color: var(--bk-ink) !important; }
+html[data-route="app"][data-theme="light"] .shell .pr .profile-badge.earned > i { border-color: #D9C6A6 !important; color: var(--bk-bronze-text, #8A5A22) !important; }
+html[data-route="app"][data-theme="light"] .shell .pr .profile-badge.earned.green > i { border-color: #BFD3C6 !important; color: var(--bk-ok) !important; }
+
 html[data-route="app"]:not([data-theme="light"]) body, html[data-route="app"]:not([data-theme="light"]) .shell { background: #0E1218 !important; background-image: none !important; }
 html[data-route="app"]:not([data-theme="light"]) .shell > main { background: #11161D !important; background-image: none !important; }
 html[data-route="app"]:not([data-theme="light"]) .shell .side { background: #0E1218 !important; }
