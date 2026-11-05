@@ -4,10 +4,10 @@ import { KIT, useLive } from "./lp/useLive";
 import { Bento } from "./lp/Bento";
 import { LpShell, REPO, RPC, shortAddr, useLinks } from "./lp/Shell";
 import { Count, Words, smooth, useActiveStep, useCrossProgress, usePinProgress } from "./lp/fx";
-import hero2400 from "./assets/hero/hero-2400.webp";
-import hero1600 from "./assets/hero/hero-1600.webp";
-import heroM960 from "./assets/hero/hero-m-960.webp";
-import heroM640 from "./assets/hero/hero-m-640.webp";
+import flowers2400 from "./assets/hero/flowers-2400.webp";
+import flowers1600 from "./assets/hero/flowers-1600.webp";
+import flowers960 from "./assets/hero/flowers-960.webp";
+import cityHow from "./assets/hero/city-how-1080.webp";
 import city1920 from "./assets/hero/city-1920.mp4";
 import city1280 from "./assets/hero/city-1280.mp4";
 import poster1920 from "./assets/hero/city-poster-1920.webp";
@@ -17,7 +17,8 @@ import poster960 from "./assets/hero/city-poster-960.webp";
    as you scroll, large counting numerals, large type, a numbered walkthrough and a closing band. All code, copy and assets are PotKit's.
    Every figure is either read from the chain or documented in the repository; the receipt in "How it works" is labelled illustrative.
    Hero video: Pexels video 15170398 (Pexels licence; evening traffic by Diamond Plaza, Ho Chi Minh City), trimmed to a 5.7 s
-   crossfaded loop with no audio or metadata. Closing photo: own work (Dragon Bridge, Da Nang, at dusk). */
+   crossfaded loop with no audio or metadata; the How it works picture is a still cut from it. Closing photo: "Flower bicycle on a
+   vibrant street scene" by Tuan Phan, Pexels photo 37321262 (Pexels licence). */
 
 /** Muted looping street video. It plays only while on screen; with reduced motion it is a still frame. Phones get the 1280 px file. */
 function HeroVideo() {
@@ -212,6 +213,7 @@ export function Landing() {
               </ol>
             </div>
             <figure className="lp-how-art" ref={artRef}>
+              <img src={cityHow} width={1080} height={1350} loading="lazy" decoding="async" alt="" />
               <figcaption className="lp-doc" aria-label="Illustrative receipt">
                 <span className="lp-tag">Illustrative example · not live data</span>
                 <dl>
@@ -244,8 +246,7 @@ export function Landing() {
         {/* closing band */}
         <section className="lp-final" id="start">
           <picture className="lp-pic">
-            <source media="(max-width: 700px)" srcSet={`${heroM640} 640w, ${heroM960} 960w`} sizes="100vw" />
-            <img src={hero1600} srcSet={`${hero1600} 1600w, ${hero2400} 2400w`} sizes="100vw" width={1600} height={900} loading="lazy" decoding="async" alt="" />
+            <img src={flowers1600} srcSet={`${flowers960} 960w, ${flowers1600} 1600w, ${flowers2400} 2400w`} sizes="100vw" width={1600} height={1064} loading="lazy" decoding="async" alt="" />
           </picture>
           <div className="lp-hero-shade final" aria-hidden />
           <div className="lp-wrap lp-final-in lp-rv">
