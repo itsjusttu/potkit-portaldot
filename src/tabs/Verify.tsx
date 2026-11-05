@@ -111,6 +111,19 @@ export function Verify({ c }: { c: Ctx }) {
       {msg && <p className="banner err" role="alert">{msg}</p>}
       {loading && !res && <div className="verify-skel" role="status" aria-busy="true" aria-label="Reading Portaldot"><i className="skel h3 w40" /><i className="skel w80" /><i className="skel w60" /><i className="skel h3 w100" /><i className="skel w70" /></div>}
       {!res && !loading && !msg && <p className="muted verify-empty">Enter a receipt id to inspect its current on-chain state. Share-token address lookup covers loaded receipts only.</p>}
+      {!res && !loading && c.rows.length > 0 && (
+        <section className="verify-picks" aria-label="Receipts on this contract">
+          <h2 className="h-sub">Or pick a receipt on this contract</h2>
+          <div className="verify-pick-list">
+            {[...c.rows].sort((a, b) => b.id - a.id).slice(0, 6).map((row) => (
+              <button key={row.id} type="button" className="verify-pick" onClick={() => { setInput(String(row.id)); void check(String(row.id)); }}>
+                <b className="num">#{row.id}</b><span>{row.note || KINDS[row.kind]}</span>
+                <small>{row.settle.settled ? "Settled" : row.status === "Pending" ? "Open" : row.status === "Free" ? "Not locked" : row.status}</small>
+              </button>
+            ))}
+          </div>
+        </section>
+      )}
       {res && r && (
         <div className="verify-result" aria-live="polite">
           <article className={`cert ${fails || overdueUnpaid ? "bad" : currentSettle || currentLock ? "good" : "warn"}`}>

@@ -142,6 +142,23 @@ html[data-route="app"]:not([data-theme="light"]) {
   --st-open: #9FB0CC; --st-soon: #D9A862; --st-late: #E58B78; --st-paid: #5FB389; --st-none: #A3AAB5;
   --shadow-1: none; --shadow-2: none;
 }
+/* notices (gas tip, no-gas, network bar, banners, checks, empty states) still carried the dark gradients of app.css in both themes */
+html[data-route="app"][data-theme="light"] .shell :is(.tip, .nogas, .netbar, .banner, .check, .empty) { background: var(--bk-surface) !important; background-image: none !important; border: 1px solid var(--bk-line) !important; box-shadow: none !important; color: var(--bk-muted); }
+html[data-route="app"][data-theme="light"] .shell .tip summary { color: var(--bk-ink) !important; }
+html[data-route="app"]:not([data-theme="light"]) .shell :is(.tip, .nogas, .netbar, .banner, .check, .empty) { background: #141A22 !important; background-image: none !important; box-shadow: none !important; }
+
+/* Verify: quick picks from the loaded receipts while nothing has been looked up */
+html[data-route="app"] .shell .verify-picks { margin-top: 1.5rem; }
+html[data-route="app"] .shell .verify-pick-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(13rem, 1fr)); gap: .75rem; margin-top: .75rem; }
+html[data-route="app"] .shell .verify-pick { display: grid; grid-template-columns: auto 1fr; grid-template-rows: auto auto; gap: .15rem .7rem; align-items: baseline; padding: .85rem 1rem; text-align: left; border: 1px solid var(--bk-line); border-radius: var(--bk-radius-card, 12px); background: var(--bk-surface); color: var(--bk-ink); cursor: pointer; transition: border-color .15s; }
+html[data-route="app"] .shell .verify-pick:hover, html[data-route="app"] .shell .verify-pick:focus-visible { border-color: var(--bk-navy); }
+html[data-route="app"] .shell .verify-pick b { grid-row: 1 / 3; font-size: 1.15rem; font-weight: 500; }
+html[data-route="app"] .shell .verify-pick span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 500; }
+html[data-route="app"] .shell .verify-pick small { color: var(--bk-muted); font-size: .78rem; }
+html[data-route="app"]:not([data-theme="light"]) .shell .verify-pick { background: #141A22; border-color: rgba(226, 220, 206, .14); color: #ECE7DD; }
+html[data-route="app"]:not([data-theme="light"]) .shell .verify-pick:hover, html[data-route="app"]:not([data-theme="light"]) .shell .verify-pick:focus-visible { border-color: #D4A15E; }
+html[data-route="app"]:not([data-theme="light"]) .shell .verify-pick small { color: #A3AAB5; }
+
 /* light theme: the "?" term popover was a dark box whose text the light rules turned dark; the open "?" lost its mark on navy */
 html[data-route="app"][data-theme="light"] .term-pop { background: var(--bk-surface) !important; border: 1px solid var(--bk-line) !important; color: var(--bk-muted) !important; box-shadow: 0 12px 32px -12px rgba(20, 24, 31, .28) !important; }
 html[data-route="app"][data-theme="light"] .term-pop b { color: var(--bk-ink) !important; }
