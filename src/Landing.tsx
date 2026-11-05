@@ -8,8 +8,6 @@ import hero2400 from "./assets/hero/hero-2400.webp";
 import hero1600 from "./assets/hero/hero-1600.webp";
 import heroM960 from "./assets/hero/hero-m-960.webp";
 import heroM640 from "./assets/hero/hero-m-640.webp";
-import sunset640 from "./assets/hero/sunset-640.webp";
-
 /* PotKit landing (potkit.pro). Structure and scroll feel follow the "open finance" landing pages: a full-bleed photo hero that
    shrinks into framed art while the headline splits, a floating pill navigation, a pinned block whose cards and charts change
    as you scroll, large counting numerals, large type, a numbered walkthrough and a closing band. All code, copy and assets are PotKit's.
@@ -196,7 +194,8 @@ export function Landing() {
               </ol>
             </div>
             <figure className="lp-how-art" ref={artRef}>
-              <img src={hero1600} width={1600} height={900} loading="lazy" decoding="async" alt="" />
+              {/* the picture is shown about 1.9x enlarged, so it asks for the large file */}
+              <img src={hero2400} srcSet={`${hero1600} 1600w, ${hero2400} 2400w`} sizes="(max-width: 900px) 200vw, 100vw" width={2400} height={1350} loading="lazy" decoding="async" alt="" />
               <figcaption className="lp-doc" aria-label="Illustrative receipt">
                 <span className="lp-tag">Illustrative example · not live data</span>
                 <dl>
@@ -229,7 +228,8 @@ export function Landing() {
         {/* closing band */}
         <section className="lp-final" id="start">
           <picture className="lp-pic">
-            <img src={sunset640} width={640} height={480} loading="lazy" decoding="async" alt="" />
+            <source media="(max-width: 700px)" srcSet={`${heroM640} 640w, ${heroM960} 960w`} sizes="100vw" />
+            <img src={hero1600} srcSet={`${hero1600} 1600w, ${hero2400} 2400w`} sizes="100vw" width={1600} height={900} loading="lazy" decoding="async" alt="" />
           </picture>
           <div className="lp-hero-shade final" aria-hidden />
           <div className="lp-wrap lp-final-in lp-rv">

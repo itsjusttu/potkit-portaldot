@@ -267,8 +267,8 @@ html[data-route="landing"]:has(.lp), html[data-route="landing"]:has(.lp) body { 
 
 /* ---------- closing band ---------- */
 .lp-final { position: relative; display: grid; place-items: center; min-height: 32rem; color: #fff; text-align: center; background: #0d1626; overflow: hidden; }
-.lp-final .lp-pic img { object-position: 50% 55%; }
-.lp-hero-shade.final { opacity: 1; background: linear-gradient(to bottom, rgba(8, 13, 23, .42), rgba(8, 13, 23, .58)); }
+.lp-final .lp-pic img { object-position: 50% 30%; }
+.lp-hero-shade.final { opacity: 1; background: linear-gradient(to bottom, rgba(8, 13, 23, .38), rgba(8, 13, 23, .6)); }
 .lp-final-in { position: relative; z-index: 2; padding-block: 5rem; }
 .lp-final h2 { color: #fff; max-width: 40rem; margin-inline: auto; }
 .lp-final p { max-width: 32rem; margin: 1rem auto 2rem; color: rgba(255, 255, 255, .88); }
