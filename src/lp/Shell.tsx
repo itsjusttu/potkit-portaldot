@@ -91,10 +91,6 @@ export function LpShell({ children, plain = false }: { children: ReactNode; plai
     <div className={`lp ${plain ? "lp-plain" : ""} ${scrolled ? "scrolled" : ""} ${menu ? "menu-open" : ""}`} ref={root}>
       <a className="lp-skip" href="#lp-main">Skip to content</a>
       <div className="lp-top">
-        <div className="lp-bar"><div className="lp-wrap">
-          <span>Live on Portaldot V3 testnet · Open-source · Unaudited</span>
-          <a href={REPO} {...ext}>View the repository<span aria-hidden> →</span></a>
-        </div></div>
         <header className="lp-head"><div className="lp-wrap lp-head-in">
           <a className="lp-logo" href="/" aria-label="PotKit home"><Mark size={28} /><span>PotKit</span></a>
           <MegaNav menus={buildMenus(launch, tab)} launch={launch} photo={hero1600} onNavigate={closeMenu} />

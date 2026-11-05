@@ -8,6 +8,7 @@ import hero2400 from "./assets/hero/hero-2400.webp";
 import hero1600 from "./assets/hero/hero-1600.webp";
 import heroM960 from "./assets/hero/hero-m-960.webp";
 import heroM640 from "./assets/hero/hero-m-640.webp";
+import sunset640 from "./assets/hero/sunset-640.webp";
 
 /* PotKit landing (potkit.pro). Structure and scroll feel follow the "open finance" landing pages: a full-bleed photo hero that
    shrinks into framed art while the headline splits, a floating pill navigation, a pinned block whose cards and charts change
@@ -228,8 +229,7 @@ export function Landing() {
         {/* closing band */}
         <section className="lp-final" id="start">
           <picture className="lp-pic">
-            <source media="(max-width: 700px)" srcSet={`${heroM640} 640w`} sizes="100vw" />
-            <img src={hero1600} width={1600} height={900} loading="lazy" decoding="async" alt="" />
+            <img src={sunset640} width={640} height={480} loading="lazy" decoding="async" alt="" />
           </picture>
           <div className="lp-hero-shade final" aria-hidden />
           <div className="lp-wrap lp-final-in lp-rv">
