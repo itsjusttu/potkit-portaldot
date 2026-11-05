@@ -54,6 +54,8 @@ html[data-route="landing"]:has(.lp), html[data-route="landing"]:has(.lp) body { 
 .lp-frame { position: absolute; left: 50%; top: calc(50% - var(--e) * 5vh); width: calc(100vw - (100vw - var(--fw)) * var(--e)); height: calc(100vh - (100vh - var(--fh)) * var(--e)); transform: translate(-50%, -50%); border-radius: calc(var(--e) * 30px); overflow: hidden; background: #0d1626; }
 .lp-pic, .lp-pic img, .lp-pic video { position: absolute; inset: 0; width: 100%; height: 100%; }
 .lp-pic img, .lp-pic video { object-fit: cover; object-position: 40% 50%; }
+/* the hero video is enlarged from its lower edge so the brand signs on top of the tower (Lotte, FWD, Diamond Plaza) stay out of frame */
+.lp-hero .lp-pic :is(video, img), .lp-fr img { transform-origin: 40% 100%; transform: scale(1.2); }
 .lp-hero-shade { position: absolute; inset: 0; opacity: calc(1 - var(--e) * .85); background:
   linear-gradient(to bottom, rgba(22, 35, 59, .34) 0%, rgba(22, 35, 59, 0) 36%),
   linear-gradient(to top, rgba(8, 13, 23, .7) 0%, rgba(8, 13, 23, 0) 62%),
