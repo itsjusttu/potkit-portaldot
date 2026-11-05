@@ -18,8 +18,10 @@ src/lib/chain.ts, VITE_* variable names or the transaction flow when changing vi
   Sections: floating pill nav (no announcement bar), pinned photo hero whose frame shrinks while the headline splits, word-by-word statement, pinned Receipts/Market/Settlement block with charts built from chain events,
   large counting numerals, large-type statement, how it works (active step and receipt follow the scroll), honest limits, closing band, footer. No news or testimonial sections.
   Scroll effects only read the scroll position and write CSS variables (`--e`, `--s`, `--p`, `--c`); the page always scrolls natively, and below 900px or with reduced motion nothing is pinned.
-- Hero photo is the author's own work (Dragon Bridge, Da Nang). Exports in `src/assets/hero/` are WebP with all metadata removed; tone is changed in CSS
-  (overlay) only, never in the file. Credit stays in the footer, the README and submission/DORAHACKS.md.
+- Hero is a muted looping video from Pexels (video 15170398, Pexels licence, Ho Chi Minh City; `city-*.mp4` with `city-poster-*.webp`, no audio or metadata),
+  paused off screen and a still frame under reduced motion. The Dragon Bridge photo (Da Nang) is the author's own work, used in the closing band and menu previews.
+  Images are WebP with all metadata removed; tone is changed in CSS (overlay) only, never in the file. Only use media that is the author's own or carries a
+  clear free licence, and credit it in the footer, the README and submission/DORAHACKS.md. "How it works" uses a flat navy panel, no photo.
 - /help uses the landing system (`src/Help.tsx`, shared chrome `src/lp/Shell.tsx`). The other doc pages (/how-it-works, /protocol, /security) still use the older marketing system (`src/landing-pk.css`, `src/docs/docs-pk.css`, `src/plShell.tsx`).
   Nothing there may leak into the landing or the app.
 - Never invent evidence: no customer logos, testimonials, usage numbers or partner claims. Every figure is read from the chain or dated and documented in the
