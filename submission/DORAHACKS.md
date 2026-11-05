@@ -55,7 +55,7 @@ flowchart LR
   KIT -- "events from token address" --> SHARE
   META -- "Lens.tokenJson via eth_call" --> KIT
   UI -- "request gas" --> FAUCET
-  WALLET["Wallet (MetaMask)"] --- UI
+  WALLET["Wallet (MetaMask, OKX...)<br/>via Privy or the built-in picker"] --- UI
 ```
 
 **Lifecycle**
@@ -100,15 +100,15 @@ sequenceDiagram
 | **Deploy + full demo** | ~1,473 | **~375** (+ ~1–2 gas) of a 450 tPOT budget |
 - **Portaldot V3 Testnet**, chain id **420420777**, RPC `https://test-evm-rpc-v3.portaldot.dev`, gas token `tPOTv3`.
 - **Mapped accounts**: the UI explains and links the mapping flow (node console → `reviveApi.accountId`) so gas is paid by the mapped account.
-- MetaMask / injected-wallet UX with one-click "Switch to Portaldot V3" (`wallet_addEthereumChain`).
+- Wallet connect through Privy (connect only: MetaMask, OKX and detected wallets; the wallet comes back by itself after a reload) with the built-in EIP-6963 picker as fallback, and one-click "Switch to Portaldot V3" (`wallet_addEthereumChain`). Every transaction is signed in the user's own wallet; PotKit holds no keys.
 
 ## dApp at a glance
-Dashboard (market figures and an 8-step lifecycle tracker, all read from the chain) · Issue (one-click deploy + guided 3-step wizard with live receipt preview) · Trade (listing board, quick buy, sell panel, cash-now planner) · Portfolio (shares held, claims with *Claim all*, open listings, receipts issued; CSV and calendar export) · Explore (network explorer, judge link, "Load older") · Verify (shareable proof) · History (on-chain timeline, CSV export) · Profile (wallet identity, on-time payment record, mapped gas account) · Pay page (`?tab=pay&id=N`, debtor view with an optional off-chain EIP-712 acknowledgement; the contract does not use it).
-Read-only mode: Explore and Verify work without a wallet through a direct RPC client (with retries and an optional fallback RPC).
+Dashboard (market figures and an 8-step lifecycle tracker, all read from the chain) · Issue (one-click deploy + guided 3-step wizard with live receipt preview) · Trade (listing board, quick buy, sell panel, cash-now planner) · Portfolio (shares held, claims with *Claim all*, open listings, receipts issued; CSV and calendar export) · Explore (network explorer, judge link, "Load older") · Verify (shareable proof, quick picks of the receipts on the contract) · History (on-chain timeline, CSV export) · Profile (wallet identity, on-time payment record, mapped gas account) · Pay page (`?tab=pay&id=N`, debtor view with an optional off-chain EIP-712 acknowledgement; the contract does not use it).
+Light theme by default with an optional dark theme. Read-only mode: Explore and Verify work without a wallet through a direct RPC client (with retries and an optional fallback RPC).
 
 ## Tech stack
 Yul + Solidity 0.8.28 (solc-js, pinned) · custom compile script (no Hardhat) · node:test + ganache · React 19 + TypeScript + Vite 7 ·
-viem 2 · lenis (smooth scroll on the docs pages) · canvas 2D intro animation. No database: every screen reads the chain directly (the only server code is the optional gas faucet and the `tokenURI` JSON endpoint).
+viem 2 · Privy (optional wallet connect, connect only) · landing scroll effects in plain CSS variables, no animation library. No database: every screen reads the chain directly (the only server code is the optional gas faucet and the `tokenURI` JSON endpoint).
 
 ## What's tested (`npm test`: 84 tests as of 4 Nov 2026)
 - ERC-721 compliance (ERC-165, approve, operators, transferFrom, safeTransferFrom with receiver contracts and rejection), mint permissions, unknown ids revert
@@ -179,7 +179,9 @@ No third-party Solidity/Yul code is used in the contracts (`PotKit.yul`, `Lens.s
 | react, react-dom | 19.x | MIT | UI |
 | viem | 2.57 | MIT | RPC, ABI encoding, wallet calls |
 | @noble/hashes | 1.8 | MIT | blake2b for the mapped `5…` account |
-| lenis | 1.3 | MIT | smooth scrolling on the docs pages |
+| @privy-io/react-auth | 3.50.0 (pinned) | Apache-2.0 | optional wallet connect (MetaMask, OKX, detected wallets); loaded as its own chunk only when `VITE_PRIVY_APP_ID` is set, signing stays in the app's own code |
+| @stripe/stripe-js | 1.54.2 | MIT | required by the Privy bundle at build time; PotKit takes no payments |
+| lenis | 1.3 | MIT | still listed in package.json; no longer imported by the current pages |
 | vite, @vitejs/plugin-react | 7.x / 5.x | MIT | build tooling |
 | typescript | 5.9 | Apache-2.0 | type checking |
 | solc (solc-js) | 0.8.28 | MIT | compiling Yul / Solidity |

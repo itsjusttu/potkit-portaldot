@@ -291,7 +291,9 @@ No third-party Solidity/Yul code is used in the contracts (`PotKit.yul`, `Lens.s
 | react, react-dom | 19.x | MIT | UI |
 | viem | 2.57 | MIT | RPC, ABI encoding, wallet calls |
 | @noble/hashes | 1.8 | MIT | blake2b for the mapped `5…` account |
-| lenis | 1.3 | MIT | smooth scrolling on the docs pages |
+| @privy-io/react-auth | 3.50.0 (pinned) | Apache-2.0 | optional wallet connect (MetaMask, OKX, detected wallets); loaded as its own chunk only when `VITE_PRIVY_APP_ID` is set, signing stays in the app's own code |
+| @stripe/stripe-js | 1.54.2 | MIT | required by the Privy bundle at build time; PotKit takes no payments |
+| lenis | 1.3 | MIT | still listed in package.json; no longer imported by the current pages |
 | vite, @vitejs/plugin-react | 7.x / 5.x | MIT | build tooling |
 | typescript | 5.9 | Apache-2.0 | type checking |
 | solc (solc-js) | 0.8.28 | MIT | compiling Yul / Solidity |
