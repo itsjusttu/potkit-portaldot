@@ -1,5 +1,5 @@
-import { Component, useEffect, type ReactNode } from "react";
-import { PrivyProvider, useConnectWallet, useWallets } from "@privy-io/react-auth";
+import { Component, useEffect, useState, type ReactNode } from "react";
+import { PrivyProvider, useConnectWallet, useWallets, type WalletListEntry } from "@privy-io/react-auth";
 import { portaldot } from "./chain";
 import { PRIVY_APP_ID, privyMuted, publishPrivy, setPrivyMuted, setPrivyOpener } from "./privyBus";
 import type { Eip1193 } from "./wallets";
@@ -7,6 +7,8 @@ import type { Eip1193 } from "./wallets";
 /* Privy, for connecting external EVM wallets only (no email, no social, no embedded wallets). This module is a separate chunk,
    imported by main.tsx only when VITE_PRIVY_APP_ID is set. It publishes the connected wallet's EIP-1193 provider through
    privyBus; the existing wallet code keeps doing the signing, so the transaction flow is unchanged. */
+
+const WALLETS: WalletListEntry[] = ["detected_ethereum_wallets", "metamask", "okx_wallet"];
 
 function Bridge() {
   const { connectWallet } = useConnectWallet({
@@ -16,7 +18,7 @@ function Bridge() {
   const { wallets, ready } = useWallets();
 
   useEffect(() => {
-    setPrivyOpener(() => connectWallet({ walletChainType: "ethereum-only", description: "PotKit only asks for your address and the Portaldot V3 network." }));
+    setPrivyOpener(() => connectWallet({ walletChainType: "ethereum-only", walletList: WALLETS, description: "PotKit only asks for your address and the Portaldot V3 network." }));
     return () => setPrivyOpener(null);
   }, [connectWallet]);
 
@@ -47,8 +49,20 @@ export function PrivyRoot({ children }: { children: ReactNode }) {
   return <PrivyGuard fallback={children}><PrivyInner>{children}</PrivyInner></PrivyGuard>;
 }
 
+/** Follows the app's light/dark switch, so the Privy modal always matches the page behind it. */
+function useDark() {
+  const read = () => document.documentElement.dataset.theme !== "light";
+  const [dark, setDark] = useState(read);
+  useEffect(() => {
+    const mo = new MutationObserver(() => setDark(read()));
+    mo.observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+    return () => mo.disconnect();
+  }, []);
+  return dark;
+}
+
 function PrivyInner({ children }: { children: ReactNode }) {
-  const dark = document.documentElement.dataset.theme !== "light";
+  const dark = useDark();
   return (
     <PrivyProvider appId={PRIVY_APP_ID} config={{
       loginMethods: ["wallet"],
@@ -59,7 +73,7 @@ function PrivyInner({ children }: { children: ReactNode }) {
         landingHeader: "Connect a wallet",
         showWalletLoginFirst: true,
         walletChainType: "ethereum-only",
-        walletList: ["detected_ethereum_wallets", "metamask", "okx_wallet", "coinbase_wallet", "wallet_connect"],
+        walletList: WALLETS,
       },
       defaultChain: portaldot,
       supportedChains: [portaldot],
