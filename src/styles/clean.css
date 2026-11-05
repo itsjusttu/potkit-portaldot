@@ -142,6 +142,11 @@ html[data-route="app"]:not([data-theme="light"]) {
   --st-open: #9FB0CC; --st-soon: #D9A862; --st-late: #E58B78; --st-paid: #5FB389; --st-none: #A3AAB5;
   --shadow-1: none; --shadow-2: none;
 }
+/* light theme: the "?" term popover was a dark box whose text the light rules turned dark; the open "?" lost its mark on navy */
+html[data-route="app"][data-theme="light"] .term-pop { background: var(--bk-surface) !important; border: 1px solid var(--bk-line) !important; color: var(--bk-muted) !important; box-shadow: 0 12px 32px -12px rgba(20, 24, 31, .28) !important; }
+html[data-route="app"][data-theme="light"] .term-pop b { color: var(--bk-ink) !important; }
+html[data-route="app"][data-theme="light"] .shell .term-q:is(:hover, [aria-expanded="true"]) { background: var(--bk-navy) !important; border-color: var(--bk-navy) !important; color: #fff !important; }
+
 /* light theme: profile tiles, gas balance, mapped account and the on-time ring carried dark-only fills from night-profile.css */
 html[data-route="app"][data-theme="light"] .shell .pr :is(.pr-stats > div, .pr-gas-bal, .profile-faucet-account, .pr-ico) { background: var(--bk-bg) !important; border: 1px solid var(--bk-line) !important; box-shadow: none !important; }
 html[data-route="app"][data-theme="light"] .shell .pr :is(.pr-stats dt, .pr-gas-bal span, .pr-faucet > small) { color: var(--bk-muted) !important; }
