@@ -148,6 +148,7 @@ export function App() {
   }, []);
   const wallet = useWalletStatus();
   const { account, chainOk, wallets, tick: provTick } = wallet;
+  const restoring = wallet.restoring; // Privy is restoring the last wallet after a reload
   const [notice, setNotice] = useState("");
   const [rows, setRows] = useState<Row[]>([]);
   const [held, setHeld] = useState<Map<number, bigint>>(new Map());
@@ -318,8 +319,8 @@ export function App() {
         </div>
         <section className={`side-wallet ${!account ? "is-off" : chainOk ? "is-ok" : chainOk === false ? "is-wrong" : "is-checking"}`} aria-label="Wallet status">
           {!account ? <>
-            <p className="sw-state"><i aria-hidden />Wallet not connected</p>
-            <p className="sw-note">You can browse, explore and verify without one. Issuing, buying and claiming need a wallet.</p>
+            <p className="sw-state"><i aria-hidden />{restoring ? "Reconnecting your wallet…" : "Wallet not connected"}</p>
+            <p className="sw-note">{restoring ? "Restoring the wallet you used last time. This takes a second or two." : "You can browse, explore and verify without one. Issuing, buying and claiming need a wallet."}</p>
             <button type="button" className="btn primary sm" onClick={connectWallet}>Connect wallet</button>
           </> : <>
             <p className="sw-state"><i aria-hidden />{chainOk ? "Connected" : chainOk === false ? "Wrong network" : "Checking network…"}</p>
@@ -362,7 +363,7 @@ export function App() {
             </div>
             <ThemeToggle />
             <span className={`top-net ${!account ? "" : chainOk ? "ok" : chainOk === false ? "bad" : ""}`} title={`Portaldot V3 Testnet · chain ${portaldot.id}`}><i aria-hidden />{!account ? "Portaldot V3 · read-only" : chainOk ? "Portaldot V3" : chainOk === false ? "Wrong network" : "Checking network…"}</span>
-            <WalletButton account={account} label={short(account)} net={chainOk ? "ok" : chainOk === false ? "wrong" : "unknown"}
+            <WalletButton account={account} label={short(account)} net={chainOk ? "ok" : chainOk === false ? "wrong" : "unknown"} restoring={restoring}
               onConnect={connectWallet} onProfile={() => setTab("profile")} onCopy={copyAddr} onExplore={() => setTab("explore", { addr: account })}
               onDisconnect={() => void disconnect()} onSwitchNet={switchNet} />
           </nav>

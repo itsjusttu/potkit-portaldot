@@ -11,17 +11,24 @@ export type PrivyPick = { address: string; name: string; id: string; icon?: stri
 let opener: (() => void) | null = null;
 const subs = new Set<(w: PrivyPick) => void>();
 let last: PrivyPick = null;
+let settled = false; // true once Privy has said whether a wallet is connected (or failed to start)
 
 /** Registered by the Privy bridge once the SDK is ready. */
 export const setPrivyOpener = (fn: (() => void) | null) => { opener = fn; };
 /** Opens Privy's connect modal; false when the SDK is not loaded (yet). */
 export const openPrivy = () => { if (!opener) return false; opener(); return true; };
 /** The bridge publishes the wallet Privy has connected (or null). */
-export const publishPrivy = (w: PrivyPick) => { last = w; subs.forEach((f) => f(w)); };
+export const publishPrivy = (w: PrivyPick) => { last = w; settled = true; if (w) markUsed(); subs.forEach((f) => f(w)); };
+export const privySettled = () => settled;
 export const onPrivy = (f: (w: PrivyPick) => void) => { subs.add(f); f(last); return () => { subs.delete(f); }; };
 
 // After "Disconnect" in PotKit the wallet stays connected inside Privy's own store (MetaMask cannot be disconnected from a site
 // programmatically), so PotKit ignores it until the next explicit connect.
 const OFF = "potkit.privy.off";
 export const privyMuted = () => { try { return localStorage.getItem(OFF) === "1"; } catch { return false; } };
-export const setPrivyMuted = (v: boolean) => { try { if (v) localStorage.setItem(OFF, "1"); else localStorage.removeItem(OFF); } catch { /* storage blocked */ } };
+export const setPrivyMuted = (v: boolean) => { try { if (v) { localStorage.setItem(OFF, "1"); localStorage.removeItem(USED); } else localStorage.removeItem(OFF); } catch { /* storage blocked */ } };
+
+// Remembers that a wallet was connected through Privy, so a reload can show "connecting" while the SDK restores it (about 1-2 s)
+const USED = "potkit.privy.used";
+const markUsed = () => { try { localStorage.setItem(USED, "1"); } catch { /* storage blocked */ } };
+export const privyWasUsed = () => { try { return localStorage.getItem(USED) === "1"; } catch { return false; } };

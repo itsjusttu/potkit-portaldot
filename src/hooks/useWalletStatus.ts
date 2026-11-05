@@ -4,7 +4,7 @@ import { rememberedId, select, selected, type WalletOption } from "../lib/wallet
 import { anyWallet, connect, disconnectWallet, ethereum, explain, inFrame, portaldot, short, silentAccount, walletChainId } from "../lib/chain";
 import { toast } from "../AppUi";
 import { useWallets } from "../WalletUi";
-import { onPrivy, openPrivy, privyOn, setPrivyMuted, type PrivyPick } from "../lib/privyBus";
+import { onPrivy, openPrivy, privyMuted, privyOn, privySettled, privyWasUsed, setPrivyMuted, type PrivyPick } from "../lib/privyBus";
 
 /** Pauses (ms) before each re-ask of a remembered wallet that has not given an account yet; stops at the first account. */
 const RESTORE_RETRY_MS = [500, 1500, 3500, 7000];
@@ -29,9 +29,13 @@ export function useWalletStatus() {
   // with Privy (VITE_PRIVY_APP_ID set) the wallet Privy has connected becomes the active provider; Privy restores it after a reload
   const privyMode = privyOn();
   const [privyPick, setPrivyPick] = useState<PrivyPick>(null);
+  // after a reload, show "connecting" until Privy has restored (or not) the wallet used last time; never longer than 8 s
+  const [privyWaiting, setPrivyWaiting] = useState(() => privyMode && privyWasUsed() && !privyMuted() && !privySettled());
+  useEffect(() => { if (!privyWaiting) return; const t = setTimeout(() => setPrivyWaiting(false), 8000); return () => clearTimeout(t); }, [privyWaiting]);
   useEffect(() => {
     if (!privyMode) return;
     return onPrivy((w) => {
+      if (privySettled()) setPrivyWaiting(false);
       setPrivyPick(w);
       if (w) { select({ id: "privy", name: w.name, icon: w.icon, badge: { letter: w.name.slice(0, 1).toUpperCase(), bg: "#16233B", fg: "#fff" }, provider: w.provider, via: "eip6963" }); setWalletId("privy"); }
       else if (selected()?.id === "privy") select(null);
@@ -72,8 +76,9 @@ export function useWalletStatus() {
   const status: WalletStatus = useMemo(() => {
     if (picking) return "connecting";
     if (account) return chainOk === null ? "connecting" : chainOk ? "ready" : "wrong-network";
+    if (privyWaiting) return "connecting";
     return noWallet ? "no-wallet" : "disconnected";
-  }, [picking, account, chainOk, noWallet]);
+  }, [picking, account, chainOk, noWallet, privyWaiting]);
 
   const open = useCallback(() => { if (embedded) return; if (privyMode) { setPrivyMuted(false); if (openPrivy()) return; } setPicker(true); }, [embedded, privyMode]);
   const close = useCallback(() => setPicker(false), []);
@@ -101,5 +106,5 @@ export function useWalletStatus() {
   /** re-read the chain id after a wallet_switchEthereumChain */
   const recheckChain = useCallback(async () => { setChainOk((await walletChainId()) === portaldot.id); }, []);
 
-  return { wallets, account, chainOk, status, noWallet, embedded, picker, picking, tick, open, close, pick, disconnect, recheckChain };
+  return { wallets, account, chainOk, status, restoring: privyWaiting && !account, noWallet, embedded, picker, picking, tick, open, close, pick, disconnect, recheckChain };
 }
