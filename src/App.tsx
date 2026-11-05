@@ -291,7 +291,7 @@ export function App() {
       {mobileNavOpen && <button type="button" className="mobile-nav-backdrop" aria-label="Close sections" onClick={() => setMobileNavOpen(false)} />}
       <aside className={`side ${mobileNavOpen ? "mobile-open" : ""}`}>
         <div className="side-mobile-head"><span>All sections</span><button type="button" onClick={() => setMobileNavOpen(false)} aria-label="Close navigation"><Ico n="x" /></button></div>
-        <a className="side-brand" href={homeUrl()} aria-label="PotKit home" data-tip="Home">
+        <a className="side-brand" href={homeUrl()} aria-label="PotKit home">
           <img src="/potkit-p-circle-black.svg" alt="" width={34} height={34} aria-hidden />
           <span><b>Pot<span className="grad">Kit</span></b><small>Invoice protocol</small></span>
         </a>
@@ -341,7 +341,7 @@ export function App() {
             ))}
           </nav>
           <div className="crumb">
-            <a className="icon-btn" href={homeUrl()} aria-label="Go to PotKit home" data-tip="Home">
+            <a className="icon-btn" href={homeUrl()} aria-label="Go to PotKit home">
               <svg viewBox="0 0 24 24" aria-hidden><path d="M3 11.5 12 4l9 7.5" /><path d="M5.5 10v9.5h13V10" /><path d="M10 19.5v-5h4v5" /></svg>
             </a>
             <span className="muted crumb-root">PotKit /</span> <b>{TITLES[tab][0]}</b>
