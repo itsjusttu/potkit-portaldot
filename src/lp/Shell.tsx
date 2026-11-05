@@ -111,7 +111,7 @@ export function LpShell({ children, plain = false }: { children: ReactNode; plai
           </div>
           <div className="lp-foot-base">
             <span>Chain 420420777 · RPC {RPC.replace("https://", "")} · Contract <span className="num">{shortAddr(KIT)}</span></span>
-            <span>Hero photo: Dragon Bridge, Da Nang, own work. © 2026 PotKit, MIT licence.</span>
+            <span>Video: <a href="https://www.pexels.com/video/15170398/" {...ext}>Pexels</a> (Ho Chi Minh City). Photo: Dragon Bridge, Da Nang, own work. © 2026 PotKit, MIT licence.</span>
           </div>
         </div>
       </footer>

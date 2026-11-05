@@ -8,11 +8,32 @@ import hero2400 from "./assets/hero/hero-2400.webp";
 import hero1600 from "./assets/hero/hero-1600.webp";
 import heroM960 from "./assets/hero/hero-m-960.webp";
 import heroM640 from "./assets/hero/hero-m-640.webp";
-/* PotKit landing (potkit.pro). Structure and scroll feel follow the "open finance" landing pages: a full-bleed photo hero that
+import city1920 from "./assets/hero/city-1920.mp4";
+import city1280 from "./assets/hero/city-1280.mp4";
+import poster1920 from "./assets/hero/city-poster-1920.webp";
+import poster960 from "./assets/hero/city-poster-960.webp";
+/* PotKit landing (potkit.pro). Structure and scroll feel follow the "open finance" landing pages: a full-bleed video hero that
    shrinks into framed art while the headline splits, a floating pill navigation, a pinned block whose cards and charts change
    as you scroll, large counting numerals, large type, a numbered walkthrough and a closing band. All code, copy and assets are PotKit's.
    Every figure is either read from the chain or documented in the repository; the receipt in "How it works" is labelled illustrative.
-   Hero photo: own work (Dragon Bridge, Da Nang, at dusk). */
+   Hero video: Pexels video 15170398 (Pexels licence; evening traffic by Diamond Plaza, Ho Chi Minh City), trimmed to a 5.7 s
+   crossfaded loop with no audio or metadata. Closing photo: own work (Dragon Bridge, Da Nang, at dusk). */
+
+/** Muted looping street video. It plays only while on screen; with reduced motion it is a still frame. Phones get the 1280 px file. */
+function HeroVideo() {
+  const ref = useRef<HTMLVideoElement>(null);
+  const [still] = useState(() => matchMedia("(prefers-reduced-motion: reduce)").matches);
+  const [small] = useState(() => matchMedia("(max-width: 900px)").matches);
+  useEffect(() => {
+    const v = ref.current; if (!v || typeof IntersectionObserver === "undefined") return;
+    const io = new IntersectionObserver(([e]) => { if (e.isIntersecting) void v.play().catch(() => {}); else v.pause(); });
+    io.observe(v);
+    return () => io.disconnect();
+  }, []);
+  const poster = small ? poster960 : poster1920;
+  if (still) return <img src={poster} width={1920} height={1080} alt="" fetchPriority="high" decoding="async" />;
+  return <video ref={ref} src={small ? city1280 : city1920} poster={poster} muted loop playsInline autoPlay preload="auto" aria-hidden />;
+}
 
 const MARQUEE = ["Portaldot V3", "ERC-721 receipt", "ERC-20 shares", "Escrow market", "Native tPOT", "On-chain verify", "Chain 420420777", "One hand-written Yul contract", "Open source"];
 const STATEMENT = "PotKit turns an unpaid invoice into a receipt and tradeable shares on Portaldot V3. When the debtor pays, every holder is paid pro-rata, on-chain.";
@@ -74,13 +95,10 @@ export function Landing() {
         <section className="lp-hero" id="top" ref={heroRef}>
           <div className="lp-stage">
             <div className="lp-frame">
-              <picture className="lp-pic">
-                <source media="(max-width: 700px)" srcSet={`${heroM640} 640w, ${heroM960} 960w`} sizes="100vw" />
-                <img src={hero2400} srcSet={`${hero1600} 1600w, ${hero2400} 2400w`} sizes="100vw" width={2400} height={1350} alt="The Dragon Bridge over the Han River in Da Nang at dusk, the city lights reflected on the water" fetchPriority="high" decoding="async" />
-              </picture>
+              <div className="lp-pic"><HeroVideo /></div>
               <div className="lp-hero-shade" aria-hidden />
-              <div className="lp-fr lp-fr2" aria-hidden><img src={hero1600} srcSet={`${hero1600} 1600w, ${hero2400} 2400w`} sizes="100vw" alt="" loading="lazy" decoding="async" /></div>
-              <div className="lp-fr lp-fr3" aria-hidden><img src={hero1600} srcSet={`${hero1600} 1600w, ${hero2400} 2400w`} sizes="100vw" alt="" loading="lazy" decoding="async" /></div>
+              <div className="lp-fr lp-fr2" aria-hidden><img src={poster1920} alt="" loading="lazy" decoding="async" /></div>
+              <div className="lp-fr lp-fr3" aria-hidden><img src={poster1920} alt="" loading="lazy" decoding="async" /></div>
             </div>
             <h1 className="lp-h"><span className="l">Get paid today,</span><span className="r">not in 60 days.</span></h1>
             <div className="lp-hcopy">
@@ -194,8 +212,6 @@ export function Landing() {
               </ol>
             </div>
             <figure className="lp-how-art" ref={artRef}>
-              {/* the picture is shown about 1.9x enlarged, so it asks for the large file */}
-              <img src={hero2400} srcSet={`${hero1600} 1600w, ${hero2400} 2400w`} sizes="(max-width: 900px) 200vw, 100vw" width={2400} height={1350} loading="lazy" decoding="async" alt="" />
               <figcaption className="lp-doc" aria-label="Illustrative receipt">
                 <span className="lp-tag">Illustrative example · not live data</span>
                 <dl>

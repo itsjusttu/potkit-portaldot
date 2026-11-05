@@ -52,15 +52,15 @@ html[data-route="landing"]:has(.lp), html[data-route="landing"]:has(.lp) body { 
 .lp-hero { position: relative; height: 300vh; --e: 0; --s: 0; background: var(--bk-bg); }
 .lp-stage { position: sticky; top: 0; height: 100vh; overflow: hidden; background: var(--bk-bg); --fw: min(31vw, 440px); --fh: 52vh; }
 .lp-frame { position: absolute; left: 50%; top: calc(50% - var(--e) * 5vh); width: calc(100vw - (100vw - var(--fw)) * var(--e)); height: calc(100vh - (100vh - var(--fh)) * var(--e)); transform: translate(-50%, -50%); border-radius: calc(var(--e) * 30px); overflow: hidden; background: #0d1626; }
-.lp-pic, .lp-pic img { position: absolute; inset: 0; width: 100%; height: 100%; }
-.lp-pic img { object-fit: cover; object-position: 58% 42%; }
+.lp-pic, .lp-pic img, .lp-pic video { position: absolute; inset: 0; width: 100%; height: 100%; }
+.lp-pic img, .lp-pic video { object-fit: cover; object-position: 40% 50%; }
 .lp-hero-shade { position: absolute; inset: 0; opacity: calc(1 - var(--e) * .85); background:
   linear-gradient(to bottom, rgba(22, 35, 59, .34) 0%, rgba(22, 35, 59, 0) 36%),
   linear-gradient(to top, rgba(8, 13, 23, .7) 0%, rgba(8, 13, 23, 0) 62%),
   radial-gradient(ellipse 62% 44% at 50% 50%, rgba(10, 18, 34, .42), rgba(10, 18, 34, 0) 70%); }
 /* nested frames: the same photo again, inset more at each level, fading in as the main frame shrinks */
 .lp-fr { position: absolute; overflow: hidden; background: #0d1626; opacity: calc(var(--e) * 1.2 - .1); }
-.lp-fr img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 58% 42%; }
+.lp-fr img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 40% 50%; }
 .lp-fr2 { z-index: 1; inset: calc(var(--e) * 10%) calc(var(--e) * 9%); border-radius: calc(var(--e) * 24px); box-shadow: 0 0 0 calc(var(--e) * 3px) var(--bk-bg); }
 .lp-fr3 { z-index: 2; inset: calc(var(--e) * 22%) calc(var(--e) * 20%); border-radius: calc(var(--e) * 18px); box-shadow: 0 0 0 calc(var(--e) * 3px) var(--bk-bg); opacity: calc(var(--e) * 1.4 - .3); }
 
@@ -249,8 +249,7 @@ html[data-route="landing"]:has(.lp), html[data-route="landing"]:has(.lp) body { 
 .lp-steps li.act b { color: var(--bk-navy); }
 .lp-steps h3 { font: 600 1.05rem/1.3 var(--bk-sans); }
 .lp-steps p { margin-top: .3rem; color: var(--bk-muted); font-size: .96rem; }
-.lp-how-art { --c: .5; position: sticky; top: 6.5rem; aspect-ratio: 4 / 5; overflow: hidden; border-radius: var(--bk-radius); background: #0d1626; }
-.lp-how-art img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 14% 50%; transform-origin: 18% 12%; transform: translateY(calc((var(--c) - .5) * -40px)) scale(1.9); } /* bridge and river only; the orange road below never shows */
+.lp-how-art { --c: .5; position: sticky; top: 6.5rem; aspect-ratio: 4 / 5; overflow: hidden; border-radius: var(--bk-radius); background: var(--bk-navy); } /* one flat colour, no photo */
 .lp-doc { position: absolute; left: 1rem; right: 1rem; bottom: 1rem; padding: 1.1rem 1.2rem; background: var(--bk-surface); border: 1px solid var(--bk-line); border-radius: var(--bk-radius); color: var(--bk-ink); }
 .lp-tag { display: inline-block; padding: .2rem .55rem; border: 1px solid var(--bk-line); border-radius: 999px; font-size: .68rem; letter-spacing: .04em; color: var(--bk-muted); }
 .lp-prog { height: 4px; margin-top: .9rem; background: var(--bk-line); border-radius: 2px; overflow: hidden; }
