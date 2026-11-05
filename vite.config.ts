@@ -50,7 +50,8 @@ function onlyPrivy(id: string, info: (id: string) => { importers: readonly strin
 
 export default defineConfig({
   plugins: [react(), devApi()],
-  server: { port: 8080, host: true },
+  // preview/ holds local scratch files (raw photos and video); watching them crashed the dev server when a file was locked
+  server: { port: 8080, host: true, watch: { ignored: ["**/preview/**"] } },
   build: {
     rollupOptions: {
       output: {

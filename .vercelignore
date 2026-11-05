@@ -1,0 +1,9 @@
+# Local scratch files (raw photos and video, mock-ups) are never part of a deployment
+preview/
+# same as .gitignore: secrets and local builds stay on this machine; Vercel uses its own environment variables
+.env
+.env.*
+!.env.example
+node_modules
+dist
+.vercel
