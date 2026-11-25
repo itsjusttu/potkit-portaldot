@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 import { L, app, ext, page } from "../docs/Chrome";
 import { MegaNav, type MegaMenu } from "./Mega";
 import { KIT } from "./useLive";
+import { NETWORK } from "../lib/network";
 import "../styles/brand.css";
 import "./lp.css";
 import hero1600 from "../assets/hero/hero-1600.webp";
@@ -10,7 +11,7 @@ import hero1600 from "../assets/hero/hero-1600.webp";
    scroll reveal and the pill that the navigation turns into after the first scroll. */
 
 export const REPO = "https://github.com/itsjusttu/potkit-portaldot";
-export const RPC = "https://test-evm-rpc-v3.portaldot.dev";
+export const RPC = NETWORK.rpcUrls[0]!; // VITE_RPC_URL, default the public V3 testnet RPC
 export const shortAddr = (a: string) => `${a.slice(0, 6)}…${a.slice(-4)}`;
 
 /** Links that keep a judge's `?kit=` parameters; `tab("verify", "&id=1")` is a deep link into the app. */
@@ -122,7 +123,7 @@ export function LpShell({ children, plain = false }: { children: ReactNode; plai
             <nav aria-label="Project"><h4>Project</h4><a href={REPO} {...ext}>GitHub</a><a href={L.hackathon} {...ext}>DoraHacks page</a><a href={L.discord} {...ext}>Portaldot Discord</a></nav>
           </div>
           <div className="lp-foot-base">
-            <span>Chain 420420777 · RPC {RPC.replace("https://", "")} · Contract <span className="num">{shortAddr(KIT)}</span></span>
+            <span>Chain {NETWORK.id} · RPC {RPC.replace("https://", "")} · Contract <span className="num">{shortAddr(KIT)}</span></span>
             <span>Video: <a href="https://www.pexels.com/video/15170398/" {...ext}>Pexels</a> (Ho Chi Minh City). Closing photo: <a href="https://www.pexels.com/photo/flower-bicycle-on-a-vibrant-street-scene-37321262/" {...ext}>Tuan Phan, Pexels</a>. Menu photo: Dragon Bridge, Da Nang, own work. © 2026 PotKit, MIT licence.</span>
           </div>
         </div>

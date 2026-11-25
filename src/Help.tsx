@@ -3,6 +3,7 @@ import { L, ext, IcoTelegram } from "./docs/Chrome";
 import { HELP_FAQ, HELP_LINKS } from "./docs/helpData";
 import { LpShell, REPO, RPC, shortAddr } from "./lp/Shell";
 import { KIT } from "./lp/useLive";
+import { NETWORK as NET } from "./lib/network";
 
 /* Help page (potkit.pro/help) in the same system as the landing page: search, three steps to get started, guides, FAQ,
    network details and how to reach the builder. The guides and the FAQ text are the ones the app has always had
@@ -10,15 +11,15 @@ import { KIT } from "./lp/useLive";
 
 const STEPS: [string, string, [string, string]?][] = [
   ["Install an EVM wallet", "MetaMask, Rabby, OKX and other EVM wallets work. Explore and Verify need no wallet at all."],
-  ["Switch to Portaldot V3", "The app offers a one-click switch to the V3 testnet (chain 420420777, gas token tPOTv3)."],
+  ["Switch to Portaldot V3", `The app offers a one-click switch to the V3 testnet (chain ${NET.id}, gas token ${NET.symbol}).`],
   ["Get test tokens", "Test tokens come from the Portaldot team; the PotKit faucet is closed. Gas is paid by your mapped account, and the V3 testnet guide shows how to map yours.", ["Open the testnet guide", L.guide]],
 ];
 const TOPICS = ["wallet", "invoice", "shares", "settlement", "overdue", "fee"];
 
 const NETWORK: [string, string, string?][] = [
-  ["Network", "Portaldot V3 testnet"],
-  ["Chain ID", "420420777"],
-  ["Gas token", "tPOTv3"],
+  ["Network", NET.name],
+  ["Chain ID", String(NET.id)],
+  ["Gas token", NET.symbol],
   ["RPC", RPC.replace("https://", ""), RPC],
   ["PotKit contract", shortAddr(KIT), `${REPO}#testnet-evidence`],
   ["Node console", "node-console.portaldot.dev", "https://node-console.portaldot.dev"],

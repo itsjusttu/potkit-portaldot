@@ -1,9 +1,12 @@
-// Dependency-free so it can be unit-tested against mock providers.
+// Dependency-free (apart from ./network, which is too) so it can be unit-tested against mock providers.
+import { NETWORK } from "./network";
+
+/** wallet_addEthereumChain parameters, from the VITE_CHAIN_* / VITE_NATIVE_SYMBOL / VITE_RPC_URL build variables */
 export const PORTALDOT_ADD_PARAMS = {
-  chainId: `0x${(420420777).toString(16)}`,
-  chainName: "Portaldot V3 Testnet",
-  nativeCurrency: { name: "tPOTv3", symbol: "tPOTv3", decimals: 18 }, // wallets require 18
-  rpcUrls: ["https://test-evm-rpc-v3.portaldot.dev"],
+  chainId: `0x${NETWORK.id.toString(16)}`,
+  chainName: NETWORK.name,
+  nativeCurrency: { name: NETWORK.symbol, symbol: NETWORK.symbol, decimals: 18 }, // wallets require 18
+  rpcUrls: [NETWORK.rpcUrls[0]!],
 };
 
 /** "Chain not added yet": 4902 (EIP-3085), -32603 wrapping 4902 (mobile MetaMask), OKX/others' message variants. */

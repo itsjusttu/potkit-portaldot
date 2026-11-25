@@ -41,7 +41,7 @@ export function useTx(refresh: () => Promise<void>) {
       else {
         next = "error";
         const d = explain(e);
-        if (/Not enough tPOTv3/i.test(d)) setNeedGas(true);
+        if (/Not enough S+ for gas/i.test(d)) setNeedGas(true); // chain.ts explain(): "Not enough <native symbol> for gas…"
         toast({ kind: "err", title: "Action failed", detail: d });
       }
     } finally {

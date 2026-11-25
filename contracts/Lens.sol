@@ -191,6 +191,11 @@ contract Lens {
         }
     }
 
+    /// @return tPOT credited to `who` because a payout transfer to it failed (taken with withdraw; 0 on v1 contracts)
+    function credit(IPotKit k, address who) external view returns (uint256) {
+        return _one(k, _k(uint256(uint160(who)), 14));
+    }
+
     /// @return out market listings [start, start+limit), max 50 (listing ids are 0-based)
     function listings(IPotKit k, uint256 start, uint256 limit) external view returns (Listing[] memory out) {
         uint256 n = listingCount(k);

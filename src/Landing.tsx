@@ -3,6 +3,7 @@ import { ext } from "./docs/Chrome";
 import { KIT, useLive } from "./lp/useLive";
 import { Bento } from "./lp/Bento";
 import { LpShell, REPO, RPC, shortAddr, useLinks } from "./lp/Shell";
+import { NETWORK } from "./lib/network";
 import { Count, Words, smooth, useActiveStep, useCrossProgress, usePinProgress } from "./lp/fx";
 import flowers2400 from "./assets/hero/flowers-2400.webp";
 import flowers1600 from "./assets/hero/flowers-1600.webp";
@@ -36,7 +37,7 @@ function HeroVideo() {
   return <video ref={ref} src={small ? city1280 : city1920} poster={poster} muted loop playsInline autoPlay preload="auto" aria-hidden />;
 }
 
-const MARQUEE = ["Portaldot V3", "ERC-721 receipt", "ERC-20 shares", "Escrow market", "Native tPOT", "On-chain verify", "Chain 420420777", "One hand-written Yul contract", "Open source"];
+const MARQUEE = ["Portaldot V3", "ERC-721 receipt", "ERC-20 shares", "Escrow market", "Native tPOT", "On-chain verify", `Chain ${NETWORK.id}`, "One hand-written Yul contract", "Open source"];
 const STATEMENT = "PotKit turns an unpaid invoice into a receipt and tradeable shares on Portaldot V3. When the debtor pays, every holder is paid pro-rata, on-chain.";
 
 const STEPS: { t: string; d: string; state: string; line: string; fill: number }[] = [
@@ -164,7 +165,7 @@ export function Landing() {
               <p>Every step of the recorded run, from deploy to redeem, has a transaction hash you can look up.</p>
               <dl>
                 <div><dt>Contract</dt><dd className="num"><a href={`${REPO}#testnet-evidence`} {...ext}>{shortAddr(KIT)}</a></dd></div>
-                <div><dt>Chain</dt><dd className="num">Portaldot V3 testnet · 420420777</dd></div>
+                <div><dt>Chain</dt><dd className="num">{NETWORK.name} · {NETWORK.id}</dd></div>
                 <div><dt>Deployed</dt><dd className="num">Block 97421 · 2026-10-19</dd></div>
               </dl>
               <a className="lp-link" href={`${REPO}#testnet-evidence`} {...ext}>Read the evidence table<span aria-hidden> →</span></a>

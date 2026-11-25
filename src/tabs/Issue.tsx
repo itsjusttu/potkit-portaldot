@@ -105,7 +105,7 @@ export function Issue({ c }: { c: Ctx }) {
           {cur === 2 && row && reviewed && (
             <div className="wiz-pane">
               <h2>3 · Lock &amp; issue shares</h2>
-              <p className="muted">Receipt #{row.id} moves into PotKit, its payment terms are fixed (face value in {PAY_SYMBOL}, optional due date) and {supply || "N"} ERC-20 shares (KIT{row.id}) are minted to you. One transaction, no approval needed. With terms set, anyone can settle by paying at least the face value.</p>
+              <p className="muted">Receipt #{row.id} moves into PotKit, its payment terms are fixed (face value in {PAY_SYMBOL}, optional due date) and {supply || "N"} ERC-20 shares (KIT{row.id}) are minted to you. One transaction, no approval needed. With terms set, anyone can settle by paying the face value.</p>
               <p className="irreversible" role="note"><b>Check before you lock.</b> After this transaction the face value, due date and share count cannot be changed. To take the receipt back out of PotKit you must hold every share and redeem.</p>
               <dl className="issue-summary"><div><dt>Face value</dt><dd>{faceOk ? `${face} ${PAY_SYMBOL}` : "—"}</dd></div><div><dt>Shares</dt><dd>{supplyOk ? supply : "—"}</dd></div><div><dt>Due</dt><dd>{dueOk && due ? fmtDate(new Date(`${due}T12:00:00`)) : "—"}</dd></div></dl>
               <div className="wiz-nav"><button className="btn" onClick={() => setReviewed(false)}>Back</button>

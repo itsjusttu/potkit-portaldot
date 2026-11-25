@@ -1,7 +1,7 @@
 import { useState } from "react";
 import type { Address } from "viem";
-import { cancelListing, claim, fmt, KINDS, redeem, transferUnits, units, type Row } from "../lib/chain";
-import { fmtShares } from "../lib/shares";
+import { cancelListing, claim, claimFor, fmt, KINDS, redeem, transferUnits, units, withdrawCredit, type Row } from "../lib/chain";
+import { fmtShares, shareUnit } from "../lib/shares";
 import { Empty, Ico, toast } from "../AppUi";
 import { faceShare, type Ctx } from "./ctx";
 import { day, download, SettleBadge, Term, txBlock, Why } from "./shared";
@@ -16,6 +16,7 @@ export function Portfolio({ c }: { c: Ctx }) {
   const [more, setMore] = useState<number | null>(null);
   const [receiptScope, setReceiptScope] = useState<"active" | "history">("active");
   const [to, setTo] = useState(""); const [amt, setAmt] = useState("100");
+  const [payoutFor, setPayoutFor] = useState<number | null>(null); const [holder, setHolder] = useState(""); // claimFor form
   const dis = Boolean(c.busy) || c.gated;
   const why = txBlock(c);
   const holdings = c.rows.filter((r) => r.fraction && (c.held.get(r.id) ?? 0n) > 0n);
@@ -23,6 +24,10 @@ export function Portfolio({ c }: { c: Ctx }) {
   const receiptHistory = readReceiptHistory(c.events);
   const myListings = c.listings.filter((l) => l.seller.toLowerCase() === c.account.toLowerCase() && l.remaining > 0n);
   const claimable = c.rows.filter((r) => r.settle.settled && (c.claims.get(r.id) ?? 0n) > 0n);
+  /** what closing a listing pays after settlement: the contract's cumulative rounding over the shares burned so far */
+  const escrowPayout = (r: Row, left: bigint) => { const S = r.settle.supply, A = r.settle.amount, burned = S - r.supply; return S > 0n ? (A * (burned + left)) / S - (A * burned) / S : 0n; };
+  const isDepositor = (r: Row) => Boolean(r.depositor) && r.depositor.toLowerCase() === c.account.toLowerCase();
+  const redeemBtn = (r: Row) => <button className="btn sm" disabled={dis} onClick={() => void c.run(`red${r.id}`, async () => { const h = await redeem(c.ready(), c.addrs!.vault, r.id); c.note("Redeemed", `#${r.id} back to you`, h); })}>Redeem NFT</button>;
   const dec = 18; // native tPOT
   // face value of `units` shares, multiplied before dividing so 60 of 60 shares is exactly the face value
   const faceOfUnits = (r: Row, units: bigint) => (r.settle.faceValue > 0n && r.supply > 0n ? (r.settle.faceValue * units) / r.supply : faceShare(r) * units / 10n ** 18n);
@@ -67,7 +72,7 @@ export function Portfolio({ c }: { c: Ctx }) {
   if (!c.account) return <div className="portfolio">{head}<Empty icon="◉" title="Connect a wallet to view your portfolio" body="Your receipts, share positions, listings and claimable payouts are tied to the connected wallet."><button className="btn primary" onClick={c.connect}>Connect wallet</button></Empty></div>;
   if (c.loading) return <div className="portfolio">{head}<section className="card" aria-busy="true"><SkelRows n={4} cols={5} /></section></div>;
   const lastClaim = c.events.find((e) => e.kind === "claim" && e.actors.some((x) => x.toLowerCase() === c.account.toLowerCase())); // newest first
-  if (!holdings.length && !receipts.length && !myListings.length && !claimable.length)
+  if (!holdings.length && !receipts.length && !myListings.length && !claimable.length && c.credit === 0n)
     return <div className="portfolio">{head}<Empty icon="▤" title="Nothing in your portfolio yet" body="Issue an invoice and lock it into shares, or buy discounted shares on Trade. Positions and payouts appear here, read from the chain."><div className="pf-empty-acts"><div className="row"><button className="btn sm primary" onClick={() => c.setTab("trade")}>Browse Trade</button><button className="btn sm" onClick={() => c.setTab("issue")}>Issue an invoice</button></div>{lastClaim && <p className="pf-lastclaim">Last claim <b className="num">{fmt(lastClaim.value ?? 0n, dec)} tPOT</b> paid to your wallet{lastClaim.time ? ` on ${day(lastClaim.time)}` : ""} · <button type="button" className="nv-link" onClick={() => c.setTab("history")}>See History</button></p>}</div></Empty></div>;
 
   const holdingStep = (r: Row) => {
@@ -80,6 +85,8 @@ export function Portfolio({ c }: { c: Ctx }) {
   const receiptStep = (r: Row) => {
     if (isRedeemed(r.id)) return { text: "Lifecycle complete", act: <button className="btn sm" onClick={() => c.setTab("verify", { id: String(r.id) })}>Verify</button> };
     if (!r.fraction) return { text: "Minted. Add terms to issue shares", act: <button className="btn sm" onClick={() => c.setTab("issue", { id: String(r.id) })}>Add terms</button> };
+    if (r.settle.settled && r.supply === 0n && isDepositor(r)) return { text: "Paid and every share claimed. Take the receipt back", act: redeemBtn(r) };
+    if (r.settle.settled && r.supply > 0n && isDepositor(r) && c.v2) return { text: `Paid. ${fmtShares(r.supply)} ${shareUnit(r.supply)} still unclaimed; redeem needs every share paid out`, act: <button className="btn sm" aria-expanded={payoutFor === r.id} onClick={() => { setPayoutFor(payoutFor === r.id ? null : r.id); setHolder(""); }}>Pay out a holder</button> };
     if (r.settle.settled) return { text: "Paid. Holders can claim", act: <button className="btn sm" onClick={() => c.setTab("verify", { id: String(r.id) })}>Verify</button> };
     return { text: listedOf(r.id) > 0n ? "Shares on the market" : "Locked. List shares to raise tPOT", act: <button className="btn sm" onClick={() => c.setTab("trade", { sell: String(r.id) })}>{listedOf(r.id) > 0n ? "Manage listing" : "List shares"}</button> };
   };
@@ -93,6 +100,13 @@ export function Portfolio({ c }: { c: Ctx }) {
         <div><span><Term k="share">Shares held</Term></span><strong><span className="num">{holdings.length}</span> position{holdings.length === 1 ? "" : "s"}</strong><small>{fmt(totalValue, dec)} tPOT at face value · estimate, incl. listed</small></div>
         <div><span><Term k="receipt">Receipts issued</Term></span><strong><span className="num">{activeReceipts.length}</span> active</strong><small>{historyReceipts.length} completed</small></div>
       </section>
+
+      {c.credit > 0n && (
+        <section className="pf2-sec pf2-claim" aria-labelledby="pf-credit">
+          <div className="pf2-sec-head"><div><h2 id="pf-credit">Payout held for you</h2><p className="muted">A payout to this wallet could not be delivered, so PotKit kept it for you. Withdraw it to this wallet. Read from the chain.</p></div>
+            <div><button className="btn sm primary" disabled={dis} onClick={() => void c.run("withdraw", async () => { const h = await withdrawCredit(c.ready(), c.addrs!.vault); c.note("Held payout withdrawn", `${fmt(c.credit, dec)} tPOT`, h); })}>{c.busy === "withdraw" ? "Withdrawing…" : `Withdraw ${fmt(c.credit, dec)} tPOT`}</button><Why text={why} /></div></div>
+        </section>
+      )}
 
       {claimable.length > 0 && (
         <section className="pf2-sec pf2-claim" aria-labelledby="pf-claim">
@@ -129,7 +143,7 @@ export function Portfolio({ c }: { c: Ctx }) {
                         <button className="btn sm" disabled={dis} onClick={() => void c.run(`send${r.id}`, async () => {
                           const h = await transferUnits(c.ready(), r.fraction as Address, to.trim(), amt.trim()); c.note("Shares sent", `${amt} KIT${r.id} → ${to.slice(0, 8)}…`, h);
                         })}><Ico n="send" /> Send</button>
-                        {bal === r.supply && bal > 0n ? <button className="btn sm" disabled={dis} onClick={() => void c.run(`red${r.id}`, async () => { const h = await redeem(c.ready(), c.addrs!.vault, r.id); c.note("Redeemed", `#${r.id} back to you`, h); })}>Redeem NFT</button> : <small className="muted">Redeeming the receipt needs every share ({fmtShares(r.supply)}).</small>}
+                        {bal === r.supply && bal > 0n && isDepositor(r) ? redeemBtn(r) : <small className="muted">{isDepositor(r) ? `Redeeming the receipt needs every share (${fmtShares(r.supply)}).` : "Only the wallet that locked this receipt can redeem it."}</small>}
                         <Why text={why} />
                       </div>
                     )}
@@ -144,11 +158,11 @@ export function Portfolio({ c }: { c: Ctx }) {
 
       {myListings.length > 0 && (
         <section className="pf2-sec" aria-labelledby="pf-listings">
-          <div className="pf2-sec-head"><div><h2 id="pf-listings">Your open listings</h2><p className="muted">Shares in escrow on the market. Cancel to get the remaining shares back.</p></div></div>
+          <div className="pf2-sec-head"><div><h2 id="pf-listings">Your open listings</h2><p className="muted">Shares in escrow on the market. Cancel to get the remaining shares back.{c.v2 ? " Once the invoice is settled, closing a listing pays you for its escrowed shares instead, and anyone can close it." : ""}</p></div></div>
           <div className="tscroll"><table className="rtable"><thead><tr><th scope="col">Receipt</th><th scope="col" className="num">Remaining</th><th scope="col" className="num">Price / share</th><th scope="col" className="num">Asking total</th><th scope="col"><span className="sr-only">Action</span></th></tr></thead><tbody>
             {myListings.map((l) => { const r = c.rows.find((x) => x.id === l.receiptId); return (
               <tr key={l.lid}><td data-label="Receipt"><div className="rcell"><ReceiptThumb id={l.receiptId} status={r?.status ?? "Pending"} /><div><b>#{l.receiptId} · {r?.note}</b><small className="muted">Listing {l.lid}</small></div></div></td><td data-label="Remaining" className="num" title={units(l.remaining)}>{fmtShares(l.remaining)}</td><td data-label="Price / share" className="num">{fmt(l.price, 18)} tPOT</td><td data-label="Asking total" className="num">{fmt((l.price * l.remaining) / 10n ** 18n, 18)} tPOT</td>
-                <td className="acts"><button className="btn sm" disabled={dis} onClick={() => void c.run(`cancel${l.lid}`, async () => { const h = await cancelListing(c.ready(), c.market as Address, l.lid); c.note("Listing cancelled", `#${l.lid}`, h); })}>{c.busy === `cancel${l.lid}` ? "Cancelling…" : "Cancel listing"}</button><Why text={why} /></td></tr>
+                <td className="acts"><button className="btn sm" disabled={dis} onClick={() => void c.run(`cancel${l.lid}`, async () => { const h = await cancelListing(c.ready(), c.market as Address, l.lid); c.note("Listing cancelled", `#${l.lid}`, h); })}>{c.busy === `cancel${l.lid}` ? "Cancelling…" : c.v2 && r?.settle.settled ? `Close · collect ${fmt(escrowPayout(r, l.remaining), 18)} tPOT` : "Cancel listing"}</button><Why text={why} /></td></tr>
             ); })}
           </tbody></table></div>
         </section>
@@ -169,7 +183,18 @@ export function Portfolio({ c }: { c: Ctx }) {
                 <td data-label="Due">{due ? day(due) : "—"}</td>
                 <td data-label="Shares" className="num" title={supply > 0n ? units(supply) : undefined}>{supply > 0n ? fmtShares(supply) : "—"}</td>
                 <td data-label="Next step"><span className="pf2-step">{step.text}</span></td>
-                <td className="acts">{step.act}</td></tr>;
+                <td className="acts">{step.act}
+                  {payoutFor === r.id && r.settle.settled && r.supply > 0n && (
+                    <div className="pf2-more">
+                      <label htmlFor={`holder${r.id}`}>Holder address</label>
+                      <input id={`holder${r.id}`} placeholder="0x holder" value={holder} onChange={(e) => setHolder(e.target.value)} />
+                      <small className="muted">Their shares are burned and their payout goes to them, not to you. You only pay the gas. Shares in an open listing are paid out by closing the listing.</small>
+                      <button className="btn sm" disabled={dis || !holder.trim()} onClick={() => void c.run(`claimfor${r.id}`, async () => {
+                        const out = await claimFor(c.ready(), c.addrs!.vault, r.id, holder); c.note("Holder paid out", `#${r.id} · ${fmtShares(out.shares)} ${shareUnit(out.shares)} of ${out.holder.slice(0, 8)}…`, out.hash); setHolder("");
+                      })}>{c.busy === `claimfor${r.id}` ? "Paying out…" : "Pay out this holder"}</button>
+                      <Why text={!holder.trim() ? "Paste the 0x address of a wallet that still holds shares." : why} />
+                    </div>
+                  )}</td></tr>;
             })}
           </tbody>
         </table></div>}

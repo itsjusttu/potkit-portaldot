@@ -28,5 +28,14 @@ contract TestReceiver {
         return ret;
     }
 
-    receive() external payable {}
+    /// when set, plain tPOT transfers to this contract revert (a holder or seller that cannot receive payouts)
+    bool public refuse;
+
+    function setRefuse(bool r) external {
+        refuse = r;
+    }
+
+    receive() external payable {
+        require(!refuse, "refused");
+    }
 }

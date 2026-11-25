@@ -1,6 +1,5 @@
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { Address } from "viem";
-import { checkPayment, needsAck } from "./lib/settlecheck";
 import { DEFAULTS } from "./config";
 import { appShareUrl, homeUrl, isAppHost } from "./routes";
 import { WalletButton, WalletModal } from "./WalletUi";
@@ -12,7 +11,7 @@ import { Drawer, Empty, GasTip, Ico, Toasts, toast } from "./AppUi";
 import { FaucetButton } from "./Faucet";
 import { Support } from "./Support";
 import {
-  addr, CONSOLE, explain, fmt, GUIDE, KINDS, kitAddrs, loadBalances, loadClaimables, loadEvents,
+  addr, CONSOLE, explain, fmt, GUIDE, KINDS, kitAddrs, kitVersion, loadBalances, loadClaimables, loadCredit, loadEvents,
   loadListings, loadMeta, loadRows, nativeBalance, ENV_FROM_BLOCK, isNoCode, NATIVE, NO_CODE, PAY_SYMBOL, receiptCount, type DeployStep, portaldot, settle, short, switchToPortaldot, units, type Addrs, type ChainEvent, type Listing, type Row,
 } from "./lib/chain";
 import { fmtShares } from "./lib/shares";
@@ -153,6 +152,8 @@ export function App() {
   const [rows, setRows] = useState<Row[]>([]);
   const [held, setHeld] = useState<Map<number, bigint>>(new Map());
   const [claims, setClaims] = useState<Map<number, bigint>>(new Map());
+  const [credit, setCredit] = useState(0n); // tPOT PotKit holds for this wallet after a failed payout transfer
+  const [v2, setV2] = useState(false); // the loaded PotKit is v2 (listings closed after settlement pay the seller)
   const [canMint, setCanMint] = useState(false);
   const [issuer, setIssuer] = useState("");
   // settlement and market payments are native tPOT; the market is the PotKit contract itself
@@ -169,8 +170,6 @@ export function App() {
   const [total, setTotal] = useState(0);
   const [eventsLoading, setEventsLoading] = useState(false);
   const [payFor, setPayFor] = useState<number | null>(null);
-  const [payAmt, setPayAmt] = useState("");
-  const [payAck, setPayAck] = useState<bigint | null>(null); // the overpayment the user confirmed; changing the amount invalidates it
   const [log, setLog] = useState<Log[]>(() => { try { return JSON.parse(localStorage.getItem(`${STORE}.log`) ?? "[]"); } catch { return []; } });
 
   const setAddrs = (a: Addrs | null) => { setAddrsState(a); setShared(false); if (a) localStorage.setItem(STORE, JSON.stringify(a)); else localStorage.removeItem(STORE); };
@@ -201,7 +200,7 @@ export function App() {
   const refreshSeq = useRef(0); // only the newest refresh may write state (account switch / rapid actions)
   const rowsLen = useRef(0); rowsLen.current = rows.length;
   const refresh = useCallback(async () => {
-    if (!addrs) { ++refreshSeq.current; setLoading(false); setRows([]); setHeld(new Map()); setClaims(new Map()); setListings([]); setEvents([]); setTotal(0); setNotice(""); return; }
+    if (!addrs) { ++refreshSeq.current; setLoading(false); setRows([]); setHeld(new Map()); setClaims(new Map()); setCredit(0n); setListings([]); setEvents([]); setTotal(0); setNotice(""); return; }
     setNotice("");
     const seq = ++refreshSeq.current;
     const stale = () => seq !== refreshSeq.current;
@@ -209,14 +208,16 @@ export function App() {
       const [r, count] = await Promise.all([loadRows(addrs.vault, 0, Math.max(20, rowsLen.current)), receiptCount(addrs.vault).catch(() => null)]);
       if (stale()) return;
       setRows(r); setTotal(count ?? r.length);
-      const [bal, meta, cl, ls] = await Promise.all([
+      const [bal, meta, cl, ls, cr, ver] = await Promise.all([
         account ? loadBalances(addrs.vault, account, r) : Promise.resolve(new Map<number, bigint>()),
         loadMeta(addrs.receipt, account),
         account ? loadClaimables(addrs.vault, account, r) : Promise.resolve(new Map<number, bigint>()),
         market ? loadListings(market).catch(() => []) : Promise.resolve([] as Listing[]),
+        account ? loadCredit(addrs.vault, account).catch(() => 0n) : Promise.resolve(0n),
+        kitVersion(addrs.vault),
       ]);
       if (stale()) return;
-      setHeld(bal); setClaims(cl); setListings(ls); setLoading(false); setCanMint(meta.canMint); setIssuer(meta.issuer);
+      setHeld(bal); setClaims(cl); setCredit(cr); setV2(ver === 2); setListings(ls); setLoading(false); setCanMint(meta.canMint); setIssuer(meta.issuer);
       if (account) void refreshNative();
       setEventsLoading(true);
       const sameAsEnv = addrs.receipt.toLowerCase() === DEFAULTS.receipt.trim().toLowerCase();
@@ -267,23 +268,17 @@ export function App() {
   const judgeLink = addrs ? appShareUrl(`?kit=${addrs.vault}`) : "";
   const usdRaw = native ?? 0n;
   const usdBal = native === null ? "" : `${fmt(native, 18)} ${PAY_SYMBOL}`;
-  const openPay = (id: number) => { const r = rows.find((x) => x.id === id); setPayAmt(r && r.settle.faceValue > 0n ? fmt(r.settle.faceValue, r.settle.decimals).replace(/,/g, "") : ""); setPayAck(null); setPayFor(id); };
+  const openPay = (id: number) => setPayFor(id);
 
   const c: Ctx = {
-    account, chainOk, gated, busy, phase, addrs, setAddrs, shared, usd, market, rows, held, claims, listings, events, eventsLoading, loading, eventsOk, total, loadOlder, saveStep, resetDeployment,
+    account, chainOk, gated, busy, phase, addrs, setAddrs, shared, usd, market, rows, held, claims, credit, v2, listings, events, eventsLoading, loading, eventsOk, total, loadOlder, saveStep, resetDeployment,
     canMint, issuer, usdBal, usdRaw, native, nativeLoading, nativeError, log, note, run, ready, refresh, setTab, connect: connectWallet, judgeLink,
     walletName: selected()?.name ?? "Wallet", openPay, param: (k) => params[k] ?? "", switchNetwork: switchNet,
   };
 
   const payRow = rows.find((r) => r.id === payFor);
-  // settle() accepts any amount >= face value; the whole amount goes to the pool
-  const payResult = payRow ? checkPayment(payAmt, payRow.settle.faceValue, payRow.settle.decimals) : ({ status: "invalid", extra: 0n } as const);
-  const payCheck = {
-    extra: payResult.extra,
-    error: payResult.status === "invalid" ? "Enter a positive amount."
-      : payResult.status === "under" && payRow ? `Amount must be at least ${fmt(payRow.settle.faceValue, payRow.settle.decimals)} ${PAY_SYMBOL} (the face value).` : "",
-  };
-  const payNeedsAck = needsAck(payResult, payAck);
+  // settle() takes exactly the face value: the amount is fixed by the terms, never typed
+  const payBlock = !payRow ? "" : payRow.settle.settled ? "This invoice is already paid." : !(payRow.settle.faceValue > 0n) ? "This receipt has no payment terms yet." : "";
 
   const publicProfile = tab === "profile" && /^0x[0-9a-fA-F]{40}$/.test(params.profile ?? "");
   const needsWallet = tab !== "dashboard" && tab !== "issue" && tab !== "trade" && tab !== "explore" && tab !== "verify" && tab !== "pay" && !publicProfile;
@@ -362,7 +357,7 @@ export function App() {
               </div>}
             </div>
             <ThemeToggle />
-            <span className={`top-net ${!account ? "" : chainOk ? "ok" : chainOk === false ? "bad" : ""}`} title={`Portaldot V3 Testnet · chain ${portaldot.id}`}><i aria-hidden />{!account ? "Portaldot V3 · read-only" : chainOk ? "Portaldot V3" : chainOk === false ? "Wrong network" : "Checking network…"}</span>
+            <span className={`top-net ${!account ? "" : chainOk ? "ok" : chainOk === false ? "bad" : ""}`} title={`${portaldot.name} · chain ${portaldot.id}`}><i aria-hidden />{!account ? "Portaldot V3 · read-only" : chainOk ? "Portaldot V3" : chainOk === false ? "Wrong network" : "Checking network…"}</span>
             <WalletButton account={account} label={short(account)} net={chainOk ? "ok" : chainOk === false ? "wrong" : "unknown"} restoring={restoring}
               onConnect={connectWallet} onProfile={() => setTab("profile")} onCopy={copyAddr} onExplore={() => setTab("explore", { addr: account })}
               onDisconnect={() => void disconnect()} onSwitchNet={switchNet} />
@@ -374,7 +369,7 @@ export function App() {
         {gated && (
           <div className="netbar" role="alert">
             <Ico n="swap" />
-            <span><b>Wrong network.</b> Actions are paused until you switch to Portaldot V3 Testnet (chain {portaldot.id}).</span>
+            <span><b>Wrong network.</b> Actions are paused until you switch to {portaldot.name} (chain {portaldot.id}).</span>
             <button className="btn sm primary" disabled={Boolean(busy)} onClick={switchNet}>{busy === "net" ? "Switching…" : "Switch network"}</button>
           </div>
         )}
@@ -407,7 +402,7 @@ export function App() {
           <>
             {account && needGas && (
               <div className="nogas" role="alert">
-                <div><b>Not enough gas for that transaction.</b> <span className="muted small">Gas is paid in tPOTv3 by your mapped account.</span></div>
+                <div><b>Not enough gas for that transaction.</b> <span className="muted small">Gas is paid in {portaldot.nativeCurrency.symbol} by your mapped account.</span></div>
                 <FaucetButton account={account} compact onFunded={() => { setNeedGas(false); void refresh(); }} />
                 <button className="t-x" aria-label="Dismiss" onClick={() => setNeedGas(false)}><Ico n="x" /></button>
               </div>
@@ -443,31 +438,21 @@ export function App() {
         {payRow && (
           <>
             <div className="tags"><SettleBadge r={payRow} /></div>
-            <p className="muted">Anyone can pay. The minimum is the face value; the receipt is then marked settled and every share becomes a pro-rata payout ticket. Any extra goes to the pool for share holders and is not refunded. Payment is final.</p>
+            <p className="muted">Anyone can pay. The payment is exactly the face value, no more and no less; the receipt is then marked settled and every share becomes a pro-rata payout ticket. Payment is final.</p>
             <dl className="facts">
               <div><dt>Kind</dt><dd>{KINDS[payRow.kind]}</dd></div>
               <div><dt><Term k="face">Face value</Term></dt><dd className="num">{`${fmt(payRow.settle.faceValue, payRow.settle.decimals)} ${payRow.settle.symbol}`}</dd></div>
               <div><dt><Term k="share">Shares</Term></dt><dd className="num">{fmtShares(payRow.supply)}</dd></div>
               <div><dt>Paid in</dt><dd>{PAY_SYMBOL} (native)</dd></div>
+              <div><dt>Amount to pay</dt><dd className="num"><b>{`${fmt(payRow.settle.faceValue, payRow.settle.decimals)} ${PAY_SYMBOL}`}</b></dd></div>
             </dl>
-            <label htmlFor="pay-amt">Amount ({PAY_SYMBOL})</label>
-            <input id="pay-amt" inputMode="decimal" value={payAmt} onChange={(e) => setPayAmt(e.target.value)} aria-invalid={Boolean(payCheck.error)} aria-describedby="pay-amt-msg" />
-            <span id="pay-amt-msg" className={payCheck.error ? "field-error" : "muted"} role={payCheck.error ? "alert" : undefined}>
-              {payCheck.error || (payCheck.extra > 0n ? `${fmt(payCheck.extra, payRow.settle.decimals)} ${PAY_SYMBOL} above the face value goes to the pool for share holders and is not refunded.` : "")}
-            </span>
-            {!payCheck.error && payCheck.extra > 0n && (
-              <label htmlFor="pay-ack" className="pay-ack">
-                <input id="pay-ack" className="pay-ack-box" type="checkbox" checked={payAck === payCheck.extra} onChange={(e) => setPayAck(e.target.checked ? payCheck.extra : null)} />
-                <span className="pay-ack-text">I understand the extra {fmt(payCheck.extra, payRow.settle.decimals)} {PAY_SYMBOL} goes to the pool for share holders and will not be refunded.</span>
-              </label>
-            )}
-            <button className="btn primary block" disabled={Boolean(busy) || gated || !account || Boolean(payCheck.error) || payNeedsAck} onClick={() => void run("settle", async () => {
-              if (payCheck.error) throw new Error(payCheck.error);
-              if (payNeedsAck) throw new Error("Confirm that the extra amount is not refunded.");
-              const amt = payAmt.trim();
-              const h = await settle(ready(), addrs!.vault, payRow.id, amt);
-              note("Invoice settled", `#${payRow.id} · ${amt} ${PAY_SYMBOL} paid`, h); setPayFor(null);
-            })}>{!account ? "Connect wallet to pay" : busy === "settle" ? "Confirm in wallet…" : `Pay ${payAmt || "…"} ${PAY_SYMBOL} & settle`}</button>
+            <span className="muted">The amount is fixed by the receipt's terms; the app always sends exactly this amount.</span>
+            <button className="btn primary block" disabled={Boolean(busy) || gated || !account || Boolean(payBlock)} onClick={() => void run("settle", async () => {
+              if (payBlock) throw new Error(payBlock);
+              const { hash, value } = await settle(ready(), addrs!.vault, payRow.id); // sends exactly the on-chain face value
+              note("Invoice settled", `#${payRow.id} · ${fmt(value, payRow.settle.decimals)} ${PAY_SYMBOL} paid`, hash); setPayFor(null);
+            })}>{!account ? "Connect wallet to pay" : busy === "settle" ? "Confirm in wallet…" : `Pay ${fmt(payRow.settle.faceValue, payRow.settle.decimals)} ${PAY_SYMBOL} & settle`}</button>
+            {payBlock && <span className="muted">{payBlock}</span>}
           </>
         )}
       </Drawer>

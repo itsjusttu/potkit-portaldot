@@ -1,4 +1,5 @@
 import { mappedAddress } from "./lib/chain";
+import { NETWORK } from "./lib/network";
 import { FaucetButton } from "./Faucet";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { onTx, short, STATUSES, type Listing, type Row, type TxEvent } from "./lib/chain";
@@ -139,7 +140,7 @@ export function GasTip({ consoleUrl, guideUrl, account }: { consoleUrl: string; 
     <details className="tip">
       <summary><Ico n="info" /> First time on Portaldot? How gas works</summary>
       <p>
-        Gas is paid in tPOTv3 by your <b>mapped</b> Substrate account, not the 0x address. Map it once in the{" "}
+        Gas is paid in {NETWORK.symbol} by your <b>mapped</b> Substrate account, not the 0x address. Map it once in the{" "}
         <a href={consoleUrl} target="_blank" rel="noreferrer">node console</a> (Developer → Runtime calls → reviveApi → accountId), then fund that account.{" "}
         <a href={guideUrl} target="_blank" rel="noreferrer">Testnet guide</a>
       </p>

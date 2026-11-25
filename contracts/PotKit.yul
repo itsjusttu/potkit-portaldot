@@ -28,6 +28,7 @@
 ///   k(k(owner, spender), id<<24 | cycle<<8 | 12)   share allowance (a new lock cycle resets them)
 ///   k(lid, 13)                  seller (160) | price in wei per whole share (96)
 ///   k(lid, 13) + 1              receipt id (64) | remaining share units (128 @ 128)
+///   k(who, 14)                  tPOT owed to `who` because a payout transfer to it failed (taken with withdraw)
 object "PotKit" {
     code {
         sstore(0, shl(96, caller()))
@@ -91,7 +92,11 @@ object "PotKit" {
             case 0x1d143848 { ret(shr(96, sload(0))) } // issuer()
             case 0xcf456ae7 { // setMinter(address,bool)
                 need(eq(caller(), shr(96, sload(0))), "not issuer")
-                sstore(k(low(calldataload(4)), 6), iszero(iszero(calldataload(36))))
+                let who := low(calldataload(4))
+                let on := iszero(iszero(calldataload(36)))
+                sstore(k(who, 6), on)
+                mstore(0, on)
+                log2(0, 0x20, 0x583b0aa0e528532caf4b907c11d7a8158a122fe2a6fb80cd9b09776ebea8d92d, who) // MinterSet(address indexed, bool)
                 stop()
             }
             case 0xfc1cc1d1 { mint() } // mint(address,uint8,string)
@@ -99,7 +104,23 @@ object "PotKit" {
             case 0x1be84ba4 { fractionalize() } // fractionalize(uint256,uint256,uint256,uint64)
             case 0xdb006a75 { redeem(calldataload(4)) } // redeem(uint256)
             case 0x8df82800 { settle(calldataload(4)) } // settle(uint256) payable
-            case 0x379607f5 { claim(calldataload(4)) } // claim(uint256)
+            case 0x379607f5 { claimFor(calldataload(4), caller()) } // claim(uint256)
+            case 0x10ee3f00 { // claimFor(uint256,address): anyone pays a holder out after settlement
+                let h := low(calldataload(36))
+                need(iszero(eq(h, address())), "escrow") // escrowed shares are paid out by cancel(listing)
+                claimFor(calldataload(4), h)
+            }
+            case 0x51cff8d9 { // withdraw(address to): send the caller's credited tPOT to `to`
+                let to := low(calldataload(4))
+                need(to, "zero")
+                let s := k(caller(), 14)
+                let v := sload(s)
+                need(v, "no credit")
+                sstore(s, 0)
+                need(call(gas(), to, v, 0, 0, 0, 0), "pay")
+                act(0, 9, v, to, 0)
+                ret(v)
+            }
             // ---------------- market ----------------
             case 0x19aeb490 { list(calldataload(4), calldataload(36), calldataload(68)) } // list(uint256,uint256,uint256)
             case 0xd6febde8 { buy(calldataload(4), calldataload(36)) } // buy(uint256,uint256) payable
@@ -162,8 +183,9 @@ object "PotKit" {
             function supplyOf(t) -> s { s := mul(unitsOf(t), 1000000000000000000) }
             function shareSlot(holder, id) -> s { s := k(holder, or(shl(8, id), 11)) }
             /// one event for the dApp timeline: Activity(id, actor, kind, a, b, c)
-            ///   1 lock(units, faceValue, dueDate) · 2 redeem · 4 settle(amount) · 5 claim(shares, payout)
-            ///   6 list(listingId, price, amount) · 7 buy(listingId, amount, cost) · 8 cancel(listingId, returned)
+            ///   1 lock(units, faceValue, dueDate) · 2 redeem · 4 settle(amount) · 5 claim(shares, payout, paid to)
+            ///   6 list(listingId, price, amount) · 7 buy(listingId, amount, cost)
+            ///   8 cancel(listingId, units, 1 if closed after settlement) · 9 withdraw(amount, to) with id 0
             function act(id, kind, a, b, c) {
                 mstore(0, kind)
                 mstore(0x20, a)
@@ -171,8 +193,15 @@ object "PotKit" {
                 mstore(0x60, c)
                 log3(0, 0x80, 0x9474b02fc45390e98fd94699500c2cb9403c4315f81209bfdf574aa18e8777b7, id, caller())
             }
+            /// send v tPOT to `to`; if the transfer fails (e.g. a contract that rejects tPOT) the amount is
+            /// credited to `to` instead (k(to, 14), taken with withdraw), so a payout can never block anyone else
             function pay(to, v) {
-                if v { need(call(gas(), to, v, 0, 0, 0, 0), "pay") }
+                if v {
+                    if iszero(call(gas(), to, v, 0, 0, 0, 0)) {
+                        let s := k(to, 14)
+                        sstore(s, add(sload(s), v))
+                    }
+                }
             }
 
             // ---------------- ERC-721 internals ----------------
@@ -187,6 +216,9 @@ object "PotKit" {
                 need(o, "no token")
                 need(eq(o, f), "from")
                 need(t, "zero")
+                // a receipt sent here would be stuck: owned by PotKit but not locked (fractionalize locks
+                // through moveNft directly, not through this path)
+                need(iszero(eq(t, address())), "recipient")
                 let ap := k(id, 4)
                 need(or(eq(caller(), o), or(eq(sload(ap), caller()), isOp(o, caller()))), "auth")
                 sstore(ap, 0)
@@ -283,10 +315,7 @@ object "PotKit" {
                 case 0x18160ddd { ret(sub(supplyOf(t), shr(128, sload(k(id, 9))))) } // totalSupply(): claimed shares are burned
                 case 0x70a08231 { ret(sload(shareSlot(low(calldataload(4)), id))) } // balanceOf(address)
                 case 0xdd62ed3e { ret(sload(allowSlot(low(calldataload(4)), low(calldataload(36)), id, t))) } // allowance(address,address)
-                case 0xa9059cbb { // transfer(address,uint256)
-                    moveShares(id, caller(), from, low(calldataload(4)), calldataload(36))
-                    ret(1)
-                }
+                case 0xa9059cbb { send(id, from, calldataload(4), calldataload(36)) } // transfer(address,uint256)
                 case 0x095ea7b3 { // approve(address,uint256)
                     let sp := low(calldataload(4))
                     let v := calldataload(36)
@@ -303,10 +332,18 @@ object "PotKit" {
                         need(iszero(lt(al, v)), "allowance")
                         sstore(as, sub(al, v))
                     }
-                    moveShares(id, caller(), o, low(calldataload(36)), v)
-                    ret(1)
+                    send(id, o, calldataload(36), v)
                 }
                 default { revert(0, 0) }
+            }
+            /// ERC-20 move; shares sent to PotKit or to a share token (this one or any other: k(token, 10) is
+            /// its receipt id) could never be claimed, so those recipients are refused here (list() escrows
+            /// into PotKit through moveShares directly)
+            function send(id, f, to, v) {
+                to := low(to)
+                need(iszero(or(eq(to, address()), sload(k(to, 10)))), "recipient")
+                moveShares(id, caller(), f, to, v)
+                ret(1)
             }
 
             // ---------------- vault ----------------
@@ -345,18 +382,19 @@ object "PotKit" {
                 act(id, 1, units, face, due)
                 ret(tok)
             }
-            /// redeem(id): whoever holds every outstanding share gets the receipt back. After settlement
-            /// all shares must be claimed first; then the depositor redeems.
+            /// redeem(id): only the depositor gets the receipt back. Before settlement they must hold every
+            /// share (so nobody else can wipe the terms the debtor pays against); after settlement every
+            /// share must be claimed first (claimFor / cancel let anyone finish that).
             function redeem(id) {
                 let ts := k(id, 7)
                 let t := sload(ts)
                 let supply := supplyOf(t)
                 need(supply, "not locked")
+                let ls := k(id, 8)
+                need(eq(caller(), low(sload(ls))), "not depositor")
                 let ps := k(id, 9)
                 let outstanding := sub(supply, shr(128, sload(ps)))
                 if settled(t) { need(iszero(outstanding), "claim first") }
-                let ls := k(id, 8)
-                if iszero(outstanding) { need(eq(caller(), low(sload(ls))), "not depositor") }
                 let bs := shareSlot(caller(), id)
                 need(eq(sload(bs), outstanding), "need all units")
                 sstore(bs, 0)
@@ -369,26 +407,34 @@ object "PotKit" {
                 act(id, 2, 0, 0, 0)
                 stop()
             }
-            /// settle(id) payable: anyone pays msg.value >= faceValue tPOT into the pool
+            /// settle(id) payable: anyone pays exactly faceValue tPOT into the pool
             function settle(id) {
                 let ts := k(id, 7)
                 let t := sload(ts)
                 need(unitsOf(t), "not locked")
                 need(iszero(settled(t)), "settled")
                 let v := callvalue()
-                need(iszero(lt(v, shr(160, sload(k(id, 8))))), "underpaid")
+                let face := shr(160, sload(k(id, 8)))
+                need(iszero(lt(v, face)), "underpaid")
+                need(iszero(gt(v, face)), "overpaid")
                 sstore(ts, or(t, shl(240, 1)))
                 sstore(k(id, 9), v)
                 act(id, 4, v, 0, 0)
                 stop()
             }
-            /// claim(id): burn all your shares for your pro-rata part of the pool (paid in tPOT)
-            function claim(id) {
+            /// claim(id) / claimFor(id, holder): burn all of holder's shares and pay their pro-rata part
+            /// of the pool to the holder (in tPOT)
+            function claimFor(id, holder) {
                 let t := sload(k(id, 7))
                 need(settled(t), "not settled")
-                let bs := shareSlot(caller(), id)
+                let bs := shareSlot(holder, id)
                 let shares := sload(bs)
                 need(shares, "no shares")
+                sstore(bs, 0)
+                cashOut(id, t, holder, holder, shares)
+            }
+            /// burn `shares` (already taken from `from`'s balance) and pay their part of the pool to `to`
+            function cashOut(id, t, from, to, shares) {
                 let ps := k(id, 9)
                 let p := sload(ps)
                 let amount := and(p, 0xffffffffffffffffffffffffffffffff)
@@ -396,11 +442,10 @@ object "PotKit" {
                 let supply := supplyOf(t)
                 // cumulative rounding: the payouts add up to exactly `amount` once every share is claimed
                 let payout := sub(div(mul(amount, add(burned, shares)), supply), div(mul(amount, burned), supply))
-                sstore(bs, 0)
                 sstore(ps, add(p, shl(128, shares)))
-                emitT(low(t), caller(), 0, shares)
-                act(id, 5, shares, payout, 0)
-                pay(caller(), payout)
+                emitT(low(t), from, 0, shares)
+                act(id, 5, shares, payout, to)
+                pay(to, payout)
                 ret(payout)
             }
 
@@ -446,16 +491,25 @@ object "PotKit" {
                 pay(seller, c)
                 ret(c)
             }
+            /// cancel(lid): before settlement the seller takes the escrowed shares back. After settlement
+            /// anyone may close the listing: the escrowed units are burned and their payout goes to the seller.
             function cancel(lid) {
                 let w := listingSlot(lid)
-                need(eq(caller(), low(sload(w))), "not seller")
+                let seller := low(sload(w))
                 let b := sload(add(w, 1))
                 let left := shr(128, b)
                 need(left, "closed")
                 let id := and(b, 0xffffffffffffffff)
+                let t := sload(k(id, 7))
                 sstore(add(w, 1), id)
-                moveShares(id, low(sload(k(id, 7))), address(), caller(), left)
-                act(id, 8, lid, left, 0)
+                act(id, 8, lid, left, settled(t))
+                if settled(t) {
+                    let es := shareSlot(address(), id)
+                    sstore(es, sub(sload(es), left))
+                    cashOut(id, t, address(), seller, left)
+                }
+                need(eq(caller(), seller), "not seller")
+                moveShares(id, low(t), address(), seller, left)
                 stop()
             }
         }

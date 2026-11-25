@@ -16,29 +16,28 @@ import {
 } from "viem";
 import { Fraction, Lens, PotKit, REASON_CODES } from "../generated/artifacts";
 import { selectedProvider } from "./wallets";
+import { NETWORK } from "./network";
+import { settleValue } from "./settlecheck";
 import { backoffMs, isTransient, loadStep, onScanOk, onScanRefused, saveStep, SCAN_MIN, startScan, TRANSIENT_RETRIES } from "./scanstep";
 
 const env = import.meta.env as Record<string, string | undefined>;
-/** VITE_RPC_URL (primary) and optional VITE_RPC_URL2 (comma-separated lists allowed) — baked in at build time. */
+/** VITE_RPC_URL (primary, see ./network) and optional VITE_RPC_URL2 (comma-separated lists allowed) — baked in at build time. */
 export const RPC_URLS = [
-  ...new Set(
-    [env.VITE_RPC_URL || "https://test-evm-rpc-v3.portaldot.dev", env.VITE_RPC_URL2 ?? ""]
-      .flatMap((v) => v.split(","))
-      .map((v) => v.trim())
-      .filter(Boolean),
-  ),
+  ...new Set([...NETWORK.rpcUrls, ...(env.VITE_RPC_URL2 ?? "").split(",")].map((v) => v.trim()).filter(Boolean)),
 ];
 const rpc = (url: string) => http(url, { retryCount: 3, retryDelay: 400, timeout: 20_000 });
 const transport = RPC_URLS.length > 1 ? fallback(RPC_URLS.map(rpc)) : rpc(RPC_URLS[0]);
 /** First block worth scanning for events (set after deploying; see .env.example). */
 export const ENV_FROM_BLOCK = (env.VITE_FROM_BLOCK ?? "").trim();
 
+/** Chain id, name and native symbol come from VITE_CHAIN_ID / VITE_CHAIN_NAME / VITE_NATIVE_SYMBOL (./network);
+ *  without them this is the Portaldot V3 testnet. */
 export const portaldot = defineChain({
-  id: 420420777,
-  name: "Portaldot V3 Testnet",
+  id: NETWORK.id,
+  name: NETWORK.name,
   // The Substrate side of POT uses 14 decimals, but the Ethereum JSON-RPC adapter reports balances in
   // 18-decimal wei (like every EVM chain), and wallets refuse anything other than 18 here.
-  nativeCurrency: { name: "tPOTv3", symbol: "tPOTv3", decimals: 18 },
+  nativeCurrency: { name: NETWORK.symbol, symbol: NETWORK.symbol, decimals: 18 },
   // VITE_RPC_URL overrides the RPC (used for local ganache screenshots / dev); defaults to the public testnet RPC.
   rpcUrls: { default: { http: RPC_URLS } },
 });
@@ -173,7 +172,7 @@ const REASONS: Record<string, string> = {
   "not issuer": "Only the issuer can do that.",
   from: "You are not the owner of that receipt (or it is already locked).",
   auth: "You are not allowed to move that receipt.",
-  "need all units": "You must hold every outstanding share to redeem (cancel your open listings first).",
+  "need all units": "The depositor must hold every outstanding share to redeem (cancel your open listings first).",
   balance: "Not enough shares in your wallet.",
   "note length": "Note must be 1–140 characters.",
   kind: "Unknown receipt kind.",
@@ -181,23 +180,27 @@ const REASONS: Record<string, string> = {
   "not settled": "That receipt has not been settled yet.",
   "not locked": "That receipt is not locked into shares.",
   "no shares": "You hold no shares of that receipt.",
-  "not depositor": "Only the depositor can redeem a fully claimed receipt.",
+  "not depositor": "Only the wallet that locked this receipt (the depositor) can redeem it.",
   "claim first": "Every share must be claimed before a settled receipt can be redeemed.",
   underpaid: "Amount is below the invoice face value.",
+  overpaid: "Amount is above the invoice face value; settling takes exactly the face value.",
+  escrow: "Shares in a market listing are paid out by closing the listing, not by a claim.",
+  "no credit": "There is no held payout to withdraw.",
+  recipient: "That cannot be sent to the PotKit contract (or shares to a share token): it could never be taken out again.",
   amount: "Amount is out of range.",
   price: "Price is out of range.",
   allowance: "Token allowance too low.",
   "due date": "Due date must be in the future.",
   "own listing": "You cannot buy your own listing.",
   value: "The tPOT sent does not match the price; reload and try again.",
-  "not seller": "Only the seller can cancel.",
+  "not seller": "Only the seller can cancel before the invoice is settled.",
   closed: "That listing is closed.",
   "no listing": "That listing does not exist.",
   "no token": "That receipt does not exist.",
   units: "Units must be between 1 and 1,000,000,000,000.",
   receiver: "The receiving contract does not accept ERC-721 receipts.",
   zero: "The zero address is not allowed.",
-  pay: "The payout transfer failed.",
+  pay: "The transfer failed: the receiving address does not accept tPOT. Withdraw to another address.",
   clone: "Could not create the share token.",
 };
 const CODES = REASON_CODES as Record<string, string>;
@@ -233,7 +236,7 @@ function explainRaw(error: unknown): string {
   const raw = `${e?.shortMessage ?? ""} ${e?.details ?? ""} ${e?.message ?? ""}`;
   if (/user rejected|user denied|rejected the request/i.test(raw)) return "Rejected in wallet.";
   if (/insufficient funds|gas required exceeds|lack of funds/i.test(raw))
-    return "Not enough tPOTv3 for gas. Fund the mapped account, not the 0x address (see the banner above).";
+    return `Not enough ${NETWORK.symbol} for gas. Fund the mapped account, not the 0x address (see the banner above).`;
   const why = revertReason(error);
   if (why && REASONS[why]) return REASONS[why];
   // our own input checks throw plain Errors whose text is already meant for the user
@@ -364,19 +367,62 @@ export async function tokenInfo(_token: Address | "", who: Address | "") {
   return { decimals: PAY_DECIMALS, symbol: PAY_SYMBOL, balance };
 }
 
-/** settle(id) with msg.value = amount tPOT (anyone can pay; at least the face value) */
-export async function settle(account: Address, kit: Address, id: number, amount: string) {
-  const raw = parseUnits(amount, PAY_DECIMALS);
-  if (raw <= 0n) throw new Error("Enter a positive amount.");
+/** settle(id) with msg.value = exactly the face value. The contract rejects any other amount ("underpaid" /
+ *  "overpaid"), so the amount is never typed: it is read from the chain right before sending. Anyone can pay. */
+export async function settle(account: Address, kit: Address, id: number) {
+  const [s] = await lensRead<readonly LensSettlement[]>("settlements", [kit, BigInt(id), 1n], kit);
+  const raw = s ? settleValue(s.faceValue, s.settled) : null;
+  if (raw === null) throw new Error(s?.settled ? "This invoice is already paid." : "This receipt has no payment terms yet, so it cannot be paid.");
   const balance = await reader.getBalance({ address: account });
   if (balance < raw) throw new Error(`Not enough tPOT: paying ${fmt(raw, PAY_DECIMALS)} ${PAY_SYMBOL} needs more than your balance of ${fmt(balance, PAY_DECIMALS)} ${PAY_SYMBOL} (plus gas: on Portaldot settling also locks a ~4 tPOT storage deposit).`);
   const hash = await wallet().writeContract({ address: kit, abi: PotKit.abi, functionName: "settle", args: [BigInt(id)], value: raw, account, chain: portaldot });
   await confirm(hash);
-  return hash;
+  return { hash, value: raw };
 }
 
 export async function claim(account: Address, kit: Address, id: number) {
   const hash = await wallet().writeContract({ address: kit, abi: PotKit.abi, functionName: "claim", args: [BigInt(id)], account, chain: portaldot });
+  await confirm(hash);
+  return hash;
+}
+
+/** claimFor(id, holder), v2 only: after settlement anyone can pay a holder out. The holder receives the payout,
+ *  the caller only pays gas. Checks the holder's share balance first so a typo fails before the wallet opens. */
+export async function claimFor(account: Address, kit: Address, id: number, holder: string) {
+  if (!isAddress(holder.trim())) throw new Error("Enter the holder's 0x address.");
+  const who = getAddress(holder.trim());
+  if (who === getAddress(kit)) throw new Error("Shares in a market listing are paid out by closing the listing, not by a claim.");
+  const [shares] = await lensRead<readonly bigint[]>("balances", [kit, who, BigInt(id), 1n], kit);
+  if (!shares) throw new Error(`${short(who)} holds no shares of receipt #${id}.`);
+  const hash = await wallet().writeContract({ address: kit, abi: PotKit.abi, functionName: "claimFor", args: [BigInt(id), who], account, chain: portaldot });
+  await confirm(hash);
+  return { hash, holder: who, shares };
+}
+
+/** 2 for a v2 PotKit (claimFor, listings closed after settlement pay the seller, held payouts), 1 for the first
+ *  version. Read-only probe: withdraw() from the zero address answers "no credit" on v2; v1 has no withdraw and
+ *  reverts without a reason. A failed read (RPC down) is not cached, so the next refresh asks again. */
+const kitVersions = new Map<string, Promise<1 | 2>>();
+export function kitVersion(kit: Address): Promise<1 | 2> {
+  const key = kit.toLowerCase();
+  let v = kitVersions.get(key);
+  if (!v) {
+    v = reader.simulateContract({ address: kit, abi: PotKit.abi, functionName: "withdraw", args: [kit], account: ZERO as Address })
+      .then(() => 2 as const, (e) => {
+        if (revertReason(e) === "no credit") return 2 as const;
+        if (!/revert/i.test(`${(e as Error)?.message ?? ""}`)) kitVersions.delete(key);
+        return 1 as const;
+      });
+    kitVersions.set(key, v);
+  }
+  return v;
+}
+
+/** tPOT that PotKit holds for `who` because a payout transfer to it failed (0 on contracts without credits) */
+export const loadCredit = (kit: Address, who: Address) => lensRead<bigint>("credit", [kit, who], kit);
+/** withdraw(to): sends the caller's whole held payout to `to` */
+export async function withdrawCredit(account: Address, kit: Address, to: Address = account) {
+  const hash = await wallet().writeContract({ address: kit, abi: PotKit.abi, functionName: "withdraw", args: [to], account, chain: portaldot });
   await confirm(hash);
   return hash;
 }
@@ -604,12 +650,22 @@ export async function loadEvents(a: Addrs, _market: Address | "", listings: List
       out.push({ ...base(l), kind: "terms", id, actors: [who], value: B, dueDate: Number(C), text: `#${id} terms: ${fmt(B, PAY_DECIMALS)} ${PAY_SYMBOL}${C ? ` due ${new Date(Number(C) * 1000).toLocaleDateString()}` : ""}` });
     } else if (k === 2) out.push({ ...base(l), kind: "redeem", id, actors: [who], text: `#${id} redeemed` });
     else if (k === 4) out.push({ ...base(l), kind: "settle", id, actors: [who], value: A, text: `#${id} settled · ${fmt(A, PAY_DECIMALS)} ${PAY_SYMBOL} paid` });
-    else if (k === 5) out.push({ ...base(l), kind: "claim", id, actors: [who], amount: A, value: B, text: `#${id} payout claimed` });
+    else if (k === 5) {
+      // c is the wallet that was paid (v2: claimFor / a listing closed after settlement can pay someone other than the caller)
+      const to = C > 0n ? getAddress(`0x${C.toString(16).padStart(40, "0")}`) : who;
+      const self = to.toLowerCase() === who.toLowerCase();
+      // only the wallet that was paid is an actor: History shows the payout as money received by its actors
+      out.push({ ...base(l), kind: "claim", id, actors: [to], amount: A, value: B, text: self ? `#${id} payout claimed` : `#${id} payout sent to ${short(to)}` });
+    }
     else if (k === 6) out.push({ ...base(l), kind: "list", id, lid: Number(A), actors: [who], amount: C, value: B, text: `${units(C)} shares of #${id} listed` });
     else if (k === 7) {
       const seller = sellerByLid.get(Number(A));
       out.push({ ...base(l), kind: "buy", id, lid: Number(A), actors: [who, ...(seller ? [seller] : [])], amount: B, value: C, text: `${units(B)} shares of #${id} bought` });
-    } else if (k === 8) out.push({ ...base(l), kind: "cancel", id, lid: Number(A), actors: [who], amount: B, text: `Listing ${A} cancelled` });
+    } else if (k === 8) {
+      // c = 1: closed after settlement (by anyone); the escrowed shares were paid out to the seller
+      const seller = sellerByLid.get(Number(A));
+      out.push({ ...base(l), kind: "cancel", id, lid: Number(A), actors: [who, ...(seller && seller !== who ? [seller] : [])], amount: B, text: C === 1n ? `Listing ${A} closed after settlement` : `Listing ${A} cancelled` });
+    }
   }
   const seen = new Set<string>();
   for (let i = out.length - 1; i >= 0; i--) { const e = out[i]!; const k = `${e.hash}|${e.kind}|${e.id}|${e.lid ?? ""}|${e.amount ?? ""}|${e.value ?? ""}`; if (seen.has(k)) out.splice(i, 1); else seen.add(k); }
@@ -619,7 +675,7 @@ export async function loadEvents(a: Addrs, _market: Address | "", listings: List
   recent.forEach((e) => { e.time = times.get(e.block) ?? 0; e.timeApprox = e.time > 0; });
   return { events: recent, ok };
 }
-export const formatNative = (v: bigint) => `${Number(formatUnits(v, 18)).toLocaleString("en-US", { maximumFractionDigits: 4 })} tPOTv3`;
+export const formatNative = (v: bigint) => `${Number(formatUnits(v, 18)).toLocaleString("en-US", { maximumFractionDigits: 4 })} ${NETWORK.symbol}`;
 
 // ---- B8: Portaldot (pallet-revive) H160 -> mapped Substrate account ----------
 import { blake2b } from "@noble/hashes/blake2b";

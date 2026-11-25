@@ -27,7 +27,7 @@ export function lifecycleSteps(c: Ctx): Step[] {
     { t: "Lock it into shares", d: cannotMint ? "Needs a receipt you own; receipts are minted by the issuer or an approved minter." : "Set face value, due date and share count in one transaction.", done: locked, go: cannotMint ? undefined : ["Add terms", "issue"] },
     { t: "List shares for sale", d: "Offer some shares at a discount to raise tPOT now.", done: listed, go: ["Sell", "trade", firstLocked ? { sell: String(firstLocked.id) } : {}] },
     { t: "Buy shares", d: "Use a second wallet to buy from a listing (you cannot buy your own).", done: bought, go: ["Trade", "trade"] },
-    { t: "Settle the invoice", d: "Pay at least the face value through the debtor's pay page.", done: settledMine, go: ["Open pay page", "pay", firstLocked ? { id: String(firstLocked.id) } : {}] },
+    { t: "Settle the invoice", d: "Pay the face value through the debtor's pay page.", done: settledMine, go: ["Open pay page", "pay", firstLocked ? { id: String(firstLocked.id) } : {}] },
     { t: "Claim the payout", d: "Each holder withdraws their pro-rata part of the payment.", done: claimed, go: ["Portfolio", "portfolio"] },
   ];
 }

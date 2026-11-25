@@ -83,10 +83,10 @@ export function Pay({ c }: { c: Ctx }) {
         <aside className="pay-panel" aria-label="Payment">
           <span className="pay-label"><Term k="face">Amount due</Term></span>
           <strong className="pay-amount num">{r.settle.faceValue > 0n ? `${fmt(r.settle.faceValue, r.settle.decimals)} tPOT` : "—"}</strong>
-          <small className="muted">{r.settle.settled ? `Paid ${fmt(r.settle.amount, r.settle.decimals)} tPOT` : "Minimum payment. Anyone can pay."}</small>
+          <small className="muted">{r.settle.settled ? `Paid ${fmt(r.settle.amount, r.settle.decimals)} tPOT` : "Exact amount. Anyone can pay."}</small>
           <button className="btn primary block" disabled={Boolean(payBlock && c.account) || (!c.account && Boolean(r.settle.settled || !r.fraction))} onClick={() => { if (!c.account) { c.connect(); return; } if (c.gated) { c.switchNetwork(); return; } c.openPay(r.id); }}>{r.settle.settled ? "Paid" : !c.account ? "Connect wallet to pay" : "Review and pay"}</button>
           <Why text={c.account ? payBlock : ""} />
-          <p className="pay-warn">Payment is final. Paying more than the amount due sends the extra to share holders and it is not refunded; you will be asked to confirm.</p>
+          <p className="pay-warn">Payment is final. The app sends exactly the amount due, never more.</p>
           <div className="pay-links">
             <button className="btn sm" onClick={() => copy(link(ack ? `&ack=${ack.sig}&by=${ack.by}` : ""), "Pay link")}><Ico n="link" /> Copy pay link</button>
             <button className="btn sm" onClick={() => c.setTab("verify", { id: String(r.id) })}><Ico n="shield" /> Verify</button>

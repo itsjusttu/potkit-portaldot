@@ -202,7 +202,7 @@ export function Trade({ c }: { c: Ctx }) {
                     const original = initialByListing.get(x.l.lid);
                     const filled = original !== undefined && original > x.l.remaining ? original - x.l.remaining : 0n;
                     const ratio = original ? Number((filled * 10_000n) / original) / 100 : null;
-                    return <div className="trade-my-row" key={x.l.lid}><div><b>KIT#{x.r.id}</b><small>{x.r.note}</small></div><span>{num(x.price)} tPOT</span><strong className="trade-row-apr">{x.apr === null ? "—" : pct(x.apr)}</strong><div className="trade-fill"><i style={{ width: `${ratio ?? 0}%` }} /></div><small>{ratio === null ? `${fmtShares(x.l.remaining)} ${shareUnit(x.l.remaining)} remaining · fill data unavailable` : `${ratio.toFixed(0)}% · ${units(filled)}/${units(original!)} filled`}</small><button className="btn sm" disabled={dis} title={walletReason || "Cancel and return remaining shares"} onClick={() => void c.run(`cancel${x.l.lid}`, async () => { const h = await cancelListing(c.ready(), c.market as Address, x.l.lid); c.note("Listing cancelled", `#${x.l.lid}`, h); })}>Cancel</button></div>;
+                    return <div className="trade-my-row" key={x.l.lid}><div><b>KIT#{x.r.id}</b><small>{x.r.note}</small></div><span>{num(x.price)} tPOT</span><strong className="trade-row-apr">{x.apr === null ? "—" : pct(x.apr)}</strong><div className="trade-fill"><i style={{ width: `${ratio ?? 0}%` }} /></div><small>{ratio === null ? `${fmtShares(x.l.remaining)} ${shareUnit(x.l.remaining)} remaining · fill data unavailable` : `${ratio.toFixed(0)}% · ${units(filled)}/${units(original!)} filled`}</small><button className="btn sm" disabled={dis} title={walletReason || (c.v2 && x.r.settle.settled ? "Close: the invoice is paid, so the escrowed shares are paid out to you in tPOT" : "Cancel and return remaining shares")} onClick={() => void c.run(`cancel${x.l.lid}`, async () => { const h = await cancelListing(c.ready(), c.market as Address, x.l.lid); c.note(c.v2 && x.r.settle.settled ? "Listing closed" : "Listing cancelled", `#${x.l.lid}`, h); })}>{c.v2 && x.r.settle.settled ? "Close" : "Cancel"}</button></div>;
                   })}
                 </div>}
               </div>
@@ -340,8 +340,8 @@ export function Trade({ c }: { c: Ctx }) {
             <p className="market-risk" role="note"><b>Invoice information is issuer-provided.</b> PotKit records custody, terms and payment state on-chain, but does not independently verify the underlying invoice.</p>
             {sel.l.seller === c.account ? (
                 <button className="btn block" disabled={dis} title={walletReason} onClick={() => void c.run(`cancel${sel.l.lid}`, async () => {
-                const h = await cancelListing(c.ready(), c.market as Address, sel.l.lid); c.note("Listing cancelled", `#${sel.l.lid}`, h); setOpen(null);
-              })}>{c.busy === `cancel${sel.l.lid}` ? "Cancelling…" : "Cancel listing"}</button>
+                const h = await cancelListing(c.ready(), c.market as Address, sel.l.lid); c.note(c.v2 && sel.r.settle.settled ? "Listing closed" : "Listing cancelled", `#${sel.l.lid}`, h); setOpen(null);
+              })}>{c.busy === `cancel${sel.l.lid}` ? "Cancelling…" : c.v2 && sel.r.settle.settled ? "Close listing and collect payout" : "Cancel listing"}</button>
             ) : sel.state === "Settled" || sel.state === "Overdue" ? <ClosedWhy state={sel.state} onPortfolio={() => c.setTab("portfolio")} /> : (
               <div className="buy-panel">
                 <label htmlFor="b-amt">Shares to buy</label>

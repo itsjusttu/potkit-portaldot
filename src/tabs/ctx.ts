@@ -12,6 +12,10 @@ export type Ctx = {
   /** payment token: always NATIVE (tPOT); market: the PotKit contract (same as addrs.vault) */
   usd: Address | ""; market: Address | "";
   rows: Row[]; held: Map<number, bigint>; claims: Map<number, bigint>; listings: Listing[];
+  /** tPOT PotKit holds for this wallet because a payout transfer to it failed (withdraw takes it) */
+  credit: bigint;
+  /** the loaded PotKit is v2: after settlement anyone can close a listing and the seller is paid for its escrowed shares (v1 returns them) */
+  v2: boolean;
   events: ChainEvent[]; eventsLoading: boolean; loading: boolean; eventsOk: boolean;
   total: number; loadOlder: () => void; saveStep: (s: DeployStep) => void; resetDeployment: () => void;
     /** usdBal / usdRaw: the wallet's tPOT balance (what settlement and market payments use) */

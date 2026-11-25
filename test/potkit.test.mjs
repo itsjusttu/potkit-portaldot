@@ -11,7 +11,7 @@ const ZERO = "0x0000000000000000000000000000000000000000";
 const NATIVE = "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE";
 const K = A.PotKit.abi;
 const F = A.Fraction.abi;
-let pub, wal, alice, bob, carol, dave, kit;
+let pub, wal, alice, bob, carol, dave, erin, frank, kit;
 
 async function ok(hash) {
   const r = await pub.waitForTransactionReceipt({ hash });
@@ -53,6 +53,17 @@ async function lock(id, units, who = alice, face = 1000n * E18, due = 0n) {
   assert.equal(act.kind, 1n);
   return getAddress(rc.logs.find((l) => l.address.toLowerCase() !== kit.toLowerCase()).address);
 }
+/** a fresh TestReceiver contract (acts as a PotKit user through exec); refuse = it rejects plain tPOT transfers */
+async function receiver(refuse = false) {
+  const d = await ok(await wal.deployContract({ abi: A.TestReceiver.abi, bytecode: A.TestReceiver.bytecode, account: alice, chain, gas: 6_000_000n }));
+  const c = getAddress(d.contractAddress);
+  if (refuse) await ok(await w(c, A.TestReceiver.abi, "setRefuse", [true], alice));
+  return c;
+}
+/** `contract` calls PotKit (or a share token) as itself; alice sends the transaction */
+const asC = (contract, target, abi, functionName, args, value) =>
+  w(contract, A.TestReceiver.abi, "exec", [target, encodeFunctionData({ abi, functionName, args })], alice, value);
+const credit = (who) => lens("credit", [kit, who]);
 /** tx cost in wei (to compute exact native balance changes) */
 async function spent(hash) {
   const rc = await ok(hash);
@@ -70,7 +81,7 @@ before(async () => {
   };
   pub = createPublicClient({ chain, transport: custom(provider) });
   wal = createWalletClient({ chain, transport: custom(provider) });
-  [alice, bob, carol, dave] = await wal.getAddresses();
+  [alice, bob, carol, dave, erin, frank] = await wal.getAddresses();
   const d = await ok(await wal.deployContract({ abi: K, bytecode: A.PotKit.bytecode, account: alice, chain, gas: 6_000_000n }));
   kit = getAddress(d.contractAddress);
 });
@@ -302,19 +313,355 @@ test("settle in native tPOT by anyone; holders claim pro-rata; payouts sum exact
   assert.equal((await lens("settlements", [kit, id, 1n]))[0].settled, false);
 });
 
-test("overpayment stays in the pool; payouts to a contract holder work; settle on unlocked reverts", async () => {
+test("fix 2: settle takes exactly the face value (over- and underpayment revert); payouts to a contract holder work", async () => {
   const id = await mint(alice);
   const token = await lock(id, 2n, alice, 100n);
-  const d = await ok(await wal.deployContract({ abi: A.TestReceiver.abi, bytecode: A.TestReceiver.bytecode, account: alice, chain, gas: 6_000_000n }));
-  const c = getAddress(d.contractAddress);
+  const c = await receiver();
   await ok(await w(token, F, "transfer", [c, E18], alice));
-  await ok(await kw("settle", [id], bob, 300n));
+  await reverts(ks("settle", [id], bob, 99n), "underpaid");
+  await reverts(ks("settle", [id], bob, 101n), "overpaid");
+  await reverts(ks("settle", [id], bob, 300n), "overpaid");
+  await reverts(ks("settle", [id], bob, 0n), "underpaid");
+  const k0 = await bal(kit);
+  await ok(await kw("settle", [id], bob, 100n));
+  assert.equal((await bal(kit)) - k0, 100n);
+  const [s] = await lens("settlements", [kit, id, 1n]);
+  assert.deepEqual([s.settled, s.amount, s.faceValue], [true, 100n, 100n]);
   const c0 = await bal(c);
   await ok(await w(c, A.TestReceiver.abi, "exec", [kit, encodeFunctionData({ abi: K, functionName: "claim", args: [id] })], alice));
-  assert.equal((await bal(c)) - c0, 150n);
+  assert.equal((await bal(c)) - c0, 50n);
   const free = await mint(alice);
   await reverts(ks("settle", [free], bob, 1n), "not locked");
   await reverts(ks("settle", [9999n], bob, 1n), "not locked");
+});
+
+// ---- v2 fixes ---------------------------------------------------------------------------------------
+test("fix 1: before settlement only the depositor can redeem, even against a holder of 100% of the shares", async () => {
+  const id = await mint(alice);
+  const face = 7n * E18;
+  const token = await lock(id, 10n, alice, face);
+  await ok(await w(token, F, "transfer", [bob, 10n * E18], alice));
+  await reverts(ks("redeem", [id], bob), "not depositor"); // bob holds every share but did not lock the receipt
+  await reverts(ks("redeem", [id], alice), "need all units");
+  assert.equal(await kr("ownerOf", [id]), kit);
+  assert.equal((await lens("settlements", [kit, id, 1n]))[0].faceValue, face); // the terms survive
+  await ok(await kw("settle", [id], dave, face)); // so the debtor can still settle
+  const b0 = await bal(bob);
+  const { fee } = await spent(await kw("claim", [id], bob));
+  assert.equal((await bal(bob)) - b0 + fee, face);
+  await reverts(ks("redeem", [id], bob), "not depositor");
+  await ok(await kw("redeem", [id])); // after settlement: unchanged, every share claimed, then the depositor
+  assert.equal(await kr("ownerOf", [id]), alice);
+  // a depositor holding every share still takes the receipt back before settlement
+  const id2 = await mint(alice);
+  const t2 = await lock(id2, 3n);
+  await ok(await w(t2, F, "transfer", [bob, E18], alice));
+  await reverts(ks("redeem", [id2]), "need all units");
+  await ok(await w(t2, F, "transfer", [alice, E18], bob));
+  await ok(await kw("redeem", [id2]));
+  assert.equal(await kr("ownerOf", [id2]), alice);
+});
+
+test("fix 3: claimFor lets anyone pay a holder out after settlement; the payout goes to the holder", async () => {
+  const id = await mint(alice);
+  const face = 3_000_000_001n;
+  const token = await lock(id, 3n, alice, face);
+  await ok(await w(token, F, "transfer", [bob, E18], alice));
+  await ok(await w(token, F, "transfer", [carol, 2n * E18], alice));
+  await reverts(ks("claimFor", [id, bob], dave), "not settled");
+  await ok(await kw("settle", [id], dave, face));
+  await reverts(ks("claimFor", [id, dave], dave), "no shares");
+  await reverts(ks("claimFor", [id, kit], dave), "escrow"); // escrowed shares are paid out by cancel(listing)
+  await reverts(ks("redeem", [id]), "claim first"); // bob and carol have not claimed
+  const b0 = await bal(bob);
+  const rc = await ok(await kw("claimFor", [id, bob], dave)); // dave pays the gas, bob gets the tPOT
+  assert.equal((await bal(bob)) - b0, 1_000_000_000n);
+  const a = parseEventLogs({ abi: K, logs: rc.logs, eventName: "Activity" })[0].args;
+  assert.deepEqual([a.actor, a.kind, a.a, a.b, a.c], [dave, 5n, E18, 1_000_000_000n, BigInt(bob)]);
+  const burn = parseEventLogs({ abi: F, logs: rc.logs.filter((l) => getAddress(l.address) === token), eventName: "Transfer" })[0].args;
+  assert.deepEqual([burn.from, burn.to, burn.value], [bob, ZERO, E18]);
+  await reverts(ks("claimFor", [id, bob], dave), "no shares");
+  const c0 = await bal(carol);
+  await ok(await kw("claimFor", [id, carol], bob));
+  assert.equal((await bal(carol)) - c0, 2_000_000_001n); // cumulative rounding: the last claim gets the dust
+  await reverts(ks("claim", [id], carol), "no shares");
+  assert.equal(await r(token, F, "totalSupply"), 0n);
+  await ok(await kw("redeem", [id]));
+});
+
+test("fix 3: after settlement anyone can close an open listing; the seller is paid for the escrowed shares", async () => {
+  const id = await mint(alice);
+  const face = E18;
+  const token = await lock(id, 10n, alice, face);
+  await ok(await w(token, F, "transfer", [bob, 4n * E18], alice));
+  const rc = await ok(await kw("list", [id, E18, 3n * E18], bob));
+  const lid = parseEventLogs({ abi: K, logs: rc.logs, eventName: "Activity" })[0].args.a;
+  await ok(await kw("buy", [lid, E18], carol, E18)); // 2 shares stay in escrow
+  await reverts(ks("cancel", [lid], dave), "not seller"); // before settlement only the seller cancels
+  await ok(await kw("settle", [id], dave, face));
+  await ok(await kw("claimFor", [id, alice], dave));
+  await ok(await kw("claimFor", [id, bob], dave));
+  await ok(await kw("claimFor", [id, carol], dave));
+  await reverts(ks("redeem", [id]), "claim first"); // only the escrowed shares are left
+  const b0 = await bal(bob);
+  const cr = await ok(await kw("cancel", [lid], dave));
+  assert.equal((await bal(bob)) - b0, (2n * face) / 10n);
+  const acts = parseEventLogs({ abi: K, logs: cr.logs, eventName: "Activity" }).map((l) => l.args);
+  assert.deepEqual(acts.map((x) => [x.actor, x.kind, x.a, x.b, x.c]), [[dave, 8n, lid, 2n * E18, 1n], [dave, 5n, 2n * E18, (2n * face) / 10n, BigInt(bob)]]);
+  const burn = parseEventLogs({ abi: F, logs: cr.logs.filter((l) => getAddress(l.address) === token), eventName: "Transfer" })[0].args;
+  assert.deepEqual([burn.from, burn.to, burn.value], [kit, ZERO, 2n * E18]);
+  assert.equal(await r(token, F, "balanceOf", [kit]), 0n);
+  assert.equal((await lens("listings", [kit, lid, 1n]))[0].remaining, 0n);
+  await reverts(ks("cancel", [lid], bob), "closed");
+  assert.equal(await r(token, F, "totalSupply"), 0n);
+  await ok(await kw("redeem", [id]));
+  assert.equal(await kr("ownerOf", [id]), alice);
+});
+
+test("fix 3: a payout to a holder or seller that rejects tPOT is credited, never reverts; withdraw(to) pays it out", async () => {
+  const bad = await receiver(true);
+  const id = await mint(alice);
+  const face = 9n * E18;
+  const token = await lock(id, 9n, alice, face);
+  await ok(await w(token, F, "transfer", [bad, 5n * E18], alice));
+  const lr = await ok(await asC(bad, kit, K, "list", [id, E18, 3n * E18]));
+  const lid = parseEventLogs({ abi: K, logs: lr.logs, eventName: "Activity" })[0].args.a;
+  // the buyer's payment cannot reach the seller: it is credited and the purchase still goes through
+  await ok(await kw("buy", [lid, 2n * E18], carol, 2n * E18));
+  assert.equal(await r(token, F, "balanceOf", [carol]), 2n * E18);
+  assert.equal(await credit(bad), 2n * E18);
+  await ok(await kw("settle", [id], dave, face));
+  await ok(await kw("cancel", [lid], dave)); // 1 escrowed share: its payout is credited to the seller
+  assert.equal(await credit(bad), 3n * E18);
+  await ok(await kw("claimFor", [id, bad], dave)); // its 2 remaining shares: credited too
+  assert.equal(await credit(bad), 5n * E18);
+  assert.equal(await bal(bad), 0n);
+  for (const who of [alice, carol]) await ok(await kw("claimFor", [id, who], bob));
+  await ok(await kw("redeem", [id])); // nothing blocks redeem, even before the credit is withdrawn
+  await reverts(ks("withdraw", [ZERO], bad), "zero");
+  await reverts(ks("withdraw", [bad], bad), "pay"); // it still refuses tPOT: the whole call reverts, the credit stays
+  await reverts(ks("withdraw", [bob], bob), "no credit");
+  assert.equal(await credit(bad), 5n * E18);
+  const k0 = await bal(kit), e0 = await bal(erin);
+  const wr = await ok(await asC(bad, kit, K, "withdraw", [erin]));
+  assert.equal((await bal(erin)) - e0, 5n * E18);
+  assert.equal(k0 - (await bal(kit)), 5n * E18);
+  assert.equal(await credit(bad), 0n);
+  const a = parseEventLogs({ abi: K, logs: wr.logs, eventName: "Activity" })[0].args;
+  assert.deepEqual([a.id, a.actor, a.kind, a.a, a.b], [0n, bad, 9n, 5n * E18, BigInt(erin)]);
+  await reverts(ks("withdraw", [erin], bad), "no credit");
+});
+
+test("fix 4: share transfers to the PotKit contract or to any share token are refused; list() still escrows", async () => {
+  const id = await mint(alice);
+  const token = await lock(id, 5n);
+  const other = await lock(await mint(alice), 1n);
+  for (const to of [kit, token, other]) await reverts(sim(token, F, "transfer", [to, E18], alice), "recipient");
+  await ok(await w(token, F, "approve", [bob, 5n * E18], alice));
+  for (const to of [kit, token, other]) await reverts(sim(token, F, "transferFrom", [alice, to, E18], bob), "recipient");
+  await ok(await w(token, F, "transferFrom", [alice, carol, E18], bob)); // ordinary recipients still work
+  await ok(await kw("list", [id, E18, 2n * E18]));
+  assert.equal(await r(token, F, "balanceOf", [kit]), 2n * E18);
+  assert.equal(await r(token, F, "balanceOf", [alice]), 2n * E18);
+  assert.equal(await r(token, F, "balanceOf", [token]), 0n);
+});
+
+test("fix 4b: receipts cannot be transferred to the PotKit address; fractionalize still locks them there", async () => {
+  const id = await mint(alice);
+  await reverts(ks("transferFrom", [alice, kit, id]), "recipient");
+  await reverts(ks("safeTransferFrom", [alice, kit, id]), "recipient");
+  await reverts(ks("safeTransferFrom", [alice, kit, id, "0x1234"]), "recipient");
+  await ok(await kw("approve", [bob, id])); // approved spenders and operators are refused the same way
+  await reverts(ks("transferFrom", [alice, kit, id], bob), "recipient");
+  await ok(await kw("setApprovalForAll", [carol, true]));
+  await reverts(ks("transferFrom", [alice, kit, id], carol), "recipient");
+  await ok(await kw("setApprovalForAll", [carol, false]));
+  assert.equal(await kr("ownerOf", [id]), alice);
+  const k0 = await kr("balanceOf", [kit]);
+  await lock(id, 2n); // the internal lock moves it into PotKit
+  assert.equal(await kr("ownerOf", [id]), kit);
+  assert.equal(await kr("balanceOf", [kit]), k0 + 1n);
+  await ok(await kw("redeem", [id])); // and redeem moves it back out
+  assert.equal(await kr("ownerOf", [id]), alice);
+  await ok(await kw("transferFrom", [alice, bob, id])); // ordinary transfers still work
+  assert.equal(await kr("ownerOf", [id]), bob);
+});
+
+test("fix 5: setMinter emits MinterSet(minter, allowed) on every call", async () => {
+  for (const [who, on] of [[carol, true], [carol, true], [carol, false], [dave, false]]) {
+    const rc = await ok(await kw("setMinter", [who, on]));
+    const ev = parseEventLogs({ abi: K, logs: rc.logs, eventName: "MinterSet" });
+    assert.equal(ev.length, 1);
+    assert.deepEqual([getAddress(ev[0].address), ev[0].args.minter, ev[0].args.allowed], [kit, who, on]);
+    assert.deepEqual(await lens("meta", [kit, who]), [alice, on]);
+  }
+});
+
+// ---- settlement property: every payout adds up, the pool empties, redeem always becomes possible ----
+/** Seeded random numbers, so a failing case replays with the same seed (PROP_SEED=<text> npm test). */
+function rng(seed) {
+  let h = 2166136261;
+  for (const c of String(seed)) h = Math.imul(h ^ c.charCodeAt(0), 16777619) >>> 0;
+  const next32 = () => {
+    h = (h + 0x6d2b79f5) >>> 0;
+    let t = Math.imul(h ^ (h >>> 15), h | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return (t ^ (t >>> 14)) >>> 0;
+  };
+  const big = (max) => { let x = 0n; for (let i = 0; i < 10; i++) x = (x << 32n) | BigInt(next32()); return x % max; }; // in [0, max)
+  const int = (n) => Number(big(BigInt(n)));
+  return { big, int, pick: (a) => a[int(a.length)], shuffle: (a) => { for (let i = a.length - 1; i > 0; i--) { const j = int(i + 1); [a[i], a[j]] = [a[j], a[i]]; } return a; } };
+}
+
+/** One life cycle of a receipt, checked against an exact ledger of every native tPOT movement. Alice locks `units`
+    shares with `face`, hands out `give` ([holder, raw share units]), the holders open `lists` ([seller, raw, price,
+    [[buyer, raw]...]]) before settlement, a random account settles exactly `face`, then every holder is paid out
+    (claim or claimFor by a random caller) and every open listing is closed (cancel by a random caller), all in random
+    order. Holders and sellers include a contract that accepts tPOT and one that rejects it (its payouts are credited
+    and withdrawn at the end). Checks: each payout follows the cumulative rounding and stays within 1 wei of the exact
+    share, the payouts add up to the face value, every account ends at exactly the balance the ledger predicts, the
+    pool is back at its starting balance (it holds 0 for this receipt), every share is burned and the depositor can redeem. */
+async function lifecycle(R, { units, face, give, lists = [] }, ctx, label) {
+  const { okC, badC } = ctx;
+  const contracts = new Set([okC, badC]);
+  const id = await mint(alice);
+  const token = await lock(id, units, alice, face);
+  const supply = units * E18;
+  const watched = [alice, bob, carol, dave, erin, frank, okC, badC, kit];
+  const start = new Map();
+  for (const a of watched) start.set(a, await bal(a));
+  assert.equal(await credit(badC), 0n, `${label}: no credit left over from earlier cases`);
+  const ledger = new Map(watched.map((a) => [a, 0n]));
+  const add = (who, v) => ledger.set(who, ledger.get(who) + v);
+  let owed = 0n; // credited to badC (stays in the pool until withdrawn)
+  const deliver = (to, v) => { if (to === badC) owed += v; else { add(to, v); add(kit, -v); } };
+  /** send a tx from `who` (a contract acts through exec, alice sends it); records the fee and the value sent */
+  const tx = async (who, target, abi, fn, args, value = 0n) => {
+    const sender = contracts.has(who) ? alice : who;
+    const hash = contracts.has(who) ? await asC(who, target, abi, fn, args, value) : await w(target, abi, fn, args, who, value || undefined);
+    const { rc, fee } = await spent(hash);
+    add(sender, -fee - value);
+    if (value) add(target === kit ? kit : target, value);
+    return rc;
+  };
+  const acts = (rc) => parseEventLogs({ abi: K, logs: rc.logs, eventName: "Activity" }).map((l) => l.args);
+
+  const held = new Map([[alice, supply]]);
+  const move = (f, t, v) => { held.set(f, held.get(f) - v); held.set(t, (held.get(t) ?? 0n) + v); };
+  for (const [who, raw] of give) { await tx(alice, token, F, "transfer", [who, raw]); move(alice, who, raw); }
+
+  const open = new Map(); // lid -> { seller, left }
+  for (const [seller, raw, price, buys] of lists) {
+    const lid = acts(await tx(seller, kit, K, "list", [id, price, raw]))[0].a;
+    move(seller, kit, raw);
+    const l = { seller, left: raw };
+    open.set(lid, l);
+    for (const [buyer, amt] of buys) {
+      const cost = (price * amt + E18 - 1n) / E18;
+      await tx(buyer, kit, K, "buy", [lid, amt], cost);
+      deliver(seller, cost);
+      l.left -= amt; held.set(kit, held.get(kit) - amt); held.set(buyer, (held.get(buyer) ?? 0n) + amt);
+    }
+  }
+  assert.equal(await r(token, F, "balanceOf", [kit]), [...open.values()].reduce((s, l) => s + l.left, 0n), `${label}: escrow`);
+
+  const payer = R.pick([alice, bob, carol, dave, erin, frank]);
+  await reverts(ks("settle", [id], payer, face + 1n), "overpaid");
+  await reverts(ks("settle", [id], payer, face - 1n), "underpaid");
+  await tx(payer, kit, K, "settle", [id], face);
+
+  // pay everybody out in random order, by random callers
+  const steps = R.shuffle([
+    ...[...held].filter(([who, s]) => who !== kit && s > 0n).map(([who]) => ({ holder: who })),
+    ...[...open].filter(([, l]) => l.left > 0n).map(([lid]) => ({ lid })),
+  ]);
+  const eoas = [alice, bob, carol, dave, erin, frank];
+  let burned = 0n, sum = 0n;
+  for (const [i, step] of steps.entries()) {
+    if (i === steps.length - 1) await reverts(ks("redeem", [id]), "claim first"); // one step left: still blocked
+    let rc, shares, to;
+    if (step.holder) {
+      to = step.holder; shares = held.get(to);
+      const self = R.int(2) === 0;
+      rc = self ? await tx(to, kit, K, "claim", [id]) : await tx(R.pick(eoas), kit, K, "claimFor", [id, to]);
+      held.set(to, 0n);
+    } else {
+      const l = open.get(step.lid);
+      to = l.seller; shares = l.left;
+      rc = await tx(R.pick(eoas), kit, K, "cancel", [step.lid]);
+      l.left = 0n;
+    }
+    const a = acts(rc).find((x) => x.kind === 5n);
+    const expected = (face * (burned + shares)) / supply - (face * burned) / supply;
+    assert.deepEqual([a.a, a.b, a.c], [shares, expected, BigInt(to)], `${label}: payout ${i} to ${to}`);
+    assert.ok(expected * supply > face * shares - supply && expected * supply < face * shares + supply, `${label}: within 1 wei of the exact share`);
+    deliver(to, expected);
+    burned += shares; sum += expected;
+  }
+  assert.equal(sum, face, `${label}: the payouts add up to the amount settled`);
+  assert.equal(burned, supply, `${label}: every share was paid out`);
+  assert.equal(await r(token, F, "totalSupply"), 0n, `${label}: every share is burned`);
+  assert.equal(await credit(badC), owed, `${label}: credit of the contract that rejects tPOT`);
+  if (owed) { await tx(badC, kit, K, "withdraw", [frank]); add(frank, owed); add(kit, -owed); }
+  assert.equal(await credit(badC), 0n);
+  await tx(alice, kit, K, "redeem", [id]);
+  assert.equal(await kr("ownerOf", [id]), alice, `${label}: the depositor redeemed`);
+  assert.equal(ledger.get(kit), 0n, `${label}: ledger of the pool`);
+  for (const a of watched) assert.equal((await bal(a)) - start.get(a), ledger.get(a), `${label}: native balance of ${a}`);
+}
+
+test("property: for random holder splits, listings, buys and claim orders the payouts add up, the pool empties and redeem works", async () => {
+  const ctx = { okC: await receiver(), badC: await receiver(true) };
+  const { okC, badC } = ctx;
+  const R0 = rng("edges");
+  // fixed cases first: the ones that leave dust, paid out in random order
+  const edges = [
+    { label: "100 shares in 3 holders, amount not divisible", units: 100n, give: [[bob, 100n * E18 / 3n], [carol, 100n * E18 / 3n]], face: E18 + 7n },
+    { label: "three holders of 1 wei each next to the issuer", units: 1n, give: [[bob, 1n], [okC, 1n], [badC, 1n]], face: 1_000_000_007n },
+    { label: "1 wei of shares next to a huge holder, large payment", units: 3n, give: [[bob, 3n * E18 - 1n]], face: 10n ** 19n + 3n },
+    { label: "1 wei paid, split three ways", units: 1n, give: [[bob, 333_333_333_333_333_333n], [carol, 333_333_333_333_333_333n]], face: 1n },
+    { label: "a seller that rejects tPOT, partly sold and closed after settlement", units: 10n, give: [[badC, 6n * E18]], face: 10n ** 18n + 1n,
+      lists: [[badC, 4n * E18, 10n ** 15n + 1n, [[carol, E18 / 3n]]], [alice, 1n, 1n, []]] },
+  ];
+  for (const e of edges) await lifecycle(R0, e, ctx, e.label);
+  // then random combinations of holders, share sizes, listings, buys, payer, callers and order
+  const SEED = process.env.PROP_SEED ?? "potkit-v2-1", CASES = Number(process.env.PROP_CASES ?? 24);
+  const R = rng(SEED);
+  const people = [bob, carol, dave, erin, frank, okC, badC];
+  const eoas = [alice, bob, carol, dave, erin, frank];
+  const mag = () => 10n ** BigInt(R.int(20)); // 1 wei up to 10^19 wei
+  for (let i = 0; i < CASES; i++) {
+    const units = R.pick([1n, 2n, 3n, 7n, 100n, 1000n, 10n ** 12n, 1n + R.big(1_000_000n)]);
+    let left = units * E18;
+    const held = new Map([[alice, left]]);
+    const give = [];
+    for (const who of R.shuffle([...people]).slice(0, 1 + R.int(people.length))) {
+      if (left === 0n) break;
+      const kind = R.int(4); // 1 wei · up to 1000 wei · a random part of what is left · whole shares
+      let raw = kind === 0 ? 1n : kind === 1 ? 1n + R.big(1000n) : kind === 2 ? 1n + R.big(left) : E18 * (1n + R.big(units));
+      if (raw > left) raw = left;
+      give.push([who, raw]); left -= raw; held.set(who, raw); held.set(alice, left);
+    }
+    const lists = [];
+    for (let n = R.int(4); n > 0; n--) {
+      const sellers = [...held].filter(([, s]) => s > 0n);
+      if (!sellers.length) break;
+      const [seller, s] = R.pick(sellers);
+      const raw = 1n + R.big(s);
+      held.set(seller, s - raw);
+      const price = 1n + R.big(10n ** 15n);
+      let rest = raw;
+      const buys = [];
+      for (let b = R.int(3); b > 0 && rest > 0n; b--) {
+        const cap = rest < 1000n * E18 ? rest : 1000n * E18; // keeps every purchase under ~1 tPOT
+        const amt = 1n + R.big(cap);
+        buys.push([R.pick(eoas.filter((x) => x !== seller)), amt]); rest -= amt;
+      }
+      lists.push([seller, raw, price, buys]);
+    }
+    const face = 1n + R.big(mag());
+    await lifecycle(R, { units, face, give, lists }, ctx, `case ${i} (seed ${SEED})`);
+  }
 });
 
 test("status from Lens: Free → Pending → Due soon → Overdue → Settled", async () => {
@@ -379,19 +726,25 @@ test("Market: list escrows, partial + full buy with exact tPOT, cost rounds up, 
   assert.equal((await lens("listings", [kit, lid2, 1n]))[0].remaining, 0n);
 });
 
-test("Market: no listing on unlocked receipts; no buying/listing after settlement; seller can cancel and claim", async () => {
+test("Market: no listing on unlocked receipts; no buying/listing after settlement; seller's cancel then pays out the escrow", async () => {
   const free = await mint(alice);
   await reverts(ks("list", [free, E18, E18]), "not locked");
   const id = await mint(alice);
-  const token = await lock(id, 10n, alice, 10n ** 16n);
+  const face = 10n ** 16n;
+  const token = await lock(id, 10n, alice, face);
   const rc = await ok(await kw("list", [id, E18, 5n * E18]));
   const lid = parseEventLogs({ abi: K, logs: rc.logs, eventName: "Activity" })[0].args.a;
   await reverts(ks("redeem", [id]), "need all units"); // escrowed shares block redeem
-  await ok(await kw("settle", [id], dave, 10n ** 16n));
+  await ok(await kw("settle", [id], dave, face));
   await reverts(ks("buy", [lid, E18], bob, E18), "settled");
   await reverts(ks("list", [id, E18, E18]), "settled");
-  await ok(await kw("cancel", [lid]));
-  assert.equal(await r(token, F, "balanceOf", [alice]), 10n * E18);
+  const a0 = await bal(alice);
+  const { rc: cr, fee } = await spent(await kw("cancel", [lid]));
+  assert.equal((await bal(alice)) - a0 + fee, face / 2n); // the 5 escrowed shares are paid out, not returned
+  const acts = parseEventLogs({ abi: K, logs: cr.logs, eventName: "Activity" }).map((l) => l.args);
+  assert.deepEqual(acts.map((a) => [a.kind, a.a, a.b, a.c]), [[8n, lid, 5n * E18, 1n], [5n, 5n * E18, face / 2n, BigInt(alice)]]);
+  assert.equal(await r(token, F, "balanceOf", [alice]), 5n * E18);
+  assert.equal(await r(token, F, "balanceOf", [kit]), 0n);
   await ok(await kw("claim", [id]));
   await ok(await kw("redeem", [id]));
 });

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Ico } from "./AppUi";
+import { NETWORK } from "./lib/network";
 import { listWallets, onWalletsChanged, rememberedId, startDiscovery, type WalletOption } from "./lib/wallets";
 
 export function WalletIcon({ w, size = 28 }: { w: Pick<WalletOption, "icon" | "badge" | "name">; size?: number }) {
@@ -81,7 +82,7 @@ export function WalletModal({ open, wallets, busyId, onPick, onClose }: { open: 
             ))}
           </ul>
         </details>}
-        <p className="wm2-foot">PotKit only asks for your address and the Portaldot V3 network (chain 420420777). It never asks for a recovery phrase.</p>
+        <p className="wm2-foot">PotKit only asks for your address and the {NETWORK.name} network (chain {NETWORK.id}). It never asks for a recovery phrase.</p>
       </div>
     </div>
   );

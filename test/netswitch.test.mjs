@@ -1,10 +1,14 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
-import { transformSync } from "esbuild";
+import { fileURLToPath } from "node:url";
+import { buildSync } from "esbuild";
 
-const src = transformSync(readFileSync(new URL("../src/lib/netswitch.ts", import.meta.url), "utf8"), { loader: "ts", format: "esm" }).code;
-const { switchToPortaldotWith, PORTALDOT_ADD_PARAMS } = await import("data:text/javascript," + encodeURIComponent(src));
+/** netswitch.ts bundled with ./network; `env` stands in for Vite's import.meta.env (the build-time VITE_* values) */
+const load = (env = {}) => {
+  const src = buildSync({ entryPoints: [fileURLToPath(new URL("../src/lib/netswitch.ts", import.meta.url))], bundle: true, write: false, format: "esm", define: { "import.meta.env": JSON.stringify(env) } }).outputFiles[0].text;
+  return import("data:text/javascript," + encodeURIComponent(src));
+};
+const { switchToPortaldotWith, PORTALDOT_ADD_PARAMS } = await load();
 
 /** Mock EIP-1193 wallet that enforces the rules OKX/MetaMask apply. */
 function mockWallet({ known = false, unknownErr = { code: 4902, message: "Unrecognized chain ID" }, switchAfterAdd = false, reject = "" } = {}) {
@@ -35,6 +39,14 @@ test("add params use 18 decimals and the public RPC", () => {
   assert.equal(PORTALDOT_ADD_PARAMS.nativeCurrency.decimals, 18);
   assert.equal(PORTALDOT_ADD_PARAMS.chainId, target);
   assert.deepEqual(PORTALDOT_ADD_PARAMS.rpcUrls, ["https://test-evm-rpc-v3.portaldot.dev"]);
+});
+test("network: VITE_CHAIN_ID / VITE_CHAIN_NAME / VITE_NATIVE_SYMBOL / VITE_RPC_URL override the testnet defaults", async () => {
+  const { PORTALDOT_ADD_PARAMS: p } = await load({ VITE_CHAIN_ID: "12345", VITE_CHAIN_NAME: "Example Net", VITE_NATIVE_SYMBOL: "EXM", VITE_RPC_URL: " https://rpc.example.invalid , https://rpc2.example.invalid" });
+  assert.deepEqual(p, { chainId: "0x3039", chainName: "Example Net", nativeCurrency: { name: "EXM", symbol: "EXM", decimals: 18 }, rpcUrls: ["https://rpc.example.invalid"] });
+  const blank = (await load({ VITE_CHAIN_ID: " ", VITE_CHAIN_NAME: "", VITE_NATIVE_SYMBOL: "", VITE_RPC_URL: "" })).PORTALDOT_ADD_PARAMS;
+  assert.deepEqual(blank, PORTALDOT_ADD_PARAMS); // empty variables keep the testnet defaults
+  assert.deepEqual([PORTALDOT_ADD_PARAMS.chainName, PORTALDOT_ADD_PARAMS.nativeCurrency.symbol], ["Portaldot V3 Testnet", "tPOTv3"]);
+  await assert.rejects(load({ VITE_CHAIN_ID: "abc" }), /VITE_CHAIN_ID/);
 });
 test("known chain: switch only, no add", async () => {
   const w = mockWallet({ known: true });
