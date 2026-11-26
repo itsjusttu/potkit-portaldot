@@ -517,7 +517,13 @@ object "PotKit" {
                 let id := and(b, 0xffffffffffffffff)
                 let t := sload(k(id, 7))
                 if and(settled(t), iszero(eq(caller(), seller))) { late(id) }
-                sstore(add(w, 1), id)
+                // the seller's own close clears both listing slots, so their storage deposit goes back to the seller
+                // (it is refunded to whoever signs); the depositor's close keeps them, and so does a buy that empties
+                // a listing. A cleared listing reads as seller 0, receipt 0, remaining 0: buy reverts "amount",
+                // cancel "closed". The list event (kind 6) keeps the seller, price and amount.
+                switch eq(caller(), seller)
+                case 0 { sstore(add(w, 1), id) }
+                default { sstore(w, 0) sstore(add(w, 1), 0) }
                 act(id, 8, lid, left, settled(t))
                 if settled(t) {
                     let es := shareSlot(address(), id)

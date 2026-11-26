@@ -2,7 +2,7 @@ import { test, before } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import ganache from "ganache";
-import { createPublicClient, createWalletClient, custom, defineChain, encodeFunctionData, getAddress, keccak256, parseEventLogs } from "viem";
+import { createPublicClient, createWalletClient, custom, defineChain, encodeAbiParameters, encodeFunctionData, getAddress, keccak256, parseEventLogs } from "viem";
 
 const A = JSON.parse(readFileSync(new URL("../src/generated/artifacts.json", import.meta.url), "utf8"));
 const chain = defineChain({ id: 1337, name: "local", nativeCurrency: { name: "E", symbol: "E", decimals: 18 }, rpcUrls: { default: { http: [] } } });
@@ -471,6 +471,73 @@ test("v2.1: after settlement the seller can close a listing at any time; someone
   assert.equal(await r(token, F, "totalSupply"), 0n);
   await ok(await kw("redeem", [id]));
   assert.equal(await kr("ownerOf", [id]), alice);
+});
+
+test("v2.1: the seller's own close clears both listing slots; a cleared listing reverts cleanly and still reads correctly", async () => {
+  const id = await mint(alice);
+  const face = E18;
+  const token = await lock(id, 10n, alice, face);
+  await ok(await w(token, F, "transfer", [bob, 6n * E18], alice));
+  const lidOf = (rc) => parseEventLogs({ abi: K, logs: rc.logs, eventName: "Activity" })[0].args.a;
+  // k(lid, 13) and k(lid, 13) + 1 hold the listing (PotKit.yul storage layout); a cleared slot refunds its deposit on Portaldot
+  const slots = async (lid) => {
+    const s = BigInt(keccak256(encodeAbiParameters([{ type: "uint256" }, { type: "uint256" }], [lid, 13n])));
+    return Promise.all([s, s + 1n].map(async (x) => { const v = await pub.getStorageAt({ address: kit, slot: `0x${x.toString(16).padStart(64, "0")}` }); return v && v !== "0x" ? BigInt(v) : 0n; })); // ganache answers 0x for an empty slot
+  };
+  const n0 = await lens("listingCount", [kit]);
+  const la = lidOf(await ok(await kw("list", [id, 2n * 10n ** 17n, 2n * E18], bob)));
+  const lb = lidOf(await ok(await kw("list", [id, 3n * 10n ** 17n, 2n * E18], bob)));
+  const lc = lidOf(await ok(await kw("list", [id, 4n * 10n ** 17n, E18], bob)));
+  assert.notDeepEqual(await slots(la), [0n, 0n]);
+  await ok(await kw("buy", [lb, E18], carol, 3n * 10n ** 17n)); // lb: 1 share left in escrow
+
+  // 1. before settlement: the seller cancels la; both slots are cleared and the shares come back
+  const b0 = await r(token, F, "balanceOf", [bob]);
+  const cr = await ok(await kw("cancel", [la], bob));
+  assert.equal((await r(token, F, "balanceOf", [bob])) - b0, 2n * E18);
+  const ca = parseEventLogs({ abi: K, logs: cr.logs, eventName: "Activity" })[0].args;
+  assert.deepEqual([ca.id, ca.actor, ca.kind, ca.a, ca.b, ca.c], [id, bob, 8n, la, 2n * E18, 0n]); // the event still names receipt, seller and amount
+  assert.deepEqual(await slots(la), [0n, 0n]);
+  // a cleared listing: buying from it, cancelling it again and closing it by anyone revert cleanly
+  await reverts(ks("buy", [la, E18], carol, 2n * 10n ** 17n), "amount");
+  await reverts(ks("buy", [la, 0n], carol, 0n), "amount");
+  await reverts(ks("cancel", [la], bob), "closed");
+  await reverts(ks("cancel", [la], alice), "closed");
+  await reverts(ks("cancel", [la], dave), "closed");
+
+  // 2. after settlement: the seller closes lb (during the grace period) and is paid; its slots are cleared too
+  await ok(await kw("settle", [id], dave, face));
+  const bb = await bal(bob);
+  const { fee } = await spent(await kw("cancel", [lb], bob));
+  assert.equal((await bal(bob)) - bb, face / 10n - fee);
+  assert.deepEqual(await slots(lb), [0n, 0n]);
+  await reverts(ks("buy", [lb, 1n], carol, 1n), "amount");
+  await reverts(ks("cancel", [lb], bob), "closed");
+
+  // 3. the depositor's close after the grace period keeps the listing (its deposit is not the depositor's to collect)
+  for (const who of [alice, bob, carol]) await ok(await kw("claim", [id], who));
+  await warp(GRACE);
+  const [w0] = await slots(lc);
+  const bc = await bal(bob);
+  await ok(await kw("cancel", [lc], alice));
+  assert.equal((await bal(bob)) - bc, face / 10n); // paid to the seller
+  assert.deepEqual(await slots(lc), [w0, id]); // seller and price kept, remaining 0
+  await reverts(ks("cancel", [lc], alice), "closed");
+  await reverts(ks("cancel", [lc], bob), "closed");
+
+  // Lens: the count is unchanged, cleared listings read as empty, the depositor-closed one keeps its seller, all in one window
+  assert.equal(await lens("listingCount", [kit]), n0 + 3n);
+  const ls = await lens("listings", [kit, la, 3n]);
+  const blank = { seller: ZERO, fraction: ZERO, payToken: NATIVE, price: 0n, remaining: 0n, receiptId: 0n };
+  assert.deepEqual(ls.map((l) => ({ ...l, seller: getAddress(l.seller), fraction: getAddress(l.fraction), payToken: getAddress(l.payToken) })), [
+    blank, blank, { seller: bob, fraction: token, payToken: NATIVE, price: 4n * 10n ** 17n, remaining: 0n, receiptId: id }]); // the receipt is still locked here, so lc still names its share token
+  // the app: open listings are the ones with shares left (none of these), and sellers come from the list events
+  assert.equal(ls.filter((l) => l.remaining > 0n).length, 0);
+  const evs = await pub.getContractEvents({ address: kit, abi: K, eventName: "Activity", fromBlock: 0n });
+  const sellerByLid = new Map(evs.filter((e) => e.args.kind === 6n).map((e) => [e.args.a, getAddress(e.args.actor)]));
+  assert.deepEqual([la, lb, lc].map((l) => sellerByLid.get(l)), [bob, bob, bob]);
+  assert.equal(await r(token, F, "totalSupply"), 0n);
+  await ok(await kw("redeem", [id]));
 });
 
 test("fix 3: a payout to a holder or seller that rejects tPOT is credited, never reverts; withdraw(to) pays it out", async () => {
