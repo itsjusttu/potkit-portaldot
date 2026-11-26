@@ -153,7 +153,8 @@ export function App() {
   const [held, setHeld] = useState<Map<number, bigint>>(new Map());
   const [claims, setClaims] = useState<Map<number, bigint>>(new Map());
   const [credit, setCredit] = useState(0n); // tPOT PotKit holds for this wallet after a failed payout transfer
-  const [v2, setV2] = useState(false); // the loaded PotKit is v2 (listings closed after settlement pay the seller)
+  const [v2, setV2] = useState(false); // the loaded PotKit is v2 or v2.1 (listings closed after settlement pay the seller)
+  const [grace, setGrace] = useState(0); // v2.1: seconds after settlement before the depositor may pay others out (0 = not v2.1)
   const [canMint, setCanMint] = useState(false);
   const [issuer, setIssuer] = useState("");
   // settlement and market payments are native tPOT; the market is the PotKit contract itself
@@ -217,7 +218,7 @@ export function App() {
         kitVersion(addrs.vault),
       ]);
       if (stale()) return;
-      setHeld(bal); setClaims(cl); setCredit(cr); setV2(ver === 2); setListings(ls); setLoading(false); setCanMint(meta.canMint); setIssuer(meta.issuer);
+      setHeld(bal); setClaims(cl); setCredit(cr); setV2(ver.version >= 2); setGrace(ver.version === 2.1 ? ver.grace : 0); setListings(ls); setLoading(false); setCanMint(meta.canMint); setIssuer(meta.issuer);
       if (account) void refreshNative();
       setEventsLoading(true);
       const sameAsEnv = addrs.receipt.toLowerCase() === DEFAULTS.receipt.trim().toLowerCase();
@@ -271,7 +272,7 @@ export function App() {
   const openPay = (id: number) => setPayFor(id);
 
   const c: Ctx = {
-    account, chainOk, gated, busy, phase, addrs, setAddrs, shared, usd, market, rows, held, claims, credit, v2, listings, events, eventsLoading, loading, eventsOk, total, loadOlder, saveStep, resetDeployment,
+    account, chainOk, gated, busy, phase, addrs, setAddrs, shared, usd, market, rows, held, claims, credit, v2, grace, listings, events, eventsLoading, loading, eventsOk, total, loadOlder, saveStep, resetDeployment,
     canMint, issuer, usdBal, usdRaw, native, nativeLoading, nativeError, log, note, run, ready, refresh, setTab, connect: connectWallet, judgeLink,
     walletName: selected()?.name ?? "Wallet", openPay, param: (k) => params[k] ?? "", switchNetwork: switchNet,
   };

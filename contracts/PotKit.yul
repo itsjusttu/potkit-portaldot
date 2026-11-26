@@ -22,7 +22,8 @@
 ///   k(who, 6)                   minter flag
 ///   k(id, 7)                    share token (160) | due date (40) | units (40) | settled (1) | lock cycle (15)
 ///   k(id, 8)                    depositor (160) | face value in wei (96)
-///   k(id, 9)                    amount paid in wei (128) | shares burned by claims (128)
+///   k(id, 9)                    amount paid in wei (96) | settled at, unix seconds (32 @ 96) | shares burned by claims (128 @ 128)
+///                               (the amount equals the face value, which is below 2^96; v1/v2 kept bits 96..127 zero)
 ///   k(token, 10)                receipt id of a share token
 ///   k(holder, id<<8 | 11)       share balance
 ///   k(k(owner, spender), id<<24 | cycle<<8 | 12)   share allowance (a new lock cycle resets them)
@@ -105,10 +106,12 @@ object "PotKit" {
             case 0xdb006a75 { redeem(calldataload(4)) } // redeem(uint256)
             case 0x8df82800 { settle(calldataload(4)) } // settle(uint256) payable
             case 0x379607f5 { claimFor(calldataload(4), caller()) } // claim(uint256)
-            case 0x10ee3f00 { // claimFor(uint256,address): anyone pays a holder out after settlement
+            case 0x10ee3f00 { // claimFor(uint256,address): pays a holder out after settlement
+                let id := calldataload(4)
                 let h := low(calldataload(36))
                 need(iszero(eq(h, address())), "escrow") // escrowed shares are paid out by cancel(listing)
-                claimFor(calldataload(4), h)
+                if iszero(eq(h, caller())) { late(id) } // for someone else: the depositor, after the grace period
+                claimFor(id, h)
             }
             case 0x51cff8d9 { // withdraw(address to): send the caller's credited tPOT to `to`
                 let to := low(calldataload(4))
@@ -418,9 +421,20 @@ object "PotKit" {
                 need(iszero(lt(v, face)), "underpaid")
                 need(iszero(gt(v, face)), "overpaid")
                 sstore(ts, or(t, shl(240, 1)))
-                sstore(k(id, 9), v)
+                sstore(k(id, 9), or(v, shl(96, timestamp()))) // v == face < 2^96; the time starts the grace period
                 act(id, 4, v, 0, 0)
                 stop()
+            }
+            /// Acting for someone else after settlement (claimFor for another holder, closing another seller's
+            /// listing): only the receipt's depositor, and only once the grace period after settlement is over.
+            /// Clearing a slot refunds its storage deposit to whoever signs the transaction, so holders and sellers
+            /// get that time to collect their payout (and their own deposit) themselves. The grace period is a
+            /// constant in the code (data "grace" below), with no admin.
+            function late(id) {
+                need(eq(caller(), low(sload(k(id, 8)))), "not depositor")
+                let at := and(shr(96, sload(k(id, 9))), 0xffffffff)
+                datacopy(0, dataoffset("grace"), 4) // after k(): it hashes in memory 0..63 and would overwrite the copy
+                need(iszero(lt(timestamp(), add(at, shr(224, mload(0))))), "grace")
             }
             /// claim(id) / claimFor(id, holder): burn all of holder's shares and pay their pro-rata part
             /// of the pool to the holder (in tPOT)
@@ -437,7 +451,7 @@ object "PotKit" {
             function cashOut(id, t, from, to, shares) {
                 let ps := k(id, 9)
                 let p := sload(ps)
-                let amount := and(p, 0xffffffffffffffffffffffffffffffff)
+                let amount := and(p, 0xffffffffffffffffffffffff)
                 let burned := shr(128, p)
                 let supply := supplyOf(t)
                 // cumulative rounding: the payouts add up to exactly `amount` once every share is claimed
@@ -491,8 +505,9 @@ object "PotKit" {
                 pay(seller, c)
                 ret(c)
             }
-            /// cancel(lid): before settlement the seller takes the escrowed shares back. After settlement
-            /// anyone may close the listing: the escrowed units are burned and their payout goes to the seller.
+            /// cancel(lid): before settlement the seller takes the escrowed shares back. After settlement the
+            /// listing is closed: the escrowed units are burned and their payout goes to the seller. The seller can
+            /// close it at any time; anyone else only as the depositor once the grace period is over (late).
             function cancel(lid) {
                 let w := listingSlot(lid)
                 let seller := low(sload(w))
@@ -501,6 +516,7 @@ object "PotKit" {
                 need(left, "closed")
                 let id := and(b, 0xffffffffffffffff)
                 let t := sload(k(id, 7))
+                if and(settled(t), iszero(eq(caller(), seller))) { late(id) }
                 sstore(add(w, 1), id)
                 act(id, 8, lid, left, settled(t))
                 if settled(t) {
@@ -513,5 +529,9 @@ object "PotKit" {
                 stop()
             }
         }
+        // grace period after settlement, in seconds, as 4 fixed bytes at the end of the code: 0x00278d00 = 2,592,000
+        // = 30 days. scripts/compile.mjs also builds a testnet variant that changes only these 4 bytes (600 s =
+        // 10 minutes), so both builds are byte-identical apart from this constant.
+        data "grace" hex"00278d00"
     }
 }

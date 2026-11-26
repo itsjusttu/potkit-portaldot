@@ -31,6 +31,7 @@ contract Lens {
         uint256 amount;
         uint256 supply; // original supply (units * 1e18)
         uint256 paidOut;
+        uint256 settledAt; // unix seconds of the settlement (v2.1; 0 on v1/v2 kits and while unsettled)
     }
 
     struct Listing {
@@ -140,9 +141,9 @@ contract Lens {
         for (uint256 i; i < n; i++) {
             (, uint256 t, uint256 l, uint256 p) = _words(k, start + i);
             uint256 supply = _units(t) * 1e18;
-            uint256 amount = uint128(p);
+            uint256 amount = uint96(p); // bits 96..127 hold the settlement time on v2.1 (zero on v1/v2)
             out[i] = Settlement(supply == 0 ? address(0) : NATIVE, l >> 160, (t >> 240) & 1 == 1, amount, supply,
-                supply == 0 ? 0 : (amount * (p >> 128)) / supply);
+                supply == 0 ? 0 : (amount * (p >> 128)) / supply, uint32(p >> 96));
         }
     }
 
@@ -185,7 +186,7 @@ contract Lens {
             if ((t >> 240) & 1 == 0) continue;
             uint256 shares = _one(k, _k(uint256(uint160(who)), (id << 8) | 11));
             uint256 supply = _units(t) * 1e18;
-            uint256 amount = uint128(p);
+            uint256 amount = uint96(p);
             uint256 burned = p >> 128;
             c[i] = (amount * (burned + shares)) / supply - (amount * burned) / supply;
         }

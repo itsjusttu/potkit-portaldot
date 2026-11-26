@@ -180,7 +180,8 @@ const REASONS: Record<string, string> = {
   "not settled": "That receipt has not been settled yet.",
   "not locked": "That receipt is not locked into shares.",
   "no shares": "You hold no shares of that receipt.",
-  "not depositor": "Only the wallet that locked this receipt (the depositor) can redeem it.",
+  "not depositor": "Only the wallet that locked this receipt (the depositor) can do that: redeem it, or pay out someone else's shares after the grace period.",
+  grace: "During the grace period after settlement only holders claim their own payout and only sellers close their own listings. After it, the depositor can pay out the rest.",
   "claim first": "Every share must be claimed before a settled receipt can be redeemed.",
   underpaid: "Amount is below the invoice face value.",
   overpaid: "Amount is above the invoice face value; settling takes exactly the face value.",
@@ -399,20 +400,34 @@ export async function claimFor(account: Address, kit: Address, id: number, holde
   return { hash, holder: who, shares };
 }
 
-/** 2 for a v2 PotKit (claimFor, listings closed after settlement pay the seller, held payouts), 1 for the first
- *  version. Read-only probe: withdraw() from the zero address answers "no credit" on v2; v1 has no withdraw and
- *  reverts without a reason. A failed read (RPC down) is not cached, so the next refresh asks again. */
-const kitVersions = new Map<string, Promise<1 | 2>>();
-export function kitVersion(kit: Address): Promise<1 | 2> {
+/** Which PotKit is loaded. 1: the first deployment. 2: claimFor, listings closed after settlement pay the seller, held
+ *  payouts. 2.1: like 2, but paying out someone else's shares or closing someone else's listing is only for the
+ *  depositor, `grace` seconds after settlement (holders and sellers can always act for themselves).
+ *  Read-only probes: withdraw() from the zero address answers "no credit" on v2 and v2.1 (v1 has no withdraw and
+ *  reverts without a reason); claimFor(0, 0) from a stranger answers "not depositor" on v2.1 and "not settled" on v2.
+ *  The grace period is read from the last 4 bytes of the v2.1 code (data "grace" in PotKit.yul): 30 days on the
+ *  mainnet build, 10 minutes on the testnet build. A failed read (RPC down) is not cached, so the next refresh asks again. */
+export type KitInfo = { version: 1 | 2 | 2.1; grace: number };
+const kitVersions = new Map<string, Promise<KitInfo>>();
+const STRANGER = "0x000000000000000000000000000000000000dEaD" as Address;
+export function kitVersion(kit: Address): Promise<KitInfo> {
   const key = kit.toLowerCase();
   let v = kitVersions.get(key);
   if (!v) {
-    v = reader.simulateContract({ address: kit, abi: PotKit.abi, functionName: "withdraw", args: [kit], account: ZERO as Address })
-      .then(() => 2 as const, (e) => {
-        if (revertReason(e) === "no credit") return 2 as const;
-        if (!/revert/i.test(`${(e as Error)?.message ?? ""}`)) kitVersions.delete(key);
-        return 1 as const;
+    /** "" when the call would succeed, else the revert reason ("revert" without one); RPC trouble throws */
+    const probe = (functionName: string, args: readonly unknown[], account: Address) =>
+      reader.simulateContract({ address: kit, abi: PotKit.abi, functionName, args, account } as never).then(() => "", (e: unknown) => {
+        if (!/revert/i.test(`${(e as Error)?.message ?? ""}`)) throw e;
+        return revertReason(e) || "revert";
       });
+    v = (async (): Promise<KitInfo> => {
+      const w = await probe("withdraw", [kit], ZERO as Address);
+      if (w !== "" && w !== "no credit") return { version: 1, grace: 0 };
+      if ((await probe("claimFor", [0n, ZERO], STRANGER)) !== "not depositor") return { version: 2, grace: 0 };
+      const code = (await reader.getCode({ address: kit })) ?? "0x";
+      const grace = code.length >= 10 ? Number.parseInt(code.slice(-8), 16) : 0;
+      return { version: 2.1, grace: grace > 0 ? grace : 30 * 86_400 };
+    })().catch(() => { kitVersions.delete(key); return { version: 1, grace: 0 } as KitInfo; });
     kitVersions.set(key, v);
   }
   return v;
@@ -484,12 +499,14 @@ export const STATUSES = ["Free", "Pending", "Due soon", "Overdue", "Settled"] as
 export type Status = (typeof STATUSES)[number];
 export type Settle = {
   token: Address | ""; faceValue: bigint; settled: boolean; amount: bigint; supply: bigint; paidOut: bigint;
+  /** unix seconds of the settlement, read on v2.1 kits (starts the grace period); 0 on v1/v2 and while unsettled */
+  settledAt: bigint;
   decimals: number; symbol: string;
 };
 
 type LensRow = { id: bigint; owner: Address; kind: number; note: string; fraction: Address; depositor: Address; supply: bigint };
 type LensListing = { seller: Address; fraction: Address; payToken: Address; price: bigint; remaining: bigint; receiptId: bigint };
-type LensSettlement = { token: Address; faceValue: bigint; settled: boolean; amount: bigint; supply: bigint; paidOut: bigint };
+type LensSettlement = { token: Address; faceValue: bigint; settled: boolean; amount: bigint; supply: bigint; paidOut: bigint; settledAt: bigint };
 
 export const receiptCount = async (kit: Address) => Number(await lensRead<bigint>("count", [kit], kit));
 

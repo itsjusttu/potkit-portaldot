@@ -109,9 +109,12 @@ export function Trade({ c }: { c: Ctx }) {
   const sellApr = sellFace > 0 && sellRow?.dueDate && daysTo(sellRow.dueDate) > 0 ? (1 - Number(sellPrice) / sellFace) * 365 / daysTo(sellRow.dueDate) : null;
   const sellDays = sellRow?.dueDate ? Math.max(0, daysTo(sellRow.dueDate)) : 0;
   const targetPrice = (apr: number) => Math.max(0.00000001, sellFace * (1 - Math.min(.99, (apr / 100) * sellDays / 365)));
-  const eligible = cards.filter((x) => x.apr !== null && x.state !== "Settled" && x.state !== "Overdue");
+  // buyable: open, not settled, not overdue. A listing without a due date has no APR but still counts as open;
+  // only the APR figures (best APR, quick-buy quote) need one.
+  const buyable = cards.filter((x) => x.state !== "Settled" && x.state !== "Overdue");
+  const eligible = buyable.filter((x) => x.apr !== null);
   const bestYield = [...eligible].sort((a, b) => (b.apr ?? -1) - (a.apr ?? -1))[0];
-  const openAvgDiscount = eligible.length ? eligible.reduce((s, x) => s + x.discount, 0) / eligible.length : null;
+  const openAvgDiscount = buyable.length ? buyable.reduce((s, x) => s + x.discount, 0) / buyable.length : null;
   const buys24h = marketEvents.filter((e) => e.kind === "buy" && e.time >= Date.now() / 1000 - 86400);
   const volume24hRaw = buys24h.reduce((s, e) => s + (e.value ?? 0n), 0n);
   let budgetRaw = 0n;
@@ -147,11 +150,11 @@ export function Trade({ c }: { c: Ctx }) {
 
   return (
     <div className="trade">
-      <section className="trade-intro"><div><p className="kicker">Markets · Portaldot V3</p><h1>Trade</h1><p>Compare listings by price, discount and due date. Payouts are not guaranteed.</p></div><div className="trade-intro-stats"><span><b>{eligible.length}</b> open listings</span><span><b>{num(eligible.reduce((s, x) => s + x.price * Number(x.l.remaining) / 1e18, 0))}</b> tPOT listed</span></div></section>
+      <section className="trade-intro"><div><p className="kicker">Markets · Portaldot V3</p><h1>Trade</h1><p>Compare listings by price, discount and due date. Payouts are not guaranteed.</p></div><div className="trade-intro-stats"><span><b>{buyable.length}</b> open listings</span><span><b>{num(buyable.reduce((s, x) => s + x.price * Number(x.l.remaining) / 1e18, 0))}</b> tPOT listed</span></div></section>
       <section className="trade-kpis" aria-label="Market overview">
         <article><small>Best APR</small><strong className="yield-text">{bestYield ? pct(bestYield.apr!) : "—"}</strong><span>{bestYield ? `KIT#${bestYield.r.id} · due in ${Math.ceil(bestYield.days)}d` : "No eligible listings"}</span></article>
         <article><small>Average discount</small><strong>{openAvgDiscount === null ? "—" : pct(openAvgDiscount)}</strong><span>Across buyable listings</span></article>
-        <article><small>Open listings</small><strong>{eligible.length}</strong><span>{num(eligible.reduce((s, x) => s + Number(x.l.remaining) / 1e18, 0), 2)} shares available</span></article>
+        <article><small>Open listings</small><strong>{buyable.length}</strong><span>{num(buyable.reduce((s, x) => s + Number(x.l.remaining) / 1e18, 0), 2)} shares available</span></article>
         <article><small>24h volume</small><strong>{c.eventsLoading ? "…" : c.eventsOk ? `${fmt(volume24hRaw, 18)} tPOT` : "—"}</strong><span>{c.eventsLoading ? "Reading chain activity" : c.eventsOk ? `${buys24h.length} buy${buys24h.length === 1 ? "" : "s"}` : "History unavailable"}</span></article>
       </section>
       {cards.length > 0 && <div className="trade-bar" role="search">
@@ -353,7 +356,7 @@ export function Trade({ c }: { c: Ctx }) {
                   <div className="you-get"><dt>You receive now</dt><dd className="num">{buyValid ? `${buyAmount} KIT${sel.r.id} shares` : "—"}</dd></div>
                   <div><dt>Payout if fully paid</dt><dd className="num">{sel.face && buyValid ? `${fmt(buyPayout, 18)} tPOT` : "—"}</dd></div>
                   <div><dt>Estimated spread</dt><dd className="num pos">{sel.face && buyValid ? `${fmt(buyPayout - buyCost, 18)} tPOT` : "—"}</dd></div>
-                  <div><dt>Your tPOT</dt><dd className="num">{c.usdBal || "—"}</dd></div>
+                  <div><dt>Your tPOT</dt><dd className="num" title={c.usdBal || undefined}>{c.native === null ? "—" : `${num(Number(c.native) / 1e18, 4)} tPOT`}</dd></div>
                 </dl>
                 {c.account && c.native !== null && buyValid && c.usdRaw < buyCost && (
                   <FaucetButton account={c.account} compact onFunded={() => void c.refresh()} />

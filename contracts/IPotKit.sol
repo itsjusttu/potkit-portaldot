@@ -41,13 +41,17 @@ interface IPotKit {
     // same call: faceValue in wei of tPOT (1 .. 2^96-1), dueDate unix seconds (0 = none)
     function fractionalize(uint256 id, uint256 units, uint256 faceValue, uint64 dueDate) external returns (address token);
     /// only the depositor gets the receipt back: before settlement while holding every share, after
-    /// settlement once every share is claimed (claimFor and cancel let anyone finish that)
+    /// settlement once every share is claimed (holders claim, or the depositor finishes with claimFor and cancel
+    /// after the grace period)
     function redeem(uint256 id) external;
     /// anyone pays exactly faceValue tPOT (msg.value) into the pool; less reverts "underpaid", more "overpaid"
     function settle(uint256 id) external payable;
     /// burns all of the caller's shares and pays their pro-rata part of the pool
     function claim(uint256 id) external returns (uint256 payout);
-    /// after settlement anyone can run claim() on behalf of `holder`; the payout goes to the holder
+    /// claim() for `holder`; the payout always goes to the holder. The holder can call it any time after settlement;
+    /// for someone else only the receipt's depositor can, once the grace period after settlement (30 days, a constant
+    /// in the code) is over, so every holder can first claim and get their own storage deposit back. Reverts "grace"
+    /// before that, "not depositor" for anyone else
     function claimFor(uint256 id, address holder) external returns (uint256 payout);
     /// a payout whose transfer failed (e.g. to a contract that rejects tPOT) is credited to its recipient
     /// instead; withdraw sends the caller's whole credit to `to`
@@ -57,8 +61,9 @@ interface IPotKit {
     function list(uint256 id, uint256 price, uint256 amount) external returns (uint256 listingId);
     /// msg.value must equal ceil(price * amount / 1e18)
     function buy(uint256 listingId, uint256 amount) external payable returns (uint256 cost);
-    /// before settlement: the seller takes the remaining shares back. After settlement: anyone can close
-    /// the listing; the escrowed shares are burned and their payout goes to the seller
+    /// before settlement: the seller takes the remaining shares back. After settlement the listing is closed: the
+    /// escrowed shares are burned and their payout goes to the seller. The seller can close it any time; anyone else
+    /// only as the receipt's depositor once the grace period is over (as for claimFor)
     function cancel(uint256 listingId) external;
 
     /// raw storage words (used by Lens.sol)

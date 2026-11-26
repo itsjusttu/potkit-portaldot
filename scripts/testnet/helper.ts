@@ -6,6 +6,7 @@ import { switchToPortaldotWith } from "../../src/lib/netswitch";
 import { listWallets, onWalletsChanged, startDiscovery, type Eip1193 } from "../../src/lib/wallets";
 import { Fraction, PotKit, REASON_CODES } from "../../src/generated/artifacts";
 import tiny from "./tiny-receiver.json";
+import built from "../../src/generated/artifacts.json"; // PotKitGrace10m: the 10-minute testnet build (not in the app bundle)
 
 const DEFAULTS = {
   kit: "0xaa7d235a0f88deb64e86128738e6acbd279e7f77",
@@ -205,6 +206,18 @@ const ownWithdraw = (): Call => {
 const guard = (label: string, f: () => Promise<unknown>) => () => void f().catch((e) => fail(label, e));
 
 $("refresh").onclick = () => void refresh();
+$("deployKit").onclick = guard("Deploy PotKit v2.1 (10 min)", async () => {
+  const b = built as unknown as { PotKitGrace10m: { bytecode: Hex; runtime: Hex } };
+  const r = await send("Deploy PotKit v2.1, testnet build (10-minute grace)", { data: b.PotKitGrace10m.bytecode });
+  if (r?.status === "success" && r.contractAddress) {
+    const k = getAddress(r.contractAddress);
+    const code = await pc.getCode({ address: k });
+    const same = code?.toLowerCase() === b.PotKitGrace10m.runtime.toLowerCase();
+    setSaved("kit", k);
+    const grace = code ? Number.parseInt(code.slice(-8), 16) : 0;
+    log(`PotKit v2.1 code: ${((code?.length ?? 2) - 2) / 2} bytes, grace ${grace} s, ${same ? '<span class="chip ok">matches the 10-minute build</span>' : '<span class="chip bad">does not match</span>'} · open the app on it: <a href="http://localhost:8080/app?kit=${k}" target="_blank" rel="noopener">localhost:8080/app?kit=${k.slice(0, 8)}…</a>`);
+  }
+});
 $("deploy").onclick = guard("Deploy TinyReceiver", async () => {
   const r = await send("Deploy TinyReceiver", { data: tiny.initcode as Hex });
   if (r?.status === "success" && r.contractAddress) {

@@ -16,6 +16,9 @@ export type Ctx = {
   credit: bigint;
   /** the loaded PotKit is v2: after settlement anyone can close a listing and the seller is paid for its escrowed shares (v1 returns them) */
   v2: boolean;
+  /** v2.1: seconds after settlement during which only holders claim and only sellers close their listings; after it the
+   *  depositor can pay out the rest (30 days on mainnet, 10 minutes on the testnet build). 0 on v1/v2 kits. */
+  grace: number;
   events: ChainEvent[]; eventsLoading: boolean; loading: boolean; eventsOk: boolean;
   total: number; loadOlder: () => void; saveStep: (s: DeployStep) => void; resetDeployment: () => void;
     /** usdBal / usdRaw: the wallet's tPOT balance (what settlement and market payments use) */

@@ -4,7 +4,7 @@ import { readFileSync } from "node:fs";
 import { transformSync } from "esbuild";
 
 const code = transformSync(readFileSync(new URL("../src/lib/shares.ts", import.meta.url), "utf8"), { loader: "ts", format: "esm" }).code;
-const { fmtShares, eventText, shareUnit } = await import("data:text/javascript;base64," + Buffer.from(code).toString("base64"));
+const { fmtShares, eventText, shareUnit, approxShares } = await import("data:text/javascript;base64," + Buffer.from(code).toString("base64"));
 const E18 = 10n ** 18n;
 
 test("share format: the long values seen on the live app are shortened to 2 decimals", () => {
@@ -60,4 +60,15 @@ test("share unit follows the displayed number: singular when the amount is shown
   assert.equal(shareUnit(5n * 10n ** 17n), "shares");
   assert.equal(shareUnit(2n * E18), "shares");
   assert.equal(eventText({ kind: "buy", id: 4, amount: E18, text: "x" }), "1 share of #4 bought");
+});
+
+test("approximate marker: a rounded share amount reads ≈, an exact one does not (Portfolio, 49.9999 of 100)", () => {
+  assert.equal(approxShares(49_999_900_000_000_000_000n), "≈ 50"); // seen on the v2 testnet run: A held 49.9999 shares
+  assert.equal(approxShares(50n * E18), "50");
+  assert.equal(approxShares(1_500_000_000_000_000_000n), "1.5");
+  assert.equal(approxShares(1_234_567_890_123_456_789n), "≈ 1.23");
+  assert.equal(approxShares(10n ** 14n), "0.0001"); // 4 decimals below 1 share: exact
+  assert.equal(approxShares(10n ** 14n + 1n), "≈ 0.0001");
+  assert.equal(approxShares(1n), "<0.0001"); // already marked as below the shown precision
+  assert.equal(approxShares(0n), "0");
 });

@@ -17,6 +17,16 @@ export function fmtShares(raw: bigint, decimals = 18): string {
   return `${sign}${whole}${frac ? `.${frac}` : ""}`;
 }
 
+/** fmtShares with "≈ " in front when the shown number is rounded (49.9999 shows "≈ 50"), so a rounded-up whole number
+    is not read as exact next to an exact payout. The exact value still belongs in a tooltip. */
+export function approxShares(raw: bigint, decimals = 18): string {
+  const shown = fmtShares(raw, decimals);
+  if (raw === 0n || shown.startsWith("<") || shown.startsWith("-<")) return shown;
+  const a = raw < 0n ? -raw : raw;
+  const dp = Math.min(decimals, a >= 10n ** BigInt(decimals) ? 2 : 4);
+  return a % 10n ** BigInt(decimals - dp) === 0n ? shown : `≈ ${shown}`;
+}
+
 type EventLike = { kind: string; id: number; amount?: bigint; text: string };
 
 /** One-line text of an on-chain event. Listings and buys are rebuilt here so the share amount is rounded for display;
