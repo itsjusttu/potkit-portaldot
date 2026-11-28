@@ -30,6 +30,8 @@ export type Ctx = {
   walletName: string; openPay: (id: number) => void; param: (k: string) => string;
 };
 
+/** shares issued at lock; `r.supply` is the outstanding count, which falls as claimed shares are burned */
+export const issuedSupply = (r: Row) => (r.settle.supply > 0n ? r.settle.supply : r.supply);
 /** face value per whole share, in wei of tPOT */
-export const faceShare = (r: Row) => (r.settle.faceValue > 0n && r.supply > 0n ? (r.settle.faceValue * 10n ** 18n) / r.supply : 0n);
+export const faceShare = (r: Row) => { const s = issuedSupply(r); return r.settle.faceValue > 0n && s > 0n ? (r.settle.faceValue * 10n ** 18n) / s : 0n; };
 export const daysTo = (ts: number) => (ts ? (ts * 1000 - Date.now()) / 86_400_000 : 0);

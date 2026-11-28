@@ -2,7 +2,7 @@ import { useState } from "react";
 import { fmt, KINDS, short, units, type ChainEvent, type Row } from "../lib/chain";
 import { eventText, fmtShares, shareUnit } from "../lib/shares";
 import { Addr, CountUp, Empty, Ico } from "../AppUi";
-import { faceShare, type Ctx } from "./ctx";
+import { faceShare, issuedSupply, type Ctx } from "./ctx";
 import { day, fmtDate, pct } from "./shared";
 import { ReceiptArt } from "./ReceiptThumb";
 import { N } from "./shared";
@@ -35,7 +35,7 @@ export function Explore({ c }: { c: Ctx }) {
   const isRedeemed = (r: Row) => receiptHistory.get(r.id)?.redeemed ?? false;
   const faceValueOf = (r: Row) => r.settle.faceValue > 0n ? r.settle.faceValue : receiptHistory.get(r.id)?.terms?.value ?? 0n;
   const dueDateOf = (r: Row) => r.dueDate || receiptHistory.get(r.id)?.terms?.dueDate || 0;
-  const supplyOf = (r: Row) => r.supply > 0n ? r.supply : (receiptHistory.get(r.id)?.lock?.amount ?? 0n) * 10n ** 18n;
+  const supplyOf = (r: Row) => issuedSupply(r) > 0n ? issuedSupply(r) : (receiptHistory.get(r.id)?.lock?.amount ?? 0n) * 10n ** 18n;
   const isTrading = (r: Row) => !isRedeemed(r) && open.some((l) => l.receiptId === r.id);
   const isSettled = (r: Row) => !isRedeemed(r) && r.settle.settled;
   const displayStatus = (r: Row) => isRedeemed(r) ? "Redeemed" : isTrading(r) ? "Trading" : isSettled(r) ? "Settled" : r.status;

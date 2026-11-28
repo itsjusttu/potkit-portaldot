@@ -3,7 +3,7 @@ import type { Address } from "viem";
 import { cancelListing, claim, claimFor, fmt, KINDS, redeem, transferUnits, units, withdrawCredit, type Row } from "../lib/chain";
 import { approxShares, fmtShares, shareUnit } from "../lib/shares";
 import { Empty, Ico, toast } from "../AppUi";
-import { faceShare, type Ctx } from "./ctx";
+import { faceShare, issuedSupply, type Ctx } from "./ctx";
 import { day, download, SettleBadge, Term, txBlock, Why } from "./shared";
 import { ReceiptThumb } from "./ReceiptThumb";
 import { toCsv, toIcs } from "./insights";
@@ -34,8 +34,9 @@ export function Portfolio({ c }: { c: Ctx }) {
   const pctOf = (bal: bigint, supply: bigint) => { if (supply <= 0n) return "0"; const bps = (bal * 10000n) / supply; return (Number(bps) / 100).toFixed(bps % 10n === 0n ? 1 : 2); };
   const redeemBtn = (r: Row) => <button className="btn sm" disabled={dis} onClick={() => void c.run(`red${r.id}`, async () => { const h = await redeem(c.ready(), c.addrs!.vault, r.id); c.note("Redeemed", `#${r.id} back to you`, h); })}>Redeem NFT</button>;
   const dec = 18; // native tPOT
-  // face value of `units` shares, multiplied before dividing so 60 of 60 shares is exactly the face value
-  const faceOfUnits = (r: Row, units: bigint) => (r.settle.faceValue > 0n && r.supply > 0n ? (r.settle.faceValue * units) / r.supply : faceShare(r) * units / 10n ** 18n);
+  // face value of `units` shares, multiplied before dividing so 60 of 60 shares is exactly the face value;
+  // over the shares issued at lock, so claims by others (which burn shares) do not raise anyone's estimate
+  const faceOfUnits = (r: Row, units: bigint) => { const s = issuedSupply(r); return r.settle.faceValue > 0n && s > 0n ? (r.settle.faceValue * units) / s : faceShare(r) * units / 10n ** 18n; };
   const valueAt = (id: number, bal: bigint) => { const r = c.rows.find((x) => x.id === id); return r ? faceOfUnits(r, bal) : 0n; };
   // cost basis from on-chain Bought events where you were the buyer
   const buys = new Map<number, { shares: bigint; cost: bigint }>();
@@ -133,7 +134,7 @@ export function Portfolio({ c }: { c: Ctx }) {
                 <tr key={r.id}>
                   <td data-label="Receipt"><div className="rcell"><ReceiptThumb id={r.id} status={r.status} /><div><b>#{r.id} · {r.note || KINDS[r.kind]}</b><small className="muted">{KINDS[r.kind]}{r.dueDate ? ` · due ${day(r.dueDate)}` : ""}</small></div></div></td>
                   <td data-label="Status"><div className="tags"><SettleBadge r={r} terms={false} /></div></td>
-                  <td data-label="Your shares" className="num" title={units(bal)}><b>{approxShares(bal)}</b><small className="muted"> {pctOf(bal, r.supply)}% of {fmtShares(r.supply)}</small>{listedOf(r.id) > 0n && <small className="muted">+{fmtShares(listedOf(r.id))} listed</small>}</td>
+                  <td data-label="Your shares" className="num" title={units(bal)}><b>{approxShares(bal)}</b><small className="muted"> {pctOf(bal, issuedSupply(r))}% of {fmtShares(issuedSupply(r))}</small>{listedOf(r.id) > 0n && <small className="muted">+{fmtShares(listedOf(r.id))} listed</small>}</td>
                   <td data-label="Face-value estimate" className="num">{v ? `${fmt(v, dec)} tPOT` : "—"}</td>
                   <td data-label="Bought for" className="num">{b ? `${fmt(b.cost, dec)} tPOT` : <span className="muted">Issued to you</span>}</td>
                   <td data-label="Next step"><span className="pf2-step">{step.text}</span></td>
@@ -163,7 +164,7 @@ export function Portfolio({ c }: { c: Ctx }) {
 
       {myListings.length > 0 && (
         <section className="pf2-sec" aria-labelledby="pf-listings">
-          <div className="pf2-sec-head"><div><h2 id="pf-listings">Your open listings</h2><p className="muted">Shares in escrow on the market. Cancel to get the remaining shares back.{c.v2 ? (c.grace > 0 ? " Once the invoice is settled, closing a listing pays you for its escrowed shares instead. Close it yourself during the grace period to get its storage deposit back; after it the depositor can close it for you." : " Once the invoice is settled, closing a listing pays you for its escrowed shares instead, and anyone can close it.") : ""}</p></div></div>
+          <div className="pf2-sec-head"><div><h2 id="pf-listings">Your open listings</h2><p className="muted">Shares in escrow on the market. Cancel to get the remaining shares back.{c.v2 ? (c.grace > 0 ? " Once the invoice is settled, closing a listing pays you for its escrowed shares instead. Close it yourself during the grace period to get its storage deposit back. After it the depositor can close it for you: you are still paid, but the listing's deposit is not refunded, and if that close leaves no shares of this receipt in the market's escrow, the escrow's deposit (paid by the receipt's first seller) goes to the depositor." : " Once the invoice is settled, closing a listing pays you for its escrowed shares instead, and anyone can close it.") : ""}</p></div></div>
           <div className="tscroll"><table className="rtable"><thead><tr><th scope="col">Receipt</th><th scope="col" className="num">Remaining</th><th scope="col" className="num">Price / share</th><th scope="col" className="num">Asking total</th><th scope="col"><span className="sr-only">Action</span></th></tr></thead><tbody>
             {myListings.map((l) => { const r = c.rows.find((x) => x.id === l.receiptId); return (
               <tr key={l.lid}><td data-label="Receipt"><div className="rcell"><ReceiptThumb id={l.receiptId} status={r?.status ?? "Pending"} /><div><b>#{l.receiptId} · {r?.note}</b><small className="muted">Listing {l.lid}</small></div></div></td><td data-label="Remaining" className="num" title={units(l.remaining)}>{fmtShares(l.remaining)}</td><td data-label="Price / share" className="num">{fmt(l.price, 18)} tPOT</td><td data-label="Asking total" className="num">{fmt((l.price * l.remaining) / 10n ** 18n, 18)} tPOT</td>

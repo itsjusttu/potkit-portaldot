@@ -354,6 +354,15 @@ Open issues after the run (none fixed yet):
 4. The Issue tab restores the receipt kind from the browser's saved wizard state, so receipt #1 was minted as Equipment instead of Invoice without the author noticing. Contract behaviour is the same for every kind.
 5. The share token logs a 0-share burn on redeem when the depositor holds no shares (harmless, an extra log line).
 
+Fixed on 28 Nov after the run, as decided by the author (no contract bytecode change):
+
+- Issue 1: `scripts/yulprep.mjs` now keeps a fixed list (the 30 v1 reasons, then the v2.1 order escrow, grace, no credit, overpaid, recipient = e…i); a reason not in it gets a letter after all of them, and the list is only ever appended to. Support for the v2 test kit is dropped: the app reads it as v1. `npm run compile` gives byte-identical artifacts, and the 10-minute build still equals the code deployed at `0xf9f6…e743` (and its deploy input); the 30-day build differs from it only in bytes 4378–4380 (the grace constant). New tests: the compiled codes keep every deployed letter, and new reasons are appended without shifting any.
+- Issue 2: Portfolio's percentage, "of N" and face-value estimate (row and top card) use the shares issued at lock (`issuedSupply` in `src/tabs/ctx.ts`, from the settlement data), and so does `faceShare`, which Trade, Explore and the sale planner also use; Explore's and Issue's share totals too. With the run's numbers A's row reads 60 · 60.0% of 100 and 0.6 tPOT. Before settlement nothing changes (no share is burned until a claim).
+- Issue 3: the listing note in Portfolio now says that after the grace period the depositor's close pays the seller but does not refund the listing's deposit, and that if it empties the escrow, the escrow's deposit (paid by the receipt's first seller) goes to the depositor.
+- Issue 4: the Issue wizard starts every new receipt as an Invoice and no longer saves the kind in the browser; a minted receipt being resumed still shows its own kind.
+- Issue 5: left as it is.
+- Tests: 96 pass (93 before); typecheck and build pass.
+
 ## How the work is checked
 
 - `npm test` compiles the contracts and runs the suite in `test/` (contract behaviour on a local Ganache chain, faucet logic, network switching, transaction errors, settle and trade input checks, receipt history, dashboard figures).

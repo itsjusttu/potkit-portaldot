@@ -3,7 +3,7 @@ import { parseUnits } from "viem";
 import { deployKit, fmt, fractionalize, KINDS, mint, PAY_SYMBOL, short, units } from "../lib/chain";
 import { fmtShares, shareUnit } from "../lib/shares";
 import { Addr, Empty, Ico } from "../AppUi";
-import { type Ctx } from "./ctx";
+import { issuedSupply, type Ctx } from "./ctx";
 import { day, fmtDate, SettleBadge, Term } from "./shared";
 import { readReceiptHistory } from "./receipt-history";
 
@@ -11,14 +11,14 @@ const WKEY = "potkit.v17.wizard";
 
 export function Issue({ c }: { c: Ctx }) {
   const saved = (() => { try { return JSON.parse(localStorage.getItem(WKEY) ?? "{}"); } catch { return {}; } })();
-  const [kind, setKind] = useState<number>(saved.kind ?? 0);
+  const [kind, setKind] = useState<number>(0); // a new receipt starts as an invoice; a minted one shows its own kind (resume, ?id=)
   const [note, setNote] = useState<string>(saved.note ?? "Invoice 042: content delivery");
   const [face, setFace] = useState<string>(saved.face ?? "1");
   const [due, setDue] = useState<string>(saved.due ?? new Date(Date.now() + 60 * 86400e3).toISOString().slice(0, 10));
   const [supply, setSupply] = useState<string>(saved.supply ?? "100");
   const [wizId, setWizId] = useState<number>(saved.wizId ?? 0);
   const [reviewed, setReviewed] = useState(false); // terms confirmed; the lock step is next
-  useEffect(() => { localStorage.setItem(WKEY, JSON.stringify({ kind, note, face, due, supply, wizId })); }, [kind, note, face, due, supply, wizId]);
+  useEffect(() => { localStorage.setItem(WKEY, JSON.stringify({ note, face, due, supply, wizId })); }, [note, face, due, supply, wizId]);
 
   const requestedId = c.param("id");
   useEffect(() => {
@@ -39,7 +39,7 @@ export function Issue({ c }: { c: Ctx }) {
   const receiptHistory = readReceiptHistory(c.events);
   const redeemed = (id: number) => receiptHistory.get(id)?.redeemed ?? false;
   const faceValue = (r: (typeof c.rows)[number]) => r.settle.faceValue > 0n ? r.settle.faceValue : redeemed(r.id) ? receiptHistory.get(r.id)?.terms?.value ?? 0n : 0n;
-  const originalSupply = (r: (typeof c.rows)[number]) => r.supply > 0n ? r.supply : (receiptHistory.get(r.id)?.lock?.amount ?? 0n) * 10n ** 18n;
+  const originalSupply = (r: (typeof c.rows)[number]) => issuedSupply(r) > 0n ? issuedSupply(r) : (receiptHistory.get(r.id)?.lock?.amount ?? 0n) * 10n ** 18n;
   const needSetup = !c.addrs;
   const noteOk = note.trim().length > 0 && note.length <= 140;
   const faceOk = (() => { try { return /^\d+(\.\d+)?$/.test(face.trim()) && parseUnits(face.trim(), 18) > 0n; } catch { return false; } })();
@@ -49,7 +49,7 @@ export function Issue({ c }: { c: Ctx }) {
   const connectReason = !c.account ? "Connect your wallet to continue." : c.gated ? "Switch to Portaldot V3 before submitting." : c.busy ? "Wait for the current transaction to finish." : "";
   const termsError = !supplyOk ? "Enter a whole number of shares from 1 to 1,000,000,000,000." : !faceOk ? "Enter a positive face value in tPOT." : !dueOk ? "Choose a future due date." : "";
 
-  const restart = () => { setWizId(0); setReviewed(false); };
+  const restart = () => { setWizId(0); setReviewed(false); setKind(0); };
   const resume = (id: number) => { setWizId(id); const r = c.rows.find((x) => x.id === id); if (r) { setKind(r.kind); setNote(r.note); } document.getElementById("wizard")?.scrollIntoView({ behavior: "smooth", block: "start" }); };
 
   return (

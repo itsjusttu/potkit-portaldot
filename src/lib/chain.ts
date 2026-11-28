@@ -421,6 +421,7 @@ export function kitVersion(kit: Address): Promise<KitInfo> {
         return revertReason(e) || "revert";
       });
     v = (async (): Promise<KitInfo> => {
+      // the v2 test kit (0xaa7d…7f77) answers code f, which is "grace" in the fixed v2.1 table (scripts/yulprep.mjs), so it reads as v1; it is no longer supported
       const w = await probe("withdraw", [kit], ZERO as Address);
       if (w !== "" && w !== "no credit") return { version: 1, grace: 0 };
       if ((await probe("claimFor", [0n, ZERO], STRANGER)) !== "not depositor") return { version: 2, grace: 0 };
