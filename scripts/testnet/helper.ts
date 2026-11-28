@@ -111,10 +111,11 @@ const ready = async () => {
 
 // ---------------- simulate / send ----------------
 type Call = { to?: Address; data: Hex; value?: bigint };
-async function simulate(label: string, c: Call) {
-  let from: Address | null = account;
+/** `as`: run the eth_call from that address instead of the connected wallet (a stranger such as C; nothing is signed) */
+async function simulate(label: string, c: Call, as?: Address) {
+  let from: Address | null = as ?? account;
   try {
-    from = (await ready()).from;
+    from = as ?? (await ready()).from;
     const block = await pc.getBlockNumber();
     try {
       const r = await pc.call({ account: from, to: c.to, data: c.data, value: c.value, blockNumber: block });
@@ -243,6 +244,12 @@ const closeCall = (): Call => {
 };
 $("closeSim").onclick = guard("Close listing", async () => simulate(`Close listing #${$("lid").value.trim()}`, closeCall()));
 $("closeSend").onclick = guard("Close listing", async () => { await send(`Close listing #${$("lid").value.trim()}`, closeCall()); void refresh(); });
+$("closeSimC").onclick = guard("Close listing", async () => simulate(`Close listing #${$("lid").value.trim()}`, closeCall(), addrOf("addrC", "Address C")));
+const cfCall = (): Call => ({ to: kit(), data: enc("claimFor", [BigInt(rid()), addrOf("cfHolder", "Holder")]) });
+const cfLabel = () => `claimFor(#${rid()}, ${$("cfHolder").value.trim().slice(0, 10)}…)`;
+$("cfSim").onclick = guard("claimFor", async () => simulate(cfLabel(), cfCall()));
+$("cfSimC").onclick = guard("claimFor", async () => simulate(cfLabel(), cfCall(), addrOf("addrC", "Address C")));
+$("cfSend").onclick = guard("claimFor", async () => { await send(`${cfLabel()} (expected to fail)`, cfCall(), true); void refresh(); });
 
 startDiscovery();
 renderWallets();

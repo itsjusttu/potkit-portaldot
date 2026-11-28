@@ -113,10 +113,19 @@
 
   <section>
     <h2>6 · Close a listing as the connected wallet</h2>
-    <p class="muted">After settlement anyone may close a listing; the escrowed shares are paid out to the <i>seller</i>, not the caller. Before settlement only the seller can cancel (expected for anyone else: <code>not seller</code>).</p>
+    <p class="muted">After settlement the escrowed shares are paid out to the <i>seller</i>, not the caller. Before settlement only the seller can cancel (<code>not seller</code>). On v2.1, after settlement: the seller any time; the depositor only after the grace period (<code>grace</code> before); anyone else <code>not depositor</code>. <b>Simulate as C</b> runs the call from address C, a stranger that never signs (free <code>eth_call</code>).</p>
     <div class="row">
       <div class="narrow"><label for="lid">Listing id</label><input id="lid" value="0" /></div>
-      <div><button id="closeSim">Simulate</button> <button id="closeSend" class="primary">Close listing</button></div>
+      <div><button id="closeSim">Simulate</button> <button id="closeSimC">Simulate as C</button> <button id="closeSend" class="primary">Close listing</button></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>7 · claimFor(receipt, holder) as the connected wallet</h2>
+    <p class="muted">Pays <i>holder</i> out; the payout always goes to the holder. On v2.1: the holder themselves any time after settlement; for someone else only the depositor, after the grace period (<code>grace</code> before), anyone else <code>not depositor</code>. The app's Pay out button is disabled during the grace period, so use this to record the revert. <b>Send anyway</b> is for the expected-to-fail case only (gas limit 5·10¹³); pay holders out after the grace period with the app's button.</p>
+    <div class="row">
+      <div><label for="cfHolder">Holder</label><input id="cfHolder" placeholder="0x holder (e.g. the TinyReceiver address)" /></div>
+      <div><button id="cfSim">Simulate</button> <button id="cfSimC">Simulate as C</button> <button id="cfSend">Send anyway</button></div>
     </div>
   </section>
 
